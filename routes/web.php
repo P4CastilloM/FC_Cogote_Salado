@@ -17,4 +17,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/fccogotesalado', function () {
+    return view('public.home');
+});
+
 require __DIR__.'/auth.php';
