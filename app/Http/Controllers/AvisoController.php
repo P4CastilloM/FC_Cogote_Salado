@@ -27,4 +27,13 @@ class AvisoController extends Controller
         Aviso::where('id', $id)->update($request->all());
         return response()->json(['ok' => true]);
     }
+
+    public function home()
+    {
+        $avisos = Aviso::where('temporada_id', 2025)
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        return view('public.home', compact('avisos'));
+    }
 }

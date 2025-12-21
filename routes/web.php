@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AvisoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,5 +21,8 @@ Route::middleware('auth')->group(function () {
 Route::get('/fccogotesalado', function () {
     return view('public.home');
 });
+
+
+Route::get('/fccogotesalado', [AvisoController::class, 'home']);
 
 require __DIR__.'/auth.php';
