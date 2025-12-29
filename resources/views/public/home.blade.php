@@ -44,7 +44,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FC Cogote Salado">
   <meta name="twitter:description" content="Más que amigos, familia. Noticias, plantel, fotos y avisos del equipo.">
-  <meta name="twitter:image" content="{{ asset('storage/fotos/logo_fccs_s_f.png') }}">
+  <meta name="twitter:image" content="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
 
   {{-- =========================================================
      ✅ SEO
@@ -56,7 +56,7 @@
      ✅ ICONOS / LOGOS
      📌 Favicon + ícono (usa tu logo)
   ========================================================== --}}
-  <link rel="icon" type="image/png" href="{{ asset('storage/fotos/logo_fccs_s_f.png') }}">
+  <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
 
   {{-- =========================================================
      ✅ FUENTES
