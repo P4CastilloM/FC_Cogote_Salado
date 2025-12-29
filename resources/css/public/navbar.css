@@ -1,0 +1,25 @@
+/* Links desktop */
+.nav-link{
+  color: rgba(255,255,255,.85);
+}
+.nav-link:hover{
+  background: rgba(119,187,20,.14);
+  color: #77BB14;
+}
+
+/* Estado activo (la “píldora” amarilla/verde) */
+.nav-link.active{
+  background: rgba(119,187,20,.22);
+  border: 1px solid rgba(119,187,20,.40);
+  color: #77BB14;
+}
+
+/* Mobile (si usas) */
+.nav-link-mobile{
+  color: rgba(255,255,255,.9);
+}
+.nav-link-mobile.active{
+  background: rgba(119,187,20,.18);
+  border: 1px solid rgba(119,187,20,.35);
+  color: #77BB14;
+}

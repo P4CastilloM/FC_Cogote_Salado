@@ -12,6 +12,14 @@ export default defineConfig({
         // ✅ tus archivos de esta página
         'resources/css/public/home.css',
         'resources/js/public/home.js',
+
+        // ✅ tus archivos de fotos
+        'resources/css/public/fotos.css',
+        'resources/js/public/fotos.js',
+
+        // ✅ tus archivos de navbar
+        'resources/css/public/navbar.css',
+
       ],
       refresh: true,
     }),

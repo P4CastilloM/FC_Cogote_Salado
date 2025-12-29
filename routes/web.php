@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvisoController;
+use App\Http\Controllers\FotosController; // ✅ IMPORTANTE
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,11 +19,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/fccogotesalado', function () {
-    return view('public.home');
-});
+/** HOME FC */
+Route::get('/fccogotesalado', [AvisoController::class, 'home'])
+    ->name('fccs.home'); // ✅ ESTE NOMBRE FALTABA
 
-
-Route::get('/fccogotesalado', [AvisoController::class, 'home']);
+/** GALERÍA */
+Route::get('/fccogotesalado/fotos', [FotosController::class, 'index'])
+    ->name('fccs.fotos');
 
 require __DIR__.'/auth.php';

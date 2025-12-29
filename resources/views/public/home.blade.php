@@ -33,8 +33,8 @@
   <meta property="og:title" content="FC Cogote Salado">
   <meta property="og:description" content="Más que amigos, familia. Noticias, plantel, fotos y avisos del equipo.">
   <meta property="og:url" content="{{ url('/fccogotesalado') }}">
-  <meta property="og:image" content="{{ asset('storage/fotos/logo_fccs_s_f.png') }}">
-  <meta property="og:image:secure_url" content="{{ asset('storage/fotos/logo_fccs_s_f.png') }}">
+  <meta property="og:image" content="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
+  <meta property="og:image:secure_url" content="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
@@ -84,103 +84,7 @@
 <body class="h-full font-inter bg-club-dark text-white">
   <div id="app" class="h-full overflow-auto">
 
-    {{-- =========================================================
-       ✅ HEADER FIJO (NAVBAR)
-       📌 Aquí se cambia el logo de arriba
-    ========================================================== --}}
-    <header class="fixed top-0 left-0 right-0 z-50 bg-club-dark/95 backdrop-blur-sm border-b border-club-gold/20">
-      <div class="max-w-7xl mx-auto px-4 py-3">
-
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-
-            {{-- ✅ LOGO REAL (reemplaza el SVG placeholder) --}}
-            <div id="club-logo" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-club-gold/30">
-              <img
-                src="{{ asset('storage/fotos/logo_fccs_s_f.png') }}"
-                alt="Logo FC Cogote Salado"
-                class="w-full h-full object-cover"
-              >
-            </div>
-
-            <span id="header-club-name" class="font-bebas text-lg md:text-xl tracking-wider text-club-gold hidden sm:block">
-              FC COGOTE SALADO
-            </span>
-          </div>
-
-          {{-- =========================
-             NAV DESKTOP
-          ========================== --}}
-          <nav class="hidden lg:flex items-center gap-1">
-            <a href="#inicio" data-nav="inicio" class="nav-link active px-4 py-2 rounded-full text-sm font-semibold transition-all">Inicio</a>
-            <a href="#plantel" data-nav="plantel" class="nav-link px-4 py-2 rounded-full text-sm font-semibold transition-all">Plantel</a>
-            <a href="#directiva" data-nav="directiva" class="nav-link px-4 py-2 rounded-full text-sm font-semibold transition-all">Directiva</a>
-            <a href="#noticias" data-nav="noticias" class="nav-link px-4 py-2 rounded-full text-sm font-semibold transition-all">Noticias</a>
-            <a href="#fotos" data-nav="fotos" class="nav-link px-4 py-2 rounded-full text-sm font-semibold transition-all">Fotos</a>
-
-            <a
-              href="https://www.instagram.com/fc_cogote_salado?igsh=dmptcDF1M2x0YXp3"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 px-4 py-2 rounded-full text-sm font-semibold hover:scale-105 transition-transform ml-2"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-              Síguenos
-            </a>
-          </nav>
-
-          {{-- =========================
-             BOTÓN MENÚ MÓVIL
-          ========================== --}}
-          <button id="mobile-menu-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full bg-club-gold/20 hover:bg-club-gold/30 transition-colors">
-            <svg id="menu-icon" class="w-6 h-6 text-club-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            <svg id="close-icon" class="w-6 h-6 text-club-gold hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        {{-- =========================
-           NAV MÓVIL
-        ========================== --}}
-        <nav id="mobile-menu" class="lg:hidden hidden mt-4 pb-2">
-          <div class="flex flex-col gap-1">
-            <a href="#inicio" data-nav="inicio" class="nav-link-mobile active px-4 py-3 rounded-xl text-sm font-semibold transition-all">
-              <span class="flex items-center gap-3"><span class="text-lg">🏠</span> Inicio</span>
-            </a>
-            <a href="#plantel" data-nav="plantel" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
-              <span class="flex items-center gap-3"><span class="text-lg">👥</span> Plantel</span>
-            </a>
-            <a href="#directiva" data-nav="directiva" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
-              <span class="flex items-center gap-3"><span class="text-lg">🏛️</span> Directiva</span>
-            </a>
-            <a href="#noticias" data-nav="noticias" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
-              <span class="flex items-center gap-3"><span class="text-lg">📰</span> Noticias</span>
-            </a>
-            <a href="#fotos" data-nav="fotos" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
-              <span class="flex items-center gap-3"><span class="text-lg">📸</span> Fotos</span>
-            </a>
-
-            <a
-              href="https://www.instagram.com/fc_cogote_salado?igsh=dmptcDF1M2x0YXp3"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-3 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 px-4 py-3 rounded-xl text-sm font-semibold mt-2"
-            >
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-              Síguenos en Instagram
-            </a>
-          </div>
-        </nav>
-
-      </div>
-    </header>
+    @include('public.partials.header')
 
     {{-- =========================================================
        ✅ HERO SECTION (SLIDER)
@@ -192,17 +96,11 @@
         <div class="hero-slide active">
           <div class="absolute inset-0 bg-gradient-to-br from-club-dark via-club-gray to-club-dark">
             <div class="absolute inset-0 opacity-30">
-              <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <pattern id="grid1" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#77BB14" stroke-width="0.5" opacity="0.3" />
-                  </pattern>
-                </defs>
-                <rect width="100" height="100" fill="url(#grid1)" />
-                <circle cx="50" cy="50" r="30" fill="none" stroke="#77BB14" stroke-width="0.5" opacity="0.5" />
-                <circle cx="50" cy="50" r="15" fill="none" stroke="#77BB14" stroke-width="0.5" opacity="0.5" />
-                <line x1="50" y1="20" x2="50" y2="80" stroke="#fff" stroke-width="0.3" opacity="0.3" />
-              </svg>
+              <img
+                src="{{ asset('storage/f_inicio/equipo1.jpeg') }}"
+                alt="FC Cogote Salado - Slide 1"
+                class="w-full h-full object-cover"
+              >
             </div>
           </div>
         </div>
@@ -210,14 +108,11 @@
         <div class="hero-slide">
           <div class="absolute inset-0 bg-gradient-to-tr from-club-gray/80 via-club-dark to-club-gold/30">
             <div class="absolute inset-0 opacity-20">
-              <svg class="w-full h-full" viewBox="0 0 400 400">
-                <defs>
-                  <pattern id="triangles" width="50" height="50" patternUnits="userSpaceOnUse">
-                    <polygon points="25,0 50,50 0,50" fill="none" stroke="#fff" stroke-width="0.5" />
-                  </pattern>
-                </defs>
-                <rect width="400" height="400" fill="url(#triangles)" />
-              </svg>
+              <img
+                src="{{ asset('storage/f_inicio/equipo2.jpeg') }}"
+                alt="FC Cogote Salado - Slide 2"
+                class="w-full h-full object-cover"
+              >
             </div>
           </div>
         </div>
@@ -225,17 +120,11 @@
         <div class="hero-slide">
           <div class="absolute inset-0 bg-gradient-to-bl from-club-gold/40 via-club-dark to-club-red/60">
             <div class="absolute inset-0 opacity-25">
-              <svg class="w-full h-full" viewBox="0 0 200 200">
-                <defs>
-                  <radialGradient id="rg1">
-                    <stop offset="0%" stop-color="#77BB14" stop-opacity="0.3" />
-                    <stop offset="100%" stop-color="transparent" />
-                  </radialGradient>
-                </defs>
-                <circle cx="100" cy="100" r="80" fill="url(#rg1)" />
-                <circle cx="30" cy="30" r="40" fill="url(#rg1)" />
-                <circle cx="170" cy="170" r="50" fill="url(#rg1)" />
-              </svg>
+              <img
+                src="{{ asset('storage/f_inicio/equipo3.jpg') }}"
+                alt="FC Cogote Salado - Slide 3"
+                class="w-full h-full object-cover"
+              >
             </div>
           </div>
         </div>
@@ -252,7 +141,7 @@
           <div class="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-club-gold to-club-red p-1 shadow-2xl">
             <div class="w-full h-full rounded-full bg-club-dark flex items-center justify-center overflow-hidden">
               <img
-                src="{{ asset('storage/fotos/logo_fccs_s_f.png') }}"
+                src="{{ asset('storage/logo/logo_fccs_s_f.png') }}"
                 alt="Logo FC Cogote Salado"
                 class="w-full h-full object-cover"
               >
