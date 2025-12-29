@@ -1,0 +1,76 @@
+/* =========================================================
+   ✅ ESTILOS GENERALES
+========================================================== */
+body { box-sizing: border-box; }
+
+/* =========================================================
+   ✅ HERO SLIDER
+========================================================== */
+.hero-slide{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transition:opacity 1s ease-in-out;
+}
+.hero-slide.active{ opacity:1; }
+
+/* =========================================================
+   ✅ AVISOS CAROUSEL
+========================================================== */
+.aviso-carousel{ display:flex; transition:transform 0.5s ease-out; }
+.aviso-card{ min-width:100%; padding:0 1rem; }
+
+@media (min-width:768px){ .aviso-card{ min-width:50%; } }
+@media (min-width:1024px){ .aviso-card{ min-width:33.333%; } }
+
+/* =========================================================
+   ✅ EFECTOS UI
+========================================================== */
+.news-card:hover .news-overlay{ opacity:1; }
+.player-card:hover .player-info{ transform: translateY(0); }
+
+.instagram-glow{ animation: glow 2s ease-in-out infinite alternate; }
+@keyframes glow{
+  from{ box-shadow:0 0 20px rgba(212,175,55,0.3); }
+  to  { box-shadow:0 0 40px rgba(212,175,55,0.6); }
+}
+
+.scroll-indicator{ animation:bounce 2s infinite; }
+@keyframes bounce{
+  0%,20%,50%,80%,100%{ transform: translateY(0); }
+  40%{ transform: translateY(-10px); }
+  60%{ transform: translateY(-5px); }
+}
+
+.carousel-dot{ transition: all 0.3s ease; }
+.carousel-dot.active{ width:24px; border-radius:9999px; }
+
+/* =========================================================
+   ✅ NAVIGATION STYLES
+========================================================== */
+.nav-link{
+  color: rgba(255,255,255,0.7);
+  background: transparent;
+}
+.nav-link:hover{
+  color: #d4af37;
+  background: rgba(212,175,55,0.1);
+}
+.nav-link.active{
+  color: #1a1a2e;
+  background: #d4af37;
+}
+
+.nav-link-mobile{
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.05);
+}
+.nav-link-mobile:hover{
+  color: #d4af37;
+  background: rgba(212,175,55,0.1);
+}
+.nav-link-mobile.active{
+  color:#d4af37;
+  background: rgba(212,175,55,0.2);
+  border-left:3px solid #d4af37;
+}
