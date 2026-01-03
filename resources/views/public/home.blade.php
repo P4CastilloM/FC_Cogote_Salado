@@ -608,7 +608,7 @@
         <div class="flex items-center justify-center gap-3 mb-4">
 
           <div class="w-10 h-10 rounded-full bg-white/10 border border-club-gold/30 overflow-hidden">
-            <img src="{{ asset('storage/fotos/logo_fccs_s_f.png') }}" alt="Logo" class="w-full h-full object-cover">
+            <img src="{{ asset('storage/logo/logo_fccs_s_f.png') }}" alt="Logo" class="w-full h-full object-cover">
           </div>
 
           <span class="font-bebas text-lg tracking-wider text-club-gold">FC COGOTE SALADO</span>

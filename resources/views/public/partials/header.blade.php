@@ -7,7 +7,7 @@
       <div class="flex items-center gap-3 h-full">
         <div id="club-logo"
              class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-club-gold/30">
-          <img src="{{ asset('storage/fotos/logo_fccs_s_f.png') }}"
+          <img src="{{ asset('storage/logo/logo_fccs_s_f.png') }}"
                alt="Logo FC Cogote Salado"
                class="w-full h-full object-cover">
         </div>
