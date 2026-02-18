@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ModuleController as AdminModuleController;
+use App\Http\Middleware\TrackPageVisit;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvisoController;
@@ -41,10 +42,12 @@ Route::middleware(['auth', 'verified'])
 
 /** HOME FC */
 Route::get('/fccogotesalado', [AvisoController::class, 'home'])
+    ->middleware(TrackPageVisit::class)
     ->name('fccs.home');
 
 /** GALERÍA */
 Route::get('/fccogotesalado/fotos', [FotosController::class, 'index'])
+    ->middleware(TrackPageVisit::class)
     ->name('fccs.fotos');
 
 require __DIR__.'/auth.php';

@@ -1,5 +1,6 @@
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('sidebar-overlay');
+const userMenu = document.getElementById('user-menu');
 
 document.querySelectorAll('[data-action="toggle-sidebar"]').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -26,4 +27,16 @@ document.querySelectorAll('[data-accordion-trigger]').forEach((trigger) => {
     content?.classList.toggle('open');
     arrow?.classList.toggle('rotated');
   });
+});
+
+const userTrigger = document.querySelector('[data-action="toggle-user-menu"]');
+userTrigger?.addEventListener('click', (event) => {
+  event.stopPropagation();
+  userMenu?.classList.toggle('hidden');
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('#user-menu') && !event.target.closest('[data-action="toggle-user-menu"]')) {
+    userMenu?.classList.add('hidden');
+  }
 });

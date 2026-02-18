@@ -38,8 +38,10 @@ class ModuleController extends Controller
             ]);
         }
 
+        $pk = $this->primaryKeyFor($module);
+
         $items = Schema::hasTable($config['table'])
-            ? DB::table($config['table'])->orderByDesc('id')->limit(50)->get()
+            ? DB::table($config['table'])->orderByDesc($pk)->limit(50)->get()
             : collect();
 
         return response()->json([
@@ -120,7 +122,7 @@ class ModuleController extends Controller
             return response()->json(['ok' => false, 'message' => 'Tabla no disponible.'], 422);
         }
 
-        $pk = $module === 'plantel' ? 'rut' : 'id';
+        $pk = $this->primaryKeyFor($module);
 
         $item = DB::table($config['table'])->where($pk, $id)->first();
 
@@ -144,7 +146,7 @@ class ModuleController extends Controller
             $data['updated_at'] = now();
         }
 
-        $pk = $module === 'plantel' ? 'rut' : 'id';
+        $pk = $this->primaryKeyFor($module);
 
         DB::table($config['table'])->where($pk, $id)->update($data);
 
@@ -173,7 +175,7 @@ class ModuleController extends Controller
             return response()->json(['ok' => false, 'message' => 'Tabla no disponible.'], 422);
         }
 
-        $pk = $module === 'plantel' ? 'rut' : 'id';
+        $pk = $this->primaryKeyFor($module);
 
         $deleted = DB::table($config['table'])->where($pk, $id)->delete();
 
@@ -189,6 +191,11 @@ class ModuleController extends Controller
         abort_unless(isset($this->modules[$module]), 404);
 
         return $this->modules[$module];
+    }
+
+    private function primaryKeyFor(string $module): string
+    {
+        return $module === 'plantel' ? 'rut' : 'id';
     }
 
     /** @return array<int, array{filename: string, url: string}> */

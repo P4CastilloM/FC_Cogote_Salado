@@ -53,7 +53,7 @@
 }
 
 .accordion-content.open {
-  max-height: 200px;
+  max-height: 260px;
 }
 
 .accordion-arrow {
@@ -83,6 +83,47 @@
   color: #84cc16;
   font-weight: 700;
 }
+
+.avatar.small {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.75rem;
+}
+
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  color: #d1d5db;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+}
+
+.user-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  width: 11rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #1f1434;
+  overflow: hidden;
+  z-index: 70;
+}
+
+.user-menu-item {
+  width: 100%;
+  display: block;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  color: #d1d5db;
+  font-size: 0.9rem;
+}
+
+.user-menu-item:hover { background: rgba(255,255,255,0.08); color: white; }
+.user-menu-item.danger { color: #fca5a5; }
 
 .quick-link {
   border: 1px solid rgba(132, 204, 22, 0.3);
