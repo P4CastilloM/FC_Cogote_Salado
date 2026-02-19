@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Storage;
 
 class ModuleController extends Controller
 {
+    /** @var array<int, string> */
+    private array $adminOnlyModules = ['temporadas', 'staff', 'directiva', 'modificaciones'];
+
     /** @var array<string, array{table: string|null, fields: array<int, string>, label: string}> */
     private array $modules = [
         'plantel' => ['table' => 'jugadores', 'fields' => ['rut', 'nombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion'], 'label' => 'Plantel'],
@@ -27,6 +30,8 @@ class ModuleController extends Controller
 
     public function index(string $module): JsonResponse
     {
+        $this->authorizeModuleAccess($module);
+
         $config = $this->config($module);
 
         if ($config['table'] === null) {
@@ -55,6 +60,8 @@ class ModuleController extends Controller
 
     public function create(string $module): JsonResponse
     {
+        $this->authorizeModuleAccess($module);
+
         $config = $this->config($module);
 
         return response()->json([
@@ -67,6 +74,8 @@ class ModuleController extends Controller
 
     public function store(Request $request, string $module): JsonResponse
     {
+        $this->authorizeModuleAccess($module);
+
         $config = $this->config($module);
 
         if ($module === 'album') {
@@ -108,6 +117,8 @@ class ModuleController extends Controller
 
     public function edit(string $module, string $id): JsonResponse
     {
+        $this->authorizeModuleAccess($module);
+
         $config = $this->config($module);
 
         if ($module === 'album') {
@@ -134,6 +145,8 @@ class ModuleController extends Controller
 
     public function update(Request $request, string $module, string $id): JsonResponse
     {
+        $this->authorizeModuleAccess($module);
+
         $config = $this->config($module);
 
         if (! $config['table'] || ! Schema::hasTable($config['table'])) {
@@ -159,6 +172,8 @@ class ModuleController extends Controller
 
     public function destroy(string $module, string $id): JsonResponse
     {
+        $this->authorizeModuleAccess($module);
+
         $config = $this->config($module);
 
         if ($module === 'album') {
@@ -196,6 +211,17 @@ class ModuleController extends Controller
     private function primaryKeyFor(string $module): string
     {
         return $module === 'plantel' ? 'rut' : 'id';
+    }
+
+    private function authorizeModuleAccess(string $module): void
+    {
+        $user = auth()->user();
+
+        abort_if(! $user, 401);
+
+        if (in_array($module, $this->adminOnlyModules, true) && ! $user->isAdmin()) {
+            abort(403, 'No tienes permisos para este módulo.');
+        }
     }
 
     /** @return array<int, array{filename: string, url: string}> */

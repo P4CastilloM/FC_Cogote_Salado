@@ -4,6 +4,8 @@
 @section('subtitle', 'Resumen general del club y visitas de la web')
 
 @section('content')
+    @php($isAdmin = Auth::user()?->isAdmin() ?? false)
+
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         @foreach ($stats as $card)
             <div class="glass-card rounded-2xl p-5">
@@ -47,7 +49,10 @@
             <a class="quick-link" href="{{ route('admin.album.create') }}">📸 Subir foto</a>
             <a class="quick-link" href="{{ route('admin.plantel.index') }}">👥 Gestionar plantel</a>
             <a class="quick-link" href="{{ route('admin.partidos.index') }}">📅 Gestionar partidos</a>
-            <a class="quick-link" href="{{ route('admin.temporadas.index') }}">⏳ Gestionar temporadas</a>
+            @if($isAdmin)
+                <a class="quick-link" href="{{ route('admin.temporadas.index') }}">⏳ Gestionar temporadas</a>
+                <a class="quick-link" href="{{ route('admin.staff.index') }}">🤝 Gestionar ayudantes</a>
+            @endif
         </div>
     </div>
 @endsection

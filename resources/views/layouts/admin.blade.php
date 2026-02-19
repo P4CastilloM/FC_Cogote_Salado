@@ -29,20 +29,22 @@
             <a href="{{ route('dashboard') }}" class="admin-nav-item {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'active' : '' }}">🏠 Dashboard</a>
 
             @php
+                $isAdmin = Auth::user()?->isAdmin() ?? false;
                 $menu = [
-                    'plantel' => ['title' => '👥 Plantel', 'routes' => ['create' => '➕ Añadir Jugador', 'index' => '✏️ Editar / Eliminar Jugadores']],
-                    'noticias' => ['title' => '📰 Noticias', 'routes' => ['create' => '➕ Crear Noticia', 'index' => '✏️ Editar / Eliminar Noticias']],
-                    'avisos' => ['title' => '📢 Avisos', 'routes' => ['create' => '➕ Crear Aviso', 'index' => '✏️ Editar / Eliminar Avisos']],
-                    'album' => ['title' => '📸 Álbum / Fotos', 'routes' => ['create' => '⬆️ Subir Fotos', 'index' => '🗑️ Eliminar Fotos']],
-                    'directiva' => ['title' => '🏛️ Directiva', 'routes' => ['create' => '➕ Añadir Miembro', 'index' => '✏️ Editar / Eliminar Miembro']],
-                    'partidos' => ['title' => '📅 Partidos', 'routes' => ['create' => '➕ Añadir Partido', 'index' => '✏️ Editar / Eliminar Partidos']],
-                    'premios' => ['title' => '🏆 Premios', 'routes' => ['create' => '➕ Añadir Premio', 'index' => '✏️ Editar / Eliminar Premios']],
-                    'temporadas' => ['title' => '⏳ Temporadas', 'routes' => ['create' => '➕ Crear Temporada', 'index' => '✏️ Editar / Eliminar Temporadas']],
-                    'staff' => ['title' => '🤝 Ayudantes / Staff', 'routes' => ['create' => '➕ Añadir Staff', 'index' => '✏️ Editar / Eliminar Staff']],
+                    'plantel' => ['title' => '👥 Plantel', 'routes' => ['create' => '➕ Añadir Jugador', 'index' => '✏️ Editar / Eliminar Jugadores'], 'admin_only' => false],
+                    'noticias' => ['title' => '📰 Noticias', 'routes' => ['create' => '➕ Crear Noticia', 'index' => '✏️ Editar / Eliminar Noticias'], 'admin_only' => false],
+                    'avisos' => ['title' => '📢 Avisos', 'routes' => ['create' => '➕ Crear Aviso', 'index' => '✏️ Editar / Eliminar Avisos'], 'admin_only' => false],
+                    'album' => ['title' => '📸 Álbum / Fotos', 'routes' => ['create' => '⬆️ Subir Fotos', 'index' => '🗑️ Eliminar Fotos'], 'admin_only' => false],
+                    'directiva' => ['title' => '🏛️ Directiva', 'routes' => ['create' => '➕ Añadir Miembro', 'index' => '✏️ Editar / Eliminar Miembro'], 'admin_only' => true],
+                    'partidos' => ['title' => '📅 Partidos', 'routes' => ['create' => '➕ Añadir Partido', 'index' => '✏️ Editar / Eliminar Partidos'], 'admin_only' => false],
+                    'premios' => ['title' => '🏆 Premios', 'routes' => ['create' => '➕ Añadir Premio', 'index' => '✏️ Editar / Eliminar Premios'], 'admin_only' => false],
+                    'temporadas' => ['title' => '⏳ Temporadas', 'routes' => ['create' => '➕ Crear Temporada', 'index' => '✏️ Editar / Eliminar Temporadas'], 'admin_only' => true],
+                    'staff' => ['title' => '🤝 Ayudantes / Staff', 'routes' => ['create' => '➕ Añadir Staff', 'index' => '✏️ Editar / Eliminar Staff'], 'admin_only' => true],
                 ];
             @endphp
 
             @foreach ($menu as $key => $item)
+                @continue($item['admin_only'] && ! $isAdmin)
                 <div class="accordion-group">
                     <button type="button" class="admin-accordion-button" data-accordion-trigger="{{ $key }}">
                         <span>{{ $item['title'] }}</span>
@@ -58,9 +60,11 @@
 
             <div class="border-t border-white/10 my-4"></div>
 
-            <a href="{{ route('admin.modificaciones.index') }}" class="admin-nav-item {{ request()->routeIs('admin.modificaciones.*') ? 'active-alt' : '' }}">
-                🧾 Historial de Cambios
-            </a>
+            @if($isAdmin)
+                <a href="{{ route('admin.modificaciones.index') }}" class="admin-nav-item {{ request()->routeIs('admin.modificaciones.*') ? 'active-alt' : '' }}">
+                    🧾 Historial de Cambios
+                </a>
+            @endif
         </nav>
 
         <div class="p-4 border-t border-white/10">
