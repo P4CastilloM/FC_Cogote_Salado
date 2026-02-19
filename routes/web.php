@@ -31,12 +31,12 @@ Route::middleware(['auth', 'verified'])
         $modules = ['plantel', 'noticias', 'avisos', 'album', 'directiva', 'partidos', 'premios', 'temporadas', 'staff', 'modificaciones'];
 
         foreach ($modules as $module) {
-            Route::get("/{$module}", [AdminModuleController::class, 'index'])->name("{$module}.index");
-            Route::get("/{$module}/create", [AdminModuleController::class, 'create'])->name("{$module}.create");
-            Route::post("/{$module}", [AdminModuleController::class, 'store'])->name("{$module}.store");
-            Route::get("/{$module}/{id}/edit", [AdminModuleController::class, 'edit'])->name("{$module}.edit");
-            Route::put("/{$module}/{id}", [AdminModuleController::class, 'update'])->name("{$module}.update");
-            Route::delete("/{$module}/{id}", [AdminModuleController::class, 'destroy'])->name("{$module}.destroy");
+            Route::get("/{$module}", fn (AdminModuleController $controller) => $controller->index($module))->name("{$module}.index");
+            Route::get("/{$module}/create", fn (AdminModuleController $controller) => $controller->create($module))->name("{$module}.create");
+            Route::post("/{$module}", fn (\Illuminate\Http\Request $request, AdminModuleController $controller) => $controller->store($request, $module))->name("{$module}.store");
+            Route::get("/{$module}/{id}/edit", fn (string $id, AdminModuleController $controller) => $controller->edit($module, $id))->name("{$module}.edit");
+            Route::put("/{$module}/{id}", fn (\Illuminate\Http\Request $request, string $id, AdminModuleController $controller) => $controller->update($request, $module, $id))->name("{$module}.update");
+            Route::delete("/{$module}/{id}", fn (string $id, AdminModuleController $controller) => $controller->destroy($module, $id))->name("{$module}.destroy");
         }
     });
 
