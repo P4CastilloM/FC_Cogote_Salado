@@ -30,7 +30,7 @@
     </style>
 
     <div class="max-w-6xl mx-auto space-y-6">
-        @if(session('status') === 'player-created')
+        @if(session('status') === 'item-created')
             <div class="rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
                 ✅ ¡Jugador guardado correctamente!
             </div>
@@ -113,7 +113,7 @@
             <div class="pt-5 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p class="text-xs text-slate-500">* Campos obligatorios</p>
                 <div class="flex w-full sm:w-auto gap-3">
-                    <a href="{{ route('dashboard') }}" class="flex-1 sm:flex-none text-center px-6 py-3 rounded-xl border border-amber-400/50 text-amber-300 hover:bg-amber-400/10">✖ Cancelar</a>
+                    <a href="{{ route('admin.dashboard') }}" class="flex-1 sm:flex-none text-center px-6 py-3 rounded-xl border border-amber-400/50 text-amber-300 hover:bg-amber-400/10">✖ Cancelar</a>
                     <button type="submit" class="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg shadow-emerald-700/25">✔ Guardar Jugador</button>
                 </div>
             </div>
