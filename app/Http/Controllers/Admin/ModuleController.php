@@ -31,7 +31,7 @@ class ModuleController extends Controller
         'modificaciones' => ['table' => null, 'fields' => [], 'label' => 'Historial de Cambios', 'icon' => '🧾'],
     ];
 
-    public function index(string $module): JsonResponse
+    public function index(Request $request, string $module): JsonResponse|View
     {
         $this->authorizeModuleAccess($module);
         $config = $this->config($module);
@@ -45,16 +45,26 @@ class ModuleController extends Controller
             ]);
         }
 
+        $q = trim((string) $request->query('q', ''));
         $pk = $this->primaryKeyFor($module);
-        $items = Schema::hasTable($config['table'])
-            ? DB::table($config['table'])->orderByDesc($pk)->limit(50)->get()
-            : collect();
 
-        return response()->json([
+        $itemsQuery = DB::table($config['table']);
+        if ($q !== '') {
+            $columns = $this->searchableColumnsFor($module);
+            $itemsQuery->where(function ($query) use ($columns, $q): void {
+                foreach ($columns as $index => $column) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $query->{$method}($column, 'like', "%{$q}%");
+                }
+            });
+        }
+
+        $items = $itemsQuery->orderByDesc($pk)->limit(30)->get();
+
+        return view('admin.module-index', [
             'module' => $module,
-            'label' => $config['label'],
-            'table' => $config['table'],
-            'count' => $items->count(),
+            'config' => $config,
+            'query' => $q,
             'items' => $items,
         ]);
     }
@@ -71,7 +81,7 @@ class ModuleController extends Controller
             return view('admin.module-create', [
                 'module' => $module,
                 'config' => $this->config($module),
-                'temporadas' => Schema::hasTable('temporadas') ? DB::table('temporadas')->orderByDesc('id')->get() : collect(),
+                'temporadas' => $this->temporadas(),
             ]);
         }
 
@@ -254,30 +264,10 @@ class ModuleController extends Controller
             return redirect()->route('admin.album.create')->with('status', 'item-created');
         }
 
-        $config = $this->config($module);
-
-        if (! $config['table'] || ! Schema::hasTable($config['table'])) {
-            return response()->json(['ok' => false, 'message' => 'Tabla no disponible.'], 422);
-        }
-
-        $data = $request->only($config['fields']);
-        if (Schema::hasColumn($config['table'], 'created_at')) {
-            $data['created_at'] = now();
-        }
-        if (Schema::hasColumn($config['table'], 'updated_at')) {
-            $data['updated_at'] = now();
-        }
-
-        DB::table($config['table'])->insert($data);
-
-        return response()->json([
-            'ok' => true,
-            'module' => $module,
-            'message' => 'Registro creado correctamente.',
-        ], 201);
+        return response()->json(['ok' => false, 'message' => 'Módulo no soportado.'], 422);
     }
 
-    public function edit(string $module, string $id): JsonResponse
+    public function edit(string $module, string $id): JsonResponse|View
     {
         $this->authorizeModuleAccess($module);
         $config = $this->config($module);
@@ -296,31 +286,160 @@ class ModuleController extends Controller
 
         $pk = $this->primaryKeyFor($module);
         $item = DB::table($config['table'])->where($pk, $id)->first();
+        abort_unless($item, 404);
 
-        return response()->json(['module' => $module, 'item' => $item]);
+        if ($module === 'plantel') {
+            return view('admin.plantel-edit', ['item' => $item]);
+        }
+
+        return view('admin.module-edit', [
+            'module' => $module,
+            'config' => $config,
+            'item' => $item,
+            'temporadas' => $this->temporadas(),
+        ]);
     }
 
-    public function update(Request $request, string $module, string $id): JsonResponse
+    public function update(Request $request, string $module, string $id): JsonResponse|RedirectResponse
     {
         $this->authorizeModuleAccess($module);
-        $config = $this->config($module);
 
-        if (! $config['table'] || ! Schema::hasTable($config['table'])) {
-            return response()->json(['ok' => false, 'message' => 'Tabla no disponible.'], 422);
-        }
-
-        $data = $request->only($config['fields']);
-        if (Schema::hasColumn($config['table'], 'updated_at')) {
+        if ($module === 'plantel') {
+            $data = $request->validate([
+                'nombre' => ['required', 'string', 'max:25'],
+                'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
+                'posicion' => ['required', 'in:ARQUERO,DELANTERO,CENTRAL,DEFENSA'],
+                'goles' => ['nullable', 'integer', 'min:0'],
+                'asistencia' => ['nullable', 'integer', 'min:0'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            ]);
+            if ($request->hasFile('foto')) {
+                $old = DB::table('jugadores')->where('rut', $id)->value('foto');
+                if ($old) {
+                    Storage::disk('public')->delete($old);
+                }
+                $data['foto'] = $request->file('foto')->store('jugadores', 'public');
+            }
+            $data['goles'] = $data['goles'] ?? 0;
+            $data['asistencia'] = $data['asistencia'] ?? 0;
             $data['updated_at'] = now();
+            DB::table('jugadores')->where('rut', $id)->update($data);
+            return redirect()->route('admin.plantel.edit', $id)->with('status', 'item-updated');
         }
 
-        $pk = $this->primaryKeyFor($module);
-        DB::table($config['table'])->where($pk, $id)->update($data);
+        if ($module === 'noticias') {
+            $data = $request->validate([
+                'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
+                'titulo' => ['required', 'string', 'max:60'],
+                'subtitulo' => ['nullable', 'string', 'max:100'],
+                'cuerpo' => ['required', 'string'],
+                'fecha' => ['required', 'date'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto2' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            ]);
+            foreach (['foto', 'foto2'] as $field) {
+                if ($request->hasFile($field)) {
+                    $old = DB::table('noticias')->where('id', $id)->value($field);
+                    if ($old) {
+                        Storage::disk('public')->delete($old);
+                    }
+                    $data[$field] = $request->file($field)->store('noticias', 'public');
+                }
+            }
+            $data['updated_at'] = now();
+            DB::table('noticias')->where('id', $id)->update($data);
+            return redirect()->route('admin.noticias.edit', $id)->with('status', 'item-updated');
+        }
 
-        return response()->json(['ok' => true, 'module' => $module, 'message' => 'Registro actualizado correctamente.']);
+        if ($module === 'avisos') {
+            $data = $request->validate([
+                'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
+                'titulo' => ['required', 'string', 'max:50'],
+                'descripcion' => ['required', 'string', 'max:120'],
+                'fecha' => ['required', 'date'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            ]);
+            if ($request->hasFile('foto')) {
+                $old = DB::table('avisos')->where('id', $id)->value('foto');
+                if ($old) {
+                    Storage::disk('public')->delete($old);
+                }
+                $data['foto'] = $request->file('foto')->store('avisos', 'public');
+            }
+            $data['updated_at'] = now();
+            DB::table('avisos')->where('id', $id)->update($data);
+            return redirect()->route('admin.avisos.edit', $id)->with('status', 'item-updated');
+        }
+
+        if ($module === 'partidos') {
+            $data = $request->validate([
+                'fecha' => ['required', 'date'],
+                'nombre_lugar' => ['required', 'string', 'max:100'],
+                'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
+            ]);
+            DB::table('partidos')->where('id', $id)->update($data);
+            return redirect()->route('admin.partidos.edit', $id)->with('status', 'item-updated');
+        }
+
+        if ($module === 'premios') {
+            $data = $request->validate([
+                'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
+                'nombre' => ['required', 'string', 'max:20'],
+                'descripcion' => ['nullable', 'string', 'max:50'],
+            ]);
+            DB::table('premios')->where('id', $id)->update($data);
+            return redirect()->route('admin.premios.edit', $id)->with('status', 'item-updated');
+        }
+
+        if ($module === 'temporadas') {
+            $data = $request->validate([
+                'fecha_inicio' => ['required', 'date'],
+                'fecha_termino' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+                'descripcion' => ['nullable', 'string', 'max:150'],
+            ]);
+            $data['updated_at'] = now();
+            DB::table('temporadas')->where('id', $id)->update($data);
+            return redirect()->route('admin.temporadas.edit', $id)->with('status', 'item-updated');
+        }
+
+        if (in_array($module, ['staff', 'directiva'], true)) {
+            $data = $request->validate([
+                'nombre' => ['required', 'string', 'max:20'],
+                'apellido' => ['nullable', 'string', 'max:20'],
+                'descripcion_rol' => ['nullable', 'string', 'max:50'],
+                'activo' => ['nullable', 'boolean'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            ]);
+            if ($request->hasFile('foto')) {
+                $old = DB::table('ayudantes')->where('id', $id)->value('foto');
+                if ($old) {
+                    Storage::disk('public')->delete($old);
+                }
+                $data['foto'] = $request->file('foto')->store('ayudantes', 'public');
+            }
+            $data['activo'] = $request->boolean('activo', true);
+            $data['updated_at'] = now();
+            DB::table('ayudantes')->where('id', $id)->update($data);
+
+            if ($module === 'staff') {
+                $email = $request->input('email');
+                if ($email) {
+                    DB::table('users')
+                        ->where('email', $email)
+                        ->update([
+                            'name' => trim($data['nombre'].' '.($data['apellido'] ?? '')),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            return redirect()->route("admin.{$module}.edit", $id)->with('status', 'item-updated');
+        }
+
+        return response()->json(['ok' => false, 'message' => 'Módulo no soportado.'], 422);
     }
 
-    public function destroy(string $module, string $id): JsonResponse
+    public function destroy(string $module, string $id): JsonResponse|RedirectResponse
     {
         $this->authorizeModuleAccess($module);
         $config = $this->config($module);
@@ -337,7 +456,8 @@ class ModuleController extends Controller
         $pk = $this->primaryKeyFor($module);
         $deleted = DB::table($config['table'])->where($pk, $id)->delete();
 
-        return response()->json(['ok' => (bool) $deleted, 'module' => $module]);
+        return redirect()->route("admin.{$module}.index")
+            ->with($deleted ? 'status' : 'error', $deleted ? 'item-deleted' : 'delete-failed');
     }
 
     /** @return array{table: string|null, fields: array<int, string>, label: string, icon: string} */
@@ -373,5 +493,25 @@ class ModuleController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    /** @return array<int, string> */
+    private function searchableColumnsFor(string $module): array
+    {
+        return match ($module) {
+            'plantel' => ['rut', 'nombre'],
+            'noticias' => ['titulo', 'subtitulo'],
+            'avisos' => ['titulo', 'descripcion'],
+            'partidos' => ['nombre_lugar', 'fecha'],
+            'premios' => ['nombre', 'descripcion'],
+            'temporadas' => ['descripcion', 'fecha_inicio'],
+            'staff', 'directiva' => ['nombre', 'apellido'],
+            default => [$this->primaryKeyFor($module)],
+        };
+    }
+
+    private function temporadas()
+    {
+        return Schema::hasTable('temporadas') ? DB::table('temporadas')->orderByDesc('id')->get() : collect();
     }
 }

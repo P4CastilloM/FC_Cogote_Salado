@@ -31,7 +31,7 @@ Route::middleware(['auth', 'verified'])
         $modules = ['plantel', 'noticias', 'avisos', 'album', 'directiva', 'partidos', 'premios', 'temporadas', 'staff', 'modificaciones'];
 
         foreach ($modules as $module) {
-            Route::get("/{$module}", fn (AdminModuleController $controller) => $controller->index($module))->name("{$module}.index");
+            Route::get("/{$module}", fn (\Illuminate\Http\Request $request, AdminModuleController $controller) => $controller->index($request, $module))->name("{$module}.index");
             Route::get("/{$module}/create", fn (AdminModuleController $controller) => $controller->create($module))->name("{$module}.create");
             Route::post("/{$module}", fn (\Illuminate\Http\Request $request, AdminModuleController $controller) => $controller->store($request, $module))->name("{$module}.store");
             Route::get("/{$module}/{id}/edit", fn (string $id, AdminModuleController $controller) => $controller->edit($module, $id))->name("{$module}.edit");
