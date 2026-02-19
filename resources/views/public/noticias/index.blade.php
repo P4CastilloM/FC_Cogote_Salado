@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  @vite(['resources/css/app.css', 'resources/css/public/home.css'])
+  @vite(['resources/css/app.css', 'resources/css/public/home.css', 'resources/js/public/home.js'])
 </head>
 <body class="h-full bg-club-dark font-inter text-white overflow-auto">
   @include('public.partials.header')
@@ -25,7 +25,11 @@
       <div class="max-w-7xl mx-auto rounded-2xl border border-lime-400/20 bg-[#2d1b4e]/60 p-4 sm:p-6">
         <form class="flex flex-col lg:flex-row gap-4" method="GET" action="{{ route('fccs.noticias.index') }}">
           <input type="text" name="q" value="{{ $search }}" placeholder="Buscar noticia..." class="flex-1 px-4 py-3 bg-[#1a0a2e]/70 border border-white/10 rounded-xl">
-          <select name="order" class="px-4 py-3 bg-[#1a0a2e]/70 border border-white/10 rounded-xl">
+          <select
+            name="order"
+            class="px-4 py-3 pr-10 bg-[#1a0a2e]/70 border border-white/10 rounded-xl appearance-none bg-no-repeat bg-[right_0.8rem_center] bg-[length:0.95rem] hover:border-lime-400/40"
+            style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23facc15%27 stroke-width=%272.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e');"
+          >
             <option value="recent" @selected($order === 'desc')>Más recientes</option>
             <option value="oldest" @selected($order === 'asc')>Más antiguas</option>
           </select>

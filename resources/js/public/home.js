@@ -209,7 +209,7 @@ mobileMenuBtn?.addEventListener('click', () => {
   closeIcon?.classList.toggle('hidden');
 });
 
-document.querySelectorAll('#mobile-menu a[href^="#"]').forEach(link => {
+document.querySelectorAll('#mobile-menu a').forEach(link => {
   link.addEventListener('click', () => {
     mobileMenu?.classList.add('hidden');
     menuIcon?.classList.remove('hidden');

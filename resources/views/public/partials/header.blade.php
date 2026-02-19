@@ -37,7 +37,8 @@
         </a>
 
         <a href="{{ route('fccs.noticias.index') }}"
-           class="nav-link px-4 h-9 rounded-full text-sm font-semibold transition-all flex items-center">
+           class="nav-link px-4 h-9 rounded-full text-sm font-semibold transition-all flex items-center
+           {{ request()->routeIs('fccs.noticias.*') ? 'active' : '' }}">
           Noticias
         </a>
 
@@ -73,7 +74,7 @@
     {{-- NAV MÓVIL --}}
     <nav id="mobile-menu" class="lg:hidden hidden pb-3">
       <div class="flex flex-col gap-1">
-        <a href="{{ route('fccs.home') }}#inicio" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
+        <a href="{{ route('fccs.home') }}#inicio" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.home') ? 'active' : '' }}">
           <span class="flex items-center gap-3"><span class="text-lg">🏠</span> Inicio</span>
         </a>
         <a href="{{ route('fccs.home') }}#plantel" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
@@ -82,11 +83,11 @@
         <a href="{{ route('fccs.home') }}#directiva" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
           <span class="flex items-center gap-3"><span class="text-lg">🏛️</span> Directiva</span>
         </a>
-        <a href="{{ route('fccs.noticias.index') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
+        <a href="{{ route('fccs.noticias.index') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.noticias.*') ? 'active' : '' }}">
           <span class="flex items-center gap-3"><span class="text-lg">📰</span> Noticias</span>
         </a>
 
-        <a href="{{ route('fccs.fotos') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
+        <a href="{{ route('fccs.fotos') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.fotos') ? 'active' : '' }}">
           <span class="flex items-center gap-3"><span class="text-lg">📸</span> Fotos</span>
         </a>
       </div>
