@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\FotosController;
+use App\Http\Controllers\NoticiasController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -44,6 +45,16 @@ Route::middleware(['auth', 'verified'])
 Route::get('/fccogotesalado', [AvisoController::class, 'home'])
     ->middleware(TrackPageVisit::class)
     ->name('fccs.home');
+
+
+/** NOTICIAS */
+Route::get('/fccogotesalado/noticias', [NoticiasController::class, 'index'])
+    ->middleware(TrackPageVisit::class)
+    ->name('fccs.noticias.index');
+
+Route::get('/fccogotesalado/noticias/{id}', [NoticiasController::class, 'show'])
+    ->middleware(TrackPageVisit::class)
+    ->name('fccs.noticias.show');
 
 /** GALERÍA */
 Route::get('/fccogotesalado/fotos', [FotosController::class, 'index'])

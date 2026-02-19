@@ -53,6 +53,12 @@ class AvisoController extends Controller
                 return $jugador;
             });
 
-        return view('public.home', compact('avisos', 'jugadores'));
+        $noticias = DB::table('noticias')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
+            ->limit(3)
+            ->get();
+
+        return view('public.home', compact('avisos', 'jugadores', 'noticias'));
     }
 }
