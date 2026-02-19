@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -194,13 +195,20 @@ class ModuleController extends Controller
         }
 
         if (in_array($module, ['staff', 'directiva'], true)) {
-            $data = $request->validate([
+            $rules = [
                 'nombre' => ['required', 'string', 'max:20'],
                 'apellido' => ['nullable', 'string', 'max:20'],
                 'descripcion_rol' => ['nullable', 'string', 'max:50'],
                 'activo' => ['nullable', 'boolean'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            ]);
+            ];
+
+            if ($module === 'staff') {
+                $rules['email'] = ['required', 'string', 'email', 'max:255', 'unique:users,email'];
+                $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
+            }
+
+            $data = $request->validate($rules);
 
             if ($request->hasFile('foto')) {
                 $data['foto'] = $request->file('foto')->store('ayudantes', 'public');
@@ -209,7 +217,29 @@ class ModuleController extends Controller
             $data['activo'] = $request->boolean('activo', true);
             $data['created_at'] = now();
             $data['updated_at'] = now();
-            DB::table('ayudantes')->insert($data);
+
+            DB::transaction(function () use ($module, $data): void {
+                DB::table('ayudantes')->insert([
+                    'nombre' => $data['nombre'],
+                    'apellido' => $data['apellido'] ?? null,
+                    'descripcion_rol' => $data['descripcion_rol'] ?? null,
+                    'foto' => $data['foto'] ?? null,
+                    'activo' => $data['activo'],
+                    'created_at' => $data['created_at'],
+                    'updated_at' => $data['updated_at'],
+                ]);
+
+                if ($module === 'staff') {
+                    DB::table('users')->insert([
+                        'name' => trim($data['nombre'].' '.($data['apellido'] ?? '')),
+                        'email' => $data['email'],
+                        'password' => Hash::make($data['password']),
+                        'role' => 'ayudante',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
 
             return redirect()->route("admin.{$module}.create")->with('status', 'item-created');
         }

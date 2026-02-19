@@ -111,6 +111,18 @@
                     <div><label class="text-sm text-slate-300">👤 Apellido</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="apellido" maxlength="20" value="{{ old('apellido') }}"></div>
                 </div>
                 <div><label class="text-sm text-slate-300">🎖️ Rol</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion_rol" maxlength="50" value="{{ old('descripcion_rol') }}"></div>
+
+                @if($module === 'staff')
+                    <div class="rounded-xl border border-emerald-400/20 bg-emerald-500/5 px-4 py-3 text-xs text-emerald-200">
+                        Al crear un ayudante de staff aquí también se crea su usuario de acceso con rol <strong>ayudante</strong>.
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="text-sm text-slate-300">📧 Correo de acceso *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="email" name="email" required value="{{ old('email') }}" placeholder="ayudante@correo.cl"></div>
+                        <div><label class="text-sm text-slate-300">🔑 Contraseña *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="password" name="password" required minlength="8" placeholder="Mínimo 8 caracteres"></div>
+                    </div>
+                    <div><label class="text-sm text-slate-300">🔐 Confirmar contraseña *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="password" name="password_confirmation" required minlength="8" placeholder="Repite la contraseña"></div>
+                @endif
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                     <div><label class="text-sm text-slate-300">🖼️ Foto</label><input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp"></div>
                     <label class="inline-flex items-center gap-2 text-slate-300"><input type="checkbox" name="activo" value="1" @checked(old('activo', '1') == '1')> ✅ Activo</label>
