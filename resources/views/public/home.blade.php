@@ -371,71 +371,39 @@
         </h2>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          @forelse($jugadores ?? [] as $jugador)
+            <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
+              <div class="aspect-[3/4] relative">
+                @if(!empty($jugador->foto))
+                  <img
+                    src="{{ asset('storage/'.$jugador->foto) }}"
+                    alt="{{ $jugador->primer_nombre }}"
+                    class="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                  >
+                @endif
 
-          {{-- Jugador 1 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">👨</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#10</div>
-                <h3 class="font-bebas text-lg md:text-xl">CARLOS "EL CRACK"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Mediocampista</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">⚽ 12 Goles</span></div>
+                <div class="absolute inset-0 flex items-center justify-center" @if(!empty($jugador->foto)) style="display:none" @endif>
+                  <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center">
+                    <span class="text-4xl md:text-5xl">👤</span>
+                  </div>
+                </div>
+
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
+
+                <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                  <div class="text-club-gold font-bebas text-3xl md:text-4xl">#{{ $jugador->numero_camiseta }}</div>
+                  <h3 class="font-bebas text-lg md:text-xl">{{ $jugador->primer_nombre }}</h3>
+                  <p class="text-gray-300 text-xs md:text-sm">{{ $jugador->posicion_label }}</p>
+                </div>
               </div>
             </div>
-          </div>
-
-          {{-- Jugador 2 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-red/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-red/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">🧔</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#1</div>
-                <h3 class="font-bebas text-lg md:text-xl">MIGUEL "MURALLA"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Portero</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">🧤 8 P. Imbatido</span></div>
-              </div>
+          @empty
+            <div class="col-span-2 md:col-span-4 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
+              Aún no hay jugadores cargados en el plantel.
             </div>
-          </div>
-
-          {{-- Jugador 3 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-green-600/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-green-600/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">👦</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#7</div>
-                <h3 class="font-bebas text-lg md:text-xl">DAVID "RAYO"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Extremo Derecho</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">🎯 15 Asistencias</span></div>
-              </div>
-            </div>
-          </div>
-
-          {{-- Jugador 4 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-purple-600/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-purple-600/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">🧑</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#4</div>
-                <h3 class="font-bebas text-lg md:text-xl">PEDRO "TANQUE"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Defensa Central</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">🛡️ MVP Defensa</span></div>
-              </div>
-            </div>
-          </div>
-
+          @endforelse
         </div>
       </div>
     </section>
