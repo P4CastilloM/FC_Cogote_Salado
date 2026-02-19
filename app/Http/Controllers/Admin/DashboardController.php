@@ -39,8 +39,6 @@ class DashboardController extends Controller
         ];
 
         $dailySeries = [];
-        $monthlySeries = [];
-
         if (Schema::hasTable('page_visits')) {
             $today = now()->toDateString();
             $monthStart = now()->startOfMonth()->toDateString();
@@ -64,24 +62,12 @@ class DashboardController extends Controller
                 ])
                 ->all();
 
-            $monthlySeries = DB::table('page_visits')
-                ->selectRaw("DATE_FORMAT(visited_on, '%Y-%m') as label, COUNT(*) as total")
-                ->whereDate('visited_on', '>=', now()->subMonths(11)->startOfMonth()->toDateString())
-                ->groupBy('label')
-                ->orderBy('label')
-                ->get()
-                ->map(fn ($row) => [
-                    'label' => $row->label,
-                    'total' => (int) $row->total,
-                ])
-                ->all();
         }
 
         return view('admin.dashboard', [
             'stats' => $stats,
             'visitSummary' => $visitSummary,
             'dailySeries' => $dailySeries,
-            'monthlySeries' => $monthlySeries,
         ]);
     }
 }
