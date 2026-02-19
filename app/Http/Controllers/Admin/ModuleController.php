@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class ModuleController extends Controller
 {
@@ -58,9 +60,13 @@ class ModuleController extends Controller
         ]);
     }
 
-    public function create(string $module): JsonResponse
+    public function create(string $module): JsonResponse|View
     {
         $this->authorizeModuleAccess($module);
+
+        if ($module === 'plantel') {
+            return view('admin.plantel-create');
+        }
 
         $config = $this->config($module);
 
@@ -72,11 +78,36 @@ class ModuleController extends Controller
         ]);
     }
 
-    public function store(Request $request, string $module): JsonResponse
+    public function store(Request $request, string $module): JsonResponse|RedirectResponse
     {
         $this->authorizeModuleAccess($module);
 
         $config = $this->config($module);
+
+        if ($module === 'plantel') {
+            $data = $request->validate([
+                'rut' => ['required', 'integer', 'min:1', 'max:99999999', 'unique:jugadores,rut'],
+                'nombre' => ['required', 'string', 'max:25'],
+                'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
+                'posicion' => ['required', 'in:ARQUERO,DELANTERO,CENTRAL,DEFENSA'],
+                'goles' => ['nullable', 'integer', 'min:0'],
+                'asistencia' => ['nullable', 'integer', 'min:0'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            ]);
+
+            if ($request->hasFile('foto')) {
+                $data['foto'] = $request->file('foto')->store('jugadores', 'public');
+            }
+
+            $data['goles'] = $data['goles'] ?? 0;
+            $data['asistencia'] = $data['asistencia'] ?? 0;
+            $data['created_at'] = now();
+            $data['updated_at'] = now();
+
+            DB::table('jugadores')->insert($data);
+
+            return redirect()->route('admin.plantel.create')->with('status', 'player-created');
+        }
 
         if ($module === 'album') {
             $request->validate([
