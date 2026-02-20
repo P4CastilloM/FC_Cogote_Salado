@@ -296,33 +296,46 @@
           <a href="{{ route('fccs.noticias.index') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver todas →</a>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          @forelse($noticias ?? [] as $noticia)
-            <article class="news-card group">
-              <a href="{{ route('fccs.noticias.show', $noticia->id) }}" class="block relative rounded-2xl overflow-hidden bg-club-dark border border-club-gold/10 hover:border-club-gold/30 transition-all">
-                <div class="h-48 relative overflow-hidden bg-gradient-to-br from-club-red/50 to-club-gold/20">
-                  @if(!empty($noticia->foto))
-                    <img src="{{ asset('storage/'.$noticia->foto) }}" alt="{{ $noticia->titulo }}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                  @endif
-                  <div class="absolute inset-0 flex items-center justify-center" @if(!empty($noticia->foto)) style="display:none" @endif>
-                    <span class="text-6xl">📰</span>
+        <div class="flex items-center justify-end gap-2 mb-4">
+          <button id="noticia-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
+          <button id="noticia-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
+        </div>
+
+        <div id="noticias-container" class="overflow-hidden">
+          <div id="noticias-carousel" class="noticias-carousel">
+            @forelse($noticias ?? [] as $noticia)
+              <article class="noticia-card news-card group">
+                <a href="{{ route('fccs.noticias.show', $noticia->id) }}" class="block relative rounded-2xl overflow-hidden bg-club-dark border border-club-gold/10 hover:border-club-gold/30 transition-all h-full">
+                  <div class="h-48 relative overflow-hidden bg-gradient-to-br from-club-red/50 to-club-gold/20">
+                    @if(!empty($noticia->foto))
+                      <img src="{{ asset('storage/'.$noticia->foto) }}" alt="{{ $noticia->titulo }}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    @endif
+                    <div class="absolute inset-0 flex items-center justify-center" @if(!empty($noticia->foto)) style="display:none" @endif>
+                      <span class="text-6xl">📰</span>
+                    </div>
+                    <div class="news-overlay absolute inset-0 bg-club-gold/80 flex items-center justify-center opacity-0 transition-opacity">
+                      <span class="font-bebas text-xl text-club-dark">LEER MÁS →</span>
+                    </div>
                   </div>
-                  <div class="news-overlay absolute inset-0 bg-club-gold/80 flex items-center justify-center opacity-0 transition-opacity">
-                    <span class="font-bebas text-xl text-club-dark">LEER MÁS →</span>
+                  <div class="p-5">
+                    <span class="text-xs text-club-gold font-semibold">{{ \Carbon\Carbon::parse($noticia->fecha)->translatedFormat('d M Y') }}</span>
+                    <h3 class="font-bebas text-xl mt-2 mb-2 group-hover:text-club-gold transition-colors">{{ \Illuminate\Support\Str::limit(strtoupper($noticia->titulo), 55) }}</h3>
+                    <p class="text-gray-400 text-sm line-clamp-2">{{ \Illuminate\Support\Str::limit($noticia->subtitulo ?: strip_tags($noticia->cuerpo), 100) }}</p>
                   </div>
-                </div>
-                <div class="p-5">
-                  <span class="text-xs text-club-gold font-semibold">{{ \Carbon\Carbon::parse($noticia->fecha)->translatedFormat('d M Y') }}</span>
-                  <h3 class="font-bebas text-xl mt-2 mb-2 group-hover:text-club-gold transition-colors">{{ \Illuminate\Support\Str::limit(strtoupper($noticia->titulo), 55) }}</h3>
-                  <p class="text-gray-400 text-sm line-clamp-2">{{ \Illuminate\Support\Str::limit($noticia->subtitulo ?: strip_tags($noticia->cuerpo), 100) }}</p>
-                </div>
-              </a>
-            </article>
-          @empty
-            <div class="col-span-1 md:col-span-2 lg:col-span-3 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
-              Aún no hay noticias publicadas.
-            </div>
-          @endforelse
+                </a>
+              </article>
+            @empty
+              <div class="noticia-card col-span-1 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
+                Aún no hay noticias publicadas.
+              </div>
+            @endforelse
+          </div>
+        </div>
+
+        <div id="noticia-dots" class="flex justify-center gap-2 mt-6 md:hidden">
+          @for($i = 0; $i < max(1, min(8, count($noticias ?? []))); $i++)
+            <button class="carousel-dot {{ $i === 0 ? 'active bg-club-gold' : 'bg-white/40' }} w-2 h-2 rounded-full" data-noticia="{{ $i }}"></button>
+          @endfor
         </div>
       </div>
     </section>
@@ -332,44 +345,60 @@
     ========================================================== --}}
     <section id="plantel" class="py-16 bg-gradient-to-b from-club-gray to-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider mb-8">
-          <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
-        </h2>
+        <div class="flex items-center justify-between gap-4 mb-8">
+          <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
+          </h2>
+          <a href="{{ route('fccs.home') }}#plantel" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver más →</a>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          @forelse($jugadores ?? [] as $jugador)
-            <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-              <div class="aspect-[3/4] relative">
-                @if(!empty($jugador->foto))
-                  <img
-                    src="{{ asset('storage/'.$jugador->foto) }}"
-                    alt="{{ $jugador->primer_nombre }}"
-                    class="absolute inset-0 w-full h-full object-cover"
-                    loading="lazy"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                  >
-                @endif
+        <div class="flex items-center justify-end gap-2 mb-4">
+          <button id="destacado-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
+          <button id="destacado-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
+        </div>
 
-                <div class="absolute inset-0 flex items-center justify-center" @if(!empty($jugador->foto)) style="display:none" @endif>
-                  <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center">
-                    <span class="text-4xl md:text-5xl">👤</span>
+        <div id="destacados-container" class="overflow-hidden">
+          <div id="destacados-carousel" class="destacados-carousel">
+            @forelse($jugadores ?? [] as $jugador)
+              <div class="destacado-card player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
+                <div class="aspect-[3/4] relative">
+                  @if(!empty($jugador->foto))
+                    <img
+                      src="{{ asset('storage/'.$jugador->foto) }}"
+                      alt="{{ $jugador->primer_nombre }}"
+                      class="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    >
+                  @endif
+
+                  <div class="absolute inset-0 flex items-center justify-center" @if(!empty($jugador->foto)) style="display:none" @endif>
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center">
+                      <span class="text-4xl md:text-5xl">👤</span>
+                    </div>
+                  </div>
+
+                  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
+
+                  <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                    <div class="text-club-gold font-bebas text-3xl md:text-4xl">#{{ $jugador->numero_camiseta }}</div>
+                    <h3 class="font-bebas text-lg md:text-xl">{{ $jugador->primer_nombre }}</h3>
+                    <p class="text-gray-300 text-xs md:text-sm">{{ $jugador->posicion_label }}</p>
                   </div>
                 </div>
-
-                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-
-                <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                  <div class="text-club-gold font-bebas text-3xl md:text-4xl">#{{ $jugador->numero_camiseta }}</div>
-                  <h3 class="font-bebas text-lg md:text-xl">{{ $jugador->primer_nombre }}</h3>
-                  <p class="text-gray-300 text-xs md:text-sm">{{ $jugador->posicion_label }}</p>
-                </div>
               </div>
-            </div>
-          @empty
-            <div class="col-span-2 md:col-span-4 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
-              Aún no hay jugadores cargados en el plantel.
-            </div>
-          @endforelse
+            @empty
+              <div class="destacado-card rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
+                Aún no hay jugadores cargados en el plantel.
+              </div>
+            @endforelse
+          </div>
+        </div>
+
+        <div id="destacado-dots" class="flex justify-center gap-2 mt-6 md:hidden">
+          @for($i = 0; $i < max(1, min(8, count($jugadores ?? []))); $i++)
+            <button class="carousel-dot {{ $i === 0 ? 'active bg-club-gold' : 'bg-white/40' }} w-2 h-2 rounded-full" data-destacado="{{ $i }}"></button>
+          @endfor
         </div>
       </div>
     </section>
