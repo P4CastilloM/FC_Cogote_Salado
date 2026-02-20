@@ -77,20 +77,30 @@ class AvisoController extends Controller
             ->limit(6)
             ->get();
 
+        $hasPriority = Schema::hasColumn('ayudantes', 'prioridad');
+
         $directivaTop = DB::table('ayudantes')
             ->where('activo', true)
-            ->when(Schema::hasColumn('ayudantes', 'prioridad'), fn ($q) => $q->orderByDesc('prioridad'))
-            ->orderByDesc('id')
-            ->limit(3)
+            ->when($hasPriority, fn ($q) => $q->orderBy('prioridad'))
+            ->orderBy('id')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($hasPriority) {
+                $prioridad = $hasPriority ? (int) ($item->prioridad ?? 10) : 10;
+                $prioridad = $prioridad >= 1 && $prioridad <= 10 ? $prioridad : 10;
+
                 return (object) [
                     'nombre' => trim(($item->nombre ?? '').' '.($item->apellido ?? '')),
                     'rol' => $item->descripcion_rol ?: 'Integrante',
-                    'prioridad' => (int) ($item->prioridad ?? 10),
+                    'prioridad' => $prioridad,
                     'foto_url' => ! empty($item->foto) ? asset('storage/'.$item->foto) : null,
                 ];
-            });
+            })
+            ->sortBy([
+                ['prioridad', 'asc'],
+                ['nombre', 'asc'],
+            ])
+            ->take(4)
+            ->values();
 
         $fotos = collect(Storage::disk('public')->files('fotos'))
             ->filter(fn (string $path) => preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $path) === 1)

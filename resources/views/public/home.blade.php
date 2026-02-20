@@ -411,15 +411,10 @@
     ========================================================== --}}
     <section id="directiva" class="py-8 md:py-10 bg-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
-            <span class="text-club-gold">📅</span> CALENDARIO
-          </h2>
-          <a href="{{ route('fccs.calendario') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver calendario completo →</a>
-        </div>
+        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          @forelse(($directivaTop ?? collect())->take(3) as $dir)
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+          @forelse(($directivaTop ?? collect())->take(4) as $dir)
             <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-5 border border-club-gold/25">
               <div class="flex items-start gap-4">
                 <div class="w-14 h-14 rounded-full bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -435,7 +430,7 @@
               </div>
             </article>
           @empty
-            <div class="md:col-span-3 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay directiva activa.</div>
+            <div class="md:col-span-2 xl:col-span-4 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay directiva activa.</div>
           @endforelse
         </div>
       </div>
