@@ -77,6 +77,8 @@
 
 .modal-nav{
   position:absolute; top:50%;
+  z-index:20;
+  pointer-events:auto;
   transform: translateY(-50%);
   width:44px; height:44px;
   border-radius:50%;
@@ -90,8 +92,9 @@
 .modal-nav.prev{ left:-60px; }
 .modal-nav.next{ right:-60px; }
 @media (max-width: 768px){
-  .modal-nav.prev{ left:10px; }
-  .modal-nav.next{ right:10px; }
+  .modal-nav{ width:42px; height:42px; }
+  .modal-nav.prev{ left:8px; }
+  .modal-nav.next{ right:8px; }
 }
 
 /* Loading */
