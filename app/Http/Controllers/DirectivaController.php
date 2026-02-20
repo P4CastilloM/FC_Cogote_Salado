@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -29,20 +30,33 @@ class DirectivaController extends Controller
                 return $item;
             });
 
-        $prioridades = collect(range(1, 10))->map(function (int $nivel) use ($directiva) {
-            $miembros = $directiva->where('prioridad', $nivel)->values();
-
-            return (object) [
-                'nivel' => $nivel,
-                'miembros' => $miembros,
-                'topPair' => $miembros->take(2),
-                'extraCount' => max(0, $miembros->count() - 2),
-            ];
-        });
+        $lineups = $this->buildLineups($directiva);
 
         return view('public.directiva', [
-            'prioridades' => $prioridades,
-            'hasPriority' => $hasPriority,
+            'lineups' => $lineups,
+            'totalMembers' => $directiva->count(),
         ]);
+    }
+
+    /**
+     * @param Collection<int, object> $directiva
+     * @return Collection<int, object>
+     */
+    private function buildLineups(Collection $directiva): Collection
+    {
+        return $directiva
+            ->groupBy('prioridad')
+            ->sortKeys()
+            ->values()
+            ->map(function (Collection $group, int $index) {
+                $pair = $group->take(2)->values();
+
+                return (object) [
+                    'index' => $index,
+                    'left' => $pair->get(0),
+                    'right' => $pair->get(1),
+                    'extraCount' => max(0, $group->count() - 2),
+                ];
+            });
     }
 }
