@@ -18,10 +18,16 @@ body { box-sizing: border-box; }
    ✅ AVISOS CAROUSEL
 ========================================================== */
 .aviso-carousel{ display:flex; transition:transform 0.5s ease-out; }
-.aviso-card{ min-width:100%; padding:0 1rem; }
+.aviso-card{ min-width:100%; padding:0 .5rem; }
 
 @media (min-width:768px){ .aviso-card{ min-width:50%; } }
 @media (min-width:1024px){ .aviso-card{ min-width:33.333%; } }
+
+.noticias-carousel,.destacados-carousel{ display:flex; transition:transform 0.5s ease-out; }
+.noticia-card{ min-width:100%; padding:0 .45rem; }
+.destacado-card{ min-width:100%; padding:0 .7rem; }
+@media (min-width:768px){ .noticia-card,.destacado-card{ min-width:50%; } }
+@media (min-width:1024px){ .noticia-card,.destacado-card{ min-width:33.333%; } }
 
 /* =========================================================
    ✅ EFECTOS UI
@@ -73,4 +79,10 @@ body { box-sizing: border-box; }
   color:#d4af37;
   background: rgba(212,175,55,0.2);
   border-left:3px solid #d4af37;
+}
+
+
+@media (max-width: 767px){
+  #noticias .flex.items-center.justify-end.gap-2.mb-4,
+  #plantel .flex.items-center.justify-end.gap-2.mb-4 { margin-bottom: .75rem; }
 }
