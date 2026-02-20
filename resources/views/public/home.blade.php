@@ -325,36 +325,40 @@
         <div id="destacados-container" class="overflow-hidden">
           <div id="destacados-carousel" class="destacados-carousel">
             @forelse($jugadores ?? [] as $jugador)
-              <div class="destacado-card player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-                <div class="aspect-[3/4] relative">
-                  @if(!empty($jugador->foto))
-                    <img
-                      src="{{ asset('storage/'.$jugador->foto) }}"
-                      alt="{{ $jugador->primer_nombre }}"
-                      class="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                    >
-                  @endif
+              <div class="destacado-card">
+                <article class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all h-full">
+                  <div class="aspect-[3/4] relative">
+                    @if(!empty($jugador->foto))
+                      <img
+                        src="{{ asset('storage/'.$jugador->foto) }}"
+                        alt="{{ $jugador->primer_nombre }}"
+                        class="absolute inset-0 w-full h-full object-cover"
+                        loading="lazy"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                      >
+                    @endif
 
-                  <div class="absolute inset-0 flex items-center justify-center" @if(!empty($jugador->foto)) style="display:none" @endif>
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center">
-                      <span class="text-4xl md:text-5xl">👤</span>
+                    <div class="absolute inset-0 flex items-center justify-center" @if(!empty($jugador->foto)) style="display:none" @endif>
+                      <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center">
+                        <span class="text-4xl md:text-5xl">👤</span>
+                      </div>
+                    </div>
+
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
+
+                    <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                      <div class="text-club-gold font-bebas text-3xl md:text-4xl">#{{ $jugador->numero_camiseta }}</div>
+                      <h3 class="font-bebas text-lg md:text-xl">{{ $jugador->primer_nombre }}</h3>
+                      <p class="text-gray-300 text-xs md:text-sm">{{ $jugador->posicion_label }}</p>
                     </div>
                   </div>
-
-                  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-
-                  <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                    <div class="text-club-gold font-bebas text-3xl md:text-4xl">#{{ $jugador->numero_camiseta }}</div>
-                    <h3 class="font-bebas text-lg md:text-xl">{{ $jugador->primer_nombre }}</h3>
-                    <p class="text-gray-300 text-xs md:text-sm">{{ $jugador->posicion_label }}</p>
-                  </div>
-                </div>
+                </article>
               </div>
             @empty
-              <div class="destacado-card rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
-                Aún no hay jugadores cargados en el plantel.
+              <div class="destacado-card">
+                <div class="rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
+                  Aún no hay jugadores cargados en el plantel.
+                </div>
               </div>
             @endforelse
           </div>
@@ -401,12 +405,18 @@
       </div>
     </section>
 
+
     {{-- =========================================================
-       ✅ DIRECTIVA
+       ✅ CALENDARIO
     ========================================================== --}}
     <section id="directiva" class="py-8 md:py-10 bg-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">📅</span> CALENDARIO
+          </h2>
+          <a href="{{ route('fccs.calendario') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver calendario completo →</a>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(3) as $dir)
