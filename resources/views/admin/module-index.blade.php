@@ -41,7 +41,8 @@
                         'partidos' => $item->fecha,
                         'premios' => $item->descripcion ?? 'Sin descripción',
                         'temporadas' => $item->fecha_inicio,
-                        'staff', 'directiva' => $item->descripcion_rol ?? 'Sin rol',
+                        'staff' => $item->descripcion_rol ?? 'Sin rol',
+                        'directiva' => ($item->descripcion_rol ?? 'Sin rol').(isset($item->prioridad) ? ' · Prioridad '.($item->prioridad ?? 10) : ''),
                         default => 'ID '.$key,
                     };
                 @endphp

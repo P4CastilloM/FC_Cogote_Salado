@@ -74,6 +74,9 @@
                 <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre" maxlength="20" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre">
                 <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="apellido" maxlength="20" value="{{ old('apellido', $item->apellido) }}" placeholder="👤 Apellido">
                 <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="descripcion_rol" maxlength="50" value="{{ old('descripcion_rol', $item->descripcion_rol) }}" placeholder="🎖️ Rol">
+                @if($module === 'directiva')
+                    <input class="module-input w-full rounded-xl px-4 py-3" type="number" name="prioridad" min="1" max="10" required value="{{ old('prioridad', $item->prioridad ?? 10) }}" placeholder="🔢 Prioridad">
+                @endif
                 <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
                 <label class="inline-flex items-center gap-2 text-slate-300"><input type="checkbox" name="activo" value="1" @checked(old('activo', (string) $item->activo) == '1')> ✅ Activo</label>
                 <div class="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">ℹ️ En ayudantes solo se edita información de base de datos. Login/correo/clave no se muestra aquí.</div>

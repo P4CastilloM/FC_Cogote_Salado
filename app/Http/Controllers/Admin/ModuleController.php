@@ -23,7 +23,7 @@ class ModuleController extends Controller
         'noticias' => ['table' => 'noticias', 'fields' => ['temporada_id', 'titulo', 'subtitulo', 'cuerpo', 'fecha', 'foto', 'foto2'], 'label' => 'Noticias', 'icon' => '📰'],
         'avisos' => ['table' => 'avisos', 'fields' => ['temporada_id', 'titulo', 'descripcion', 'fecha', 'foto'], 'label' => 'Avisos', 'icon' => '📢'],
         'album' => ['table' => null, 'fields' => ['foto'], 'label' => 'Álbum / Fotos', 'icon' => '📸'],
-        'directiva' => ['table' => 'ayudantes', 'fields' => ['nombre', 'apellido', 'descripcion_rol', 'foto', 'activo'], 'label' => 'Directiva', 'icon' => '🏛️'],
+        'directiva' => ['table' => 'ayudantes', 'fields' => ['nombre', 'apellido', 'descripcion_rol', 'prioridad', 'foto', 'activo'], 'label' => 'Directiva', 'icon' => '🏛️'],
         'partidos' => ['table' => 'partidos', 'fields' => ['fecha', 'nombre_lugar', 'temporada_id'], 'label' => 'Partidos', 'icon' => '📅'],
         'premios' => ['table' => 'premios', 'fields' => ['temporada_id', 'nombre', 'descripcion'], 'label' => 'Premios', 'icon' => '🏆'],
         'temporadas' => ['table' => 'temporadas', 'fields' => ['fecha_inicio', 'fecha_termino', 'descripcion'], 'label' => 'Temporadas', 'icon' => '⏳'],
@@ -88,7 +88,9 @@ class ModuleController extends Controller
             });
         }
 
-        $items = $itemsQuery->orderByDesc($pk)->limit(30)->get();
+        $items = $module === 'directiva'
+            ? $itemsQuery->orderBy('prioridad')->orderByDesc($pk)->limit(30)->get()
+            : $itemsQuery->orderByDesc($pk)->limit(30)->get();
 
         return view('admin.module-index', [
             'module' => $module,
@@ -248,6 +250,10 @@ class ModuleController extends Controller
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             ];
 
+            if ($module === 'directiva') {
+                $rules['prioridad'] = ['required', 'integer', 'min:1', 'max:10'];
+            }
+
             if ($module === 'staff') {
                 $rules['email'] = ['required', 'string', 'email', 'max:255', 'unique:users,email'];
                 $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
@@ -270,6 +276,7 @@ class ModuleController extends Controller
                     'descripcion_rol' => $data['descripcion_rol'] ?? null,
                     'foto' => $data['foto'] ?? null,
                     'activo' => $data['activo'],
+                    'prioridad' => $module === 'directiva' ? (int) ($data['prioridad'] ?? 10) : 10,
                     'created_at' => $data['created_at'],
                     'updated_at' => $data['updated_at'],
                 ]);
@@ -447,13 +454,19 @@ class ModuleController extends Controller
         }
 
         if (in_array($module, ['staff', 'directiva'], true)) {
-            $data = $request->validate([
+            $rules = [
                 'nombre' => ['required', 'string', 'max:20'],
                 'apellido' => ['nullable', 'string', 'max:20'],
                 'descripcion_rol' => ['nullable', 'string', 'max:50'],
                 'activo' => ['nullable', 'boolean'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            ]);
+            ];
+
+            if ($module === 'directiva') {
+                $rules['prioridad'] = ['required', 'integer', 'min:1', 'max:10'];
+            }
+
+            $data = $request->validate($rules);
             if ($request->hasFile('foto')) {
                 $old = DB::table('ayudantes')->where('id', $id)->value('foto');
                 if ($old) {
@@ -462,6 +475,9 @@ class ModuleController extends Controller
                 $data['foto'] = $request->file('foto')->store('ayudantes', 'public');
             }
             $data['activo'] = $request->boolean('activo', true);
+            if ($module !== 'directiva') {
+                unset($data['prioridad']);
+            }
             $data['updated_at'] = now();
             DB::table('ayudantes')->where('id', $id)->update($data);
             $this->logModification($module, 'actualizar', $id, $data['nombre'] ?? null);

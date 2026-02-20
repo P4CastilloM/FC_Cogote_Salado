@@ -112,6 +112,11 @@
                 </div>
                 <div><label class="text-sm text-slate-300">🎖️ Rol</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion_rol" maxlength="50" value="{{ old('descripcion_rol') }}"></div>
 
+                @if($module === 'directiva')
+                    <div><label class="text-sm text-slate-300">🔢 Prioridad (1-10) *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="prioridad" min="1" max="10" required value="{{ old('prioridad', 10) }}"></div>
+                    <div class="rounded-xl border border-lime-400/25 bg-lime-500/10 px-4 py-3 text-xs text-lime-200">1 = mayor prioridad (arriba), 10 = menor prioridad (abajo). Se pueden repetir prioridades para tener 2 personas en el mismo nivel.</div>
+                @endif
+
                 @if($module === 'staff')
                     <div class="rounded-xl border border-emerald-400/20 bg-emerald-500/5 px-4 py-3 text-xs text-emerald-200">
                         Al crear un ayudante de staff aquí también se crea su usuario de acceso con rol <strong>ayudante</strong>.

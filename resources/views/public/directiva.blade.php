@@ -3,97 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FC Cogote Salado - Directiva</title>
+  <title>Directiva - FC Cogote Salado</title>
   <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   @vite(['resources/css/app.css', 'resources/css/public/home.css', 'resources/js/public/home.js'])
   <style>
-    .field-pattern {background-image:linear-gradient(rgba(132,204,22,.04) 1px, transparent 1px),linear-gradient(90deg, rgba(132,204,22,.04) 1px, transparent 1px);background-size:42px 42px;}
-    .timeline-line {background: repeating-linear-gradient(to bottom, rgba(132,204,22,.65) 0 8px, transparent 8px 16px);}    
-    .directive-card {opacity:0; transform:translateY(34px); transition:all .6s ease;}
-    .directive-card.visible {opacity:1; transform:translateY(0);} 
-    .directive-card.left {transform:translate(-24px,34px);} 
-    .directive-card.right {transform:translate(24px,34px);} 
-    .directive-card.left.visible, .directive-card.right.visible {transform:translate(0,0);} 
-    .chalk-arrow {position:absolute; width:90px; height:2px; background:rgba(132,204,22,.6); top:50%;}
-    .chalk-arrow::after {content:''; position:absolute; right:-2px; top:-3px; border-left:10px solid rgba(132,204,22,.7); border-top:4px solid transparent; border-bottom:4px solid transparent;}
-    .chalk-arrow.left {right:-92px;} .chalk-arrow.right {left:-92px; transform:scaleX(-1);} 
-    @media (max-width: 1023px){.chalk-arrow{display:none}}
+    @keyframes draw { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+    .stroke-animate { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+    .stroke-animate.active { animation: draw 1.2s ease-out forwards; }
+    .parallax-bg { will-change: transform; }
+    .member-card { opacity: 0; transform: translateY(24px); transition: all .55s ease; }
+    .member-card.visible { opacity: 1; transform: translateY(0); }
+    .glass-card { background: rgba(0, 0, 0, .42); backdrop-filter: blur(11px); border: 1px solid rgba(132,204,22,.25); }
+    .priority-block { border: 1px solid rgba(132,204,22,.2); background: rgba(10, 30, 16, .35); }
+    .field-line { stroke: rgba(134, 239, 172, 0.25); stroke-width: 2; fill: none; }
   </style>
 </head>
-<body class="h-full bg-[#241337] text-white overflow-auto">
+<body class="h-full overflow-auto bg-gradient-to-b from-[#0f3d1f] via-[#14532d] to-[#166534] text-white" style="font-family: 'Inter', sans-serif;">
   @include('public.partials.header')
 
-  <main id="app-wrapper" class="pt-24 relative overflow-hidden min-h-full">
-    <div id="parallax-bg" class="absolute inset-0 pointer-events-none field-pattern"></div>
-
-    <section class="relative px-4 py-10 md:py-14">
-      <div class="max-w-5xl mx-auto text-center">
-        <span class="inline-flex px-4 py-2 rounded-full border border-lime-400/30 bg-lime-500/15 text-lime-300 text-xs font-semibold uppercase tracking-wider">Temporada {{ date('Y') }}</span>
-        <h1 class="font-bebas text-5xl md:text-7xl tracking-wider mt-4">DIRECTIVA</h1>
-        <p class="text-gray-300 max-w-2xl mx-auto">La estrategia detrás del equipo, con un recorrido táctico en línea recta que acompaña el scroll.</p>
+  <main class="pt-24 relative">
+    <section class="relative py-14 md:py-20 px-4 overflow-hidden">
+      <div class="max-w-4xl mx-auto text-center relative z-10">
+        <span class="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-lime-500/20 text-lime-400 border border-lime-500/30 mb-6">Temporada {{ date('Y') }}</span>
+        <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold mb-4 tracking-tight" style="font-family: 'Bebas Neue', sans-serif;">Directiva</h1>
+        <p class="text-lg md:text-xl text-green-200/80 max-w-2xl mx-auto">La estrategia detrás del club. Ordenada por prioridad, desde el nivel 1 (más alto) al 10.</p>
       </div>
     </section>
 
-    <section class="relative px-4 pb-20">
-      <div class="max-w-6xl mx-auto relative">
-        <div class="timeline-line hidden lg:block absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[3px]"></div>
+    <section class="relative min-h-screen py-8 md:py-16 px-4">
+      <div id="field-bg" class="parallax-bg absolute inset-0 overflow-hidden pointer-events-none">
+        <svg class="w-full h-full" viewBox="0 0 1200 1800" preserveAspectRatio="xMidYMid slice">
+          <rect width="100%" height="100%" fill="rgba(15,61,31,0.55)" />
+          <rect x="120" y="120" width="960" height="1560" class="field-line" rx="10" />
+          <line x1="120" y1="900" x2="1080" y2="900" class="field-line" />
+          <circle cx="600" cy="900" r="120" class="field-line" />
+          <path id="t1" class="stroke-animate" d="M 600 190 C 740 250, 780 330, 650 430" stroke="white" stroke-width="3" fill="none" stroke-dasharray="10 6" />
+          <path id="t2" class="stroke-animate" d="M 650 430 C 420 520, 380 620, 560 740" stroke="white" stroke-width="3" fill="none" />
+          <path id="t3" class="stroke-animate" d="M 560 740 C 780 850, 820 960, 620 1080" stroke="#fbbf24" stroke-width="3" fill="none" />
+          <path id="t4" class="stroke-animate" d="M 620 1080 C 420 1220, 430 1370, 610 1510" stroke="white" stroke-width="3" fill="none" stroke-dasharray="10 6" />
+        </svg>
+      </div>
 
-        <div class="space-y-10 lg:space-y-16">
-          @forelse($directiva as $index => $persona)
-            @php $left = $index % 2 === 0; @endphp
-            <div class="relative grid lg:grid-cols-2 gap-6 items-center">
-              <div class="{{ $left ? 'lg:pr-16' : 'lg:pl-16 lg:col-start-2' }}">
-                <article class="directive-card {{ $left ? 'left' : 'right' }} rounded-2xl border border-lime-400/20 bg-white/[0.06] backdrop-blur p-6 hover:border-lime-400/45 transition">
-                  <div class="flex items-center gap-4 mb-3">
-                    <div class="w-16 h-16 rounded-full overflow-hidden border border-lime-400/30 bg-[#2b1b45] flex items-center justify-center">
-                      @if($persona->foto_url)
-                        <img src="{{ $persona->foto_url }}" alt="{{ $persona->full_name }}" class="w-full h-full object-cover">
-                      @else
-                        <span class="text-2xl">👤</span>
-                      @endif
-                    </div>
-                    <div>
-                      <span class="inline-flex px-3 py-1 rounded-full bg-lime-500/20 text-lime-300 text-xs font-semibold uppercase">{{ $persona->rol }}</span>
-                      <h2 class="text-2xl font-bold mt-2 leading-none">{{ $persona->full_name ?: 'Integrante sin nombre' }}</h2>
+      <div class="max-w-6xl mx-auto relative z-10 space-y-6 md:space-y-8">
+        @if(! $hasPriority)
+          <div class="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-sm">
+            ⚠️ Falta columna <strong>prioridad</strong> en la tabla <strong>ayudantes</strong>. Se está usando prioridad 10 por defecto para todos.
+          </div>
+        @endif
+
+        @foreach($prioridades as $bloque)
+          <article class="priority-block rounded-2xl p-4 md:p-6" data-priority-block>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl md:text-2xl font-bold" style="font-family: 'Bebas Neue', sans-serif; letter-spacing: .05em;">Prioridad {{ $bloque->nivel }}</h2>
+              <span class="px-3 py-1 rounded-full text-xs font-semibold border border-lime-400/35 text-lime-300 bg-lime-500/10">{{ $bloque->miembros->count() }} integrante(s)</span>
+            </div>
+
+            @if($bloque->topPair->isNotEmpty())
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($bloque->topPair as $persona)
+                  <div class="member-card glass-card rounded-2xl p-4 md:p-5">
+                    <div class="flex items-center gap-3">
+                      <div class="w-16 h-16 rounded-full overflow-hidden border border-lime-400/35 bg-[#0d1f14] flex items-center justify-center shrink-0">
+                        @if($persona->foto_url)
+                          <img src="{{ $persona->foto_url }}" alt="{{ $persona->full_name }}" class="w-full h-full object-cover">
+                        @else
+                          <span class="text-xl">👤</span>
+                        @endif
+                      </div>
+                      <div>
+                        <p class="text-xs uppercase tracking-wide text-lime-300/90">{{ $persona->rol }}</p>
+                        <h3 class="text-lg md:text-xl font-semibold leading-tight">{{ $persona->full_name ?: 'Integrante sin nombre' }}</h3>
+                      </div>
                     </div>
                   </div>
-                  <p class="text-gray-300 mt-2 text-sm">Parte del núcleo estratégico del club en gestión deportiva y coordinación institucional.</p>
-                </article>
+                @endforeach
               </div>
 
-              <div class="hidden lg:flex items-center justify-center absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-10">
-                <div class="w-12 h-12 rounded-full bg-lime-400 text-[#241337] font-bold flex items-center justify-center shadow-lg shadow-lime-400/30">{{ $persona->badge }}</div>
-              </div>
-
-              <div class="{{ $left ? 'lg:col-start-2' : 'lg:col-start-1 lg:row-start-1' }} hidden lg:block relative h-0">
-                <div class="chalk-arrow {{ $left ? 'left' : 'right' }}"></div>
-              </div>
-            </div>
-          @empty
-            <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-gray-300">No hay integrantes activos en directiva todavía.</div>
-          @endforelse
-        </div>
+              @if($bloque->extraCount > 0)
+                <p class="mt-3 text-xs text-amber-300/90">+ {{ $bloque->extraCount }} integrante(s) adicional(es) en esta prioridad (se muestran hasta 2 por bloque).</p>
+              @endif
+            @else
+              <div class="rounded-xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-green-100/70">Sin integrantes asignados a esta prioridad.</div>
+            @endif
+          </article>
+        @endforeach
       </div>
     </section>
   </main>
 
   <script>
-    const wrapper = document.getElementById('app-wrapper');
-    const parallaxBg = document.getElementById('parallax-bg');
-    const cards = document.querySelectorAll('.directive-card');
+    const fieldBg = document.getElementById('field-bg');
+    const cards = document.querySelectorAll('.member-card');
+    const tacticalPaths = document.querySelectorAll('.stroke-animate');
 
-    const revealObserver = new IntersectionObserver((entries)=>{
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    const reveal = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
     }, { threshold: 0.2 });
 
-    cards.forEach(card => revealObserver.observe(card));
+    cards.forEach((card) => reveal.observe(card));
 
+    let tick = false;
     window.addEventListener('scroll', () => {
-      const y = window.scrollY || document.documentElement.scrollTop;
-      if (parallaxBg) parallaxBg.style.transform = `translateY(${y * 0.18}px)`;
+      if (tick) return;
+      tick = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY || document.documentElement.scrollTop;
+        const sway = Math.sin(y / 180) * 22;
+
+        if (fieldBg) {
+          fieldBg.style.transform = `translate3d(${sway}px, ${y * 0.18}px, 0)`;
+        }
+
+        tacticalPaths.forEach((path, i) => {
+          const start = i * 250;
+          if (y > start) path.classList.add('active');
+        });
+
+        tick = false;
+      });
     }, { passive: true });
   </script>
 </body>
