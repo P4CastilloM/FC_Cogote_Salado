@@ -405,12 +405,18 @@
       </div>
     </section>
 
+
     {{-- =========================================================
-       ✅ DIRECTIVA
+       ✅ CALENDARIO
     ========================================================== --}}
     <section id="directiva" class="py-8 md:py-10 bg-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">📅</span> CALENDARIO
+          </h2>
+          <a href="{{ route('fccs.calendario') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver calendario completo →</a>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(3) as $dir)
