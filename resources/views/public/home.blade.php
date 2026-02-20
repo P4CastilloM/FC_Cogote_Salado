@@ -410,16 +410,19 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(3) as $dir)
-            <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-6 border border-club-gold/25 text-center">
-              <div class="w-24 h-24 mx-auto rounded-full bg-club-gold/20 flex items-center justify-center mb-4 overflow-hidden">
-                @if(!empty($dir->foto_url))
-                  <img src="{{ $dir->foto_url }}" alt="{{ $dir->nombre }}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                @endif
-                <span class="text-4xl {{ !empty($dir->foto_url) ? 'hidden' : 'flex' }}">🏛️</span>
+            <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-5 border border-club-gold/25">
+              <div class="flex items-start gap-4">
+                <div class="w-14 h-14 rounded-full bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  @if(!empty($dir->foto_url))
+                    <img src="{{ $dir->foto_url }}" alt="{{ $dir->nombre }}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  @endif
+                  <span class="text-2xl {{ !empty($dir->foto_url) ? 'hidden' : 'flex' }}">🏛️</span>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="font-bebas text-2xl leading-tight uppercase text-white">{{ $dir->nombre }}</h3>
+                  <p class="text-gray-300 text-sm mt-1">{{ $dir->rol }}</p>
+                </div>
               </div>
-              <span class="text-club-gold text-xs font-semibold uppercase tracking-wider">Prioridad {{ $dir->prioridad }}</span>
-              <h3 class="font-bebas text-2xl mt-1">{{ strtoupper($dir->nombre) }}</h3>
-              <p class="text-gray-300 text-sm mt-2">{{ $dir->rol }}</p>
             </article>
           @empty
             <div class="md:col-span-3 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay directiva activa.</div>
