@@ -14,8 +14,20 @@ class CalendarioController extends Controller
             ->orderBy('partidos.fecha')
             ->get();
 
+        $partidosData = $partidos->map(function ($partido) {
+            return [
+                'fecha' => $partido->fecha,
+                'rival' => $partido->rival ?? 'Rival por confirmar',
+                'hora' => $partido->hora,
+                'ubicacion' => $partido->nombre_lugar,
+                'direccion' => $partido->direccion,
+                'temporada' => $partido->temporada_descripcion,
+            ];
+        })->values()->all();
+
         return view('public.calendario', [
             'partidos' => $partidos,
+            'partidosData' => $partidosData,
         ]);
     }
 }

@@ -58,14 +58,7 @@
   </main>
 
   <script>
-    const partidos = @json($partidos->map(fn($p) => [
-      'fecha' => $p->fecha,
-      'rival' => $p->rival ?? 'Rival por confirmar',
-      'hora' => $p->hora ?? null,
-      'ubicacion' => $p->nombre_lugar,
-      'direccion' => $p->direccion ?? null,
-      'temporada' => $p->temporada_descripcion,
-    ]));
+    const partidos = @json($partidosData ?? []);
 
     let currentDate = new Date();
     let selectedDate = null;
