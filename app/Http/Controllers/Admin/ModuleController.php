@@ -36,6 +36,35 @@ class ModuleController extends Controller
         $this->authorizeModuleAccess($module);
         $config = $this->config($module);
 
+        if ($module === 'modificaciones') {
+            $search = trim((string) $request->query('q', ''));
+            $order = $request->query('order', 'recent') === 'oldest' ? 'asc' : 'desc';
+            $action = trim((string) $request->query('action', ''));
+
+            $logs = DB::table('modificaciones')
+                ->when($search !== '', function ($query) use ($search): void {
+                    $query->where(function ($nested) use ($search): void {
+                        $nested->where('actor_name', 'like', "%{$search}%")
+                            ->orWhere('summary', 'like', "%{$search}%")
+                            ->orWhere('module', 'like', "%{$search}%")
+                            ->orWhere('item_key', 'like', "%{$search}%");
+                    });
+                })
+                ->when($action !== '', fn ($query) => $query->where('action', $action))
+                ->orderBy('created_at', $order)
+                ->limit(200)
+                ->get();
+
+            return view('admin.modificaciones-index', [
+                'module' => $module,
+                'config' => $config,
+                'logs' => $logs,
+                'search' => $search,
+                'order' => $order,
+                'action' => $action,
+            ]);
+        }
+
         if ($config['table'] === null) {
             return response()->json([
                 'module' => $module,
@@ -120,6 +149,7 @@ class ModuleController extends Controller
             $data['updated_at'] = now();
 
             DB::table('jugadores')->insert($data);
+            $this->logModification('plantel', 'añadir', (string) $data['rut'], $data['nombre'] ?? null);
 
             return redirect()->route('admin.plantel.create')->with('status', 'item-created');
         }
@@ -145,6 +175,7 @@ class ModuleController extends Controller
             $data['created_at'] = now();
             $data['updated_at'] = now();
             DB::table('noticias')->insert($data);
+            $this->logModification('noticias', 'añadir', null, $data['titulo'] ?? null);
 
             return redirect()->route('admin.noticias.create')->with('status', 'item-created');
         }
@@ -165,6 +196,7 @@ class ModuleController extends Controller
             $data['created_at'] = now();
             $data['updated_at'] = now();
             DB::table('avisos')->insert($data);
+            $this->logModification('avisos', 'añadir', null, $data['titulo'] ?? null);
 
             return redirect()->route('admin.avisos.create')->with('status', 'item-created');
         }
@@ -176,6 +208,7 @@ class ModuleController extends Controller
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
             DB::table('partidos')->insert($data);
+            $this->logModification('partidos', 'añadir', null, $data['nombre_lugar'] ?? null);
 
             return redirect()->route('admin.partidos.create')->with('status', 'item-created');
         }
@@ -187,6 +220,7 @@ class ModuleController extends Controller
                 'descripcion' => ['nullable', 'string', 'max:50'],
             ]);
             DB::table('premios')->insert($data);
+            $this->logModification('premios', 'añadir', null, $data['nombre'] ?? null);
 
             return redirect()->route('admin.premios.create')->with('status', 'item-created');
         }
@@ -200,6 +234,7 @@ class ModuleController extends Controller
             $data['created_at'] = now();
             $data['updated_at'] = now();
             DB::table('temporadas')->insert($data);
+            $this->logModification('temporadas', 'añadir', null, $data['descripcion'] ?? 'Temporada');
 
             return redirect()->route('admin.temporadas.create')->with('status', 'item-created');
         }
@@ -251,6 +286,8 @@ class ModuleController extends Controller
                 }
             });
 
+            $this->logModification($module, 'añadir', null, $data['nombre'] ?? null);
+
             return redirect()->route("admin.{$module}.create")->with('status', 'item-created');
         }
 
@@ -259,7 +296,8 @@ class ModuleController extends Controller
                 'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             ]);
 
-            $request->file('foto')->store('fotos', 'public');
+            $path = $request->file('foto')->store('fotos', 'public');
+            $this->logModification('album', 'añadir', basename($path), basename($path));
 
             return redirect()->route('admin.album.create')->with('status', 'item-created');
         }
@@ -324,6 +362,7 @@ class ModuleController extends Controller
             $data['asistencia'] = $data['asistencia'] ?? 0;
             $data['updated_at'] = now();
             DB::table('jugadores')->where('rut', $id)->update($data);
+            $this->logModification('plantel', 'actualizar', $id, $data['nombre'] ?? null);
             return redirect()->route('admin.plantel.edit', $id)->with('status', 'item-updated');
         }
 
@@ -348,6 +387,7 @@ class ModuleController extends Controller
             }
             $data['updated_at'] = now();
             DB::table('noticias')->where('id', $id)->update($data);
+            $this->logModification('noticias', 'actualizar', $id, $data['titulo'] ?? null);
             return redirect()->route('admin.noticias.edit', $id)->with('status', 'item-updated');
         }
 
@@ -368,6 +408,7 @@ class ModuleController extends Controller
             }
             $data['updated_at'] = now();
             DB::table('avisos')->where('id', $id)->update($data);
+            $this->logModification('avisos', 'actualizar', $id, $data['titulo'] ?? null);
             return redirect()->route('admin.avisos.edit', $id)->with('status', 'item-updated');
         }
 
@@ -378,6 +419,7 @@ class ModuleController extends Controller
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
             DB::table('partidos')->where('id', $id)->update($data);
+            $this->logModification('partidos', 'actualizar', $id, $data['nombre_lugar'] ?? null);
             return redirect()->route('admin.partidos.edit', $id)->with('status', 'item-updated');
         }
 
@@ -388,6 +430,7 @@ class ModuleController extends Controller
                 'descripcion' => ['nullable', 'string', 'max:50'],
             ]);
             DB::table('premios')->where('id', $id)->update($data);
+            $this->logModification('premios', 'actualizar', $id, $data['nombre'] ?? null);
             return redirect()->route('admin.premios.edit', $id)->with('status', 'item-updated');
         }
 
@@ -399,6 +442,7 @@ class ModuleController extends Controller
             ]);
             $data['updated_at'] = now();
             DB::table('temporadas')->where('id', $id)->update($data);
+            $this->logModification('temporadas', 'actualizar', $id, $data['descripcion'] ?? null);
             return redirect()->route('admin.temporadas.edit', $id)->with('status', 'item-updated');
         }
 
@@ -420,6 +464,7 @@ class ModuleController extends Controller
             $data['activo'] = $request->boolean('activo', true);
             $data['updated_at'] = now();
             DB::table('ayudantes')->where('id', $id)->update($data);
+            $this->logModification($module, 'actualizar', $id, $data['nombre'] ?? null);
 
             if ($module === 'staff') {
                 $email = $request->input('email');
@@ -446,6 +491,9 @@ class ModuleController extends Controller
 
         if ($module === 'album') {
             $deleted = Storage::disk('public')->delete('fotos/'.$id);
+            if ($deleted) {
+                $this->logModification('album', 'eliminar', $id, $id);
+            }
             return response()->json(['ok' => $deleted, 'module' => $module, 'filename' => $id]);
         }
 
@@ -454,7 +502,12 @@ class ModuleController extends Controller
         }
 
         $pk = $this->primaryKeyFor($module);
+        $toDelete = DB::table($config['table'])->where($pk, $id)->first();
         $deleted = DB::table($config['table'])->where($pk, $id)->delete();
+        if ($deleted) {
+            $summary = $this->summaryFromRow($module, $toDelete);
+            $this->logModification($module, 'eliminar', $id, $summary);
+        }
 
         return redirect()->route("admin.{$module}.index")
             ->with($deleted ? 'status' : 'error', $deleted ? 'item-deleted' : 'delete-failed');
@@ -493,6 +546,46 @@ class ModuleController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+
+    private function logModification(string $module, string $action, ?string $itemKey = null, ?string $summary = null): void
+    {
+        if (! Schema::hasTable('modificaciones')) {
+            return;
+        }
+
+        $user = auth()->user();
+
+        DB::table('modificaciones')->insert([
+            'user_id' => $user?->id,
+            'actor_name' => $user?->name ?? 'Sistema',
+            'actor_role' => $user?->role,
+            'module' => $module,
+            'action' => $action,
+            'item_key' => $itemKey,
+            'summary' => $summary,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function summaryFromRow(string $module, object|null $row): ?string
+    {
+        if (! $row) {
+            return null;
+        }
+
+        return match ($module) {
+            'plantel' => $row->nombre ?? null,
+            'noticias' => $row->titulo ?? null,
+            'avisos' => $row->titulo ?? null,
+            'partidos' => $row->nombre_lugar ?? null,
+            'premios' => $row->nombre ?? null,
+            'temporadas' => $row->descripcion ?? null,
+            'staff', 'directiva' => trim(($row->nombre ?? '').' '.($row->apellido ?? '')),
+            default => null,
+        };
     }
 
     /** @return array<int, string> */
