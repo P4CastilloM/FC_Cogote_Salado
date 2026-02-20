@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   @vite(['resources/css/app.css', 'resources/css/public/home.css', 'resources/js/public/home.js'])
   <style>
     .player-enter { animation: playerEnter .5s cubic-bezier(.34,1.56,.64,1) forwards; }
@@ -26,7 +26,7 @@
     }
     .glow-active { box-shadow: 0 0 20px rgba(132,204,22,.45), 0 0 40px rgba(132,204,22,.2); }
     .stat-card { backdrop-filter: blur(10px); }
-    .font-display { font-family: 'Oswald', sans-serif; }
+    .font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: .03em; }
     .font-body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
@@ -77,9 +77,9 @@
                 @php $featuredInit = ($jugadores ?? collect())->first(); @endphp
                 <div id="featured-player" class="relative z-10 text-center">
                   @if($featuredInit)
-                    <div class="player-enter max-w-sm mx-auto">
+                    <div class="player-enter max-w-[320px] mx-auto">
                       <article class="group relative rounded-2xl overflow-hidden bg-gradient-to-b from-amber-300/30 to-[#241337] border border-amber-300/25">
-                        <div class="aspect-[3/4] relative">
+                        <div class="aspect-[3/4] relative rounded-xl overflow-hidden">
                           @if(!empty($featuredInit->foto_url))
                             <img src="{{ $featuredInit->foto_url }}" alt="{{ $featuredInit->display_name }}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                           @endif
@@ -210,9 +210,9 @@
         : '';
 
       container.innerHTML = `
-        <div class="player-enter max-w-sm mx-auto">
+        <div class="player-enter max-w-[320px] mx-auto">
           <article class="group relative rounded-2xl overflow-hidden bg-gradient-to-b from-amber-300/30 to-[#241337] border border-amber-300/25">
-            <div class="aspect-[3/4] relative">
+            <div class="aspect-[3/4] relative rounded-xl overflow-hidden">
               ${photoBlock}
               <div class="absolute inset-0 flex items-center justify-center ${player.foto ? 'hidden' : ''}">
                 <div class="w-24 h-24 rounded-full bg-amber-300/30 flex items-center justify-center"><span class="text-5xl">👤</span></div>
