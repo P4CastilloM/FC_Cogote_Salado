@@ -23,6 +23,11 @@ body { box-sizing: border-box; }
 @media (min-width:768px){ .aviso-card{ min-width:50%; } }
 @media (min-width:1024px){ .aviso-card{ min-width:33.333%; } }
 
+.noticias-carousel,.destacados-carousel{ display:flex; transition:transform 0.5s ease-out; }
+.noticia-card,.destacado-card{ min-width:100%; padding:0 1rem; }
+@media (min-width:768px){ .noticia-card,.destacado-card{ min-width:50%; } }
+@media (min-width:1024px){ .noticia-card,.destacado-card{ min-width:33.333%; } }
+
 /* =========================================================
    ✅ EFECTOS UI
 ========================================================== */
