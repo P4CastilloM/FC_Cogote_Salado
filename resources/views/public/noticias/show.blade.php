@@ -13,6 +13,14 @@
 <body class="h-full bg-club-dark font-inter text-white overflow-auto">
   @include('public.partials.header')
 
+  @php
+    $paragraphs = collect(preg_split('/\R{2,}/u', (string) $noticia->cuerpo))
+        ->map(fn ($text) => trim((string) $text))
+        ->filter()
+        ->values();
+    $insertAfter = max(1, (int) ceil($paragraphs->count() / 2));
+  @endphp
+
   <main class="pt-24 pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#1a0a2e] via-[#2d1b4e] to-[#1a0a2e] min-h-full">
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
       <article class="lg:col-span-2 rounded-2xl border border-lime-400/20 bg-[#1a0a2e]/80 overflow-hidden">
@@ -30,7 +38,23 @@
             <p class="text-gray-300 mt-3 text-lg">{{ $noticia->subtitulo }}</p>
           @endif
           <p class="text-gray-400 text-sm mt-3">{{ \Carbon\Carbon::parse($noticia->fecha)->translatedFormat('d \d\e F \d\e Y') }}</p>
-          <div class="prose prose-invert max-w-none mt-6 whitespace-pre-line text-gray-200">{{ $noticia->cuerpo }}</div>
+
+          <div class="mt-6 space-y-5 text-gray-200 leading-relaxed">
+            @if($paragraphs->isEmpty())
+              <p class="whitespace-pre-line">{{ $noticia->cuerpo }}</p>
+            @else
+              @foreach($paragraphs as $i => $paragraph)
+                <p>{{ $paragraph }}</p>
+
+                @if($noticia->foto2 && ($i + 1) === $insertAfter)
+                  <figure class="my-6 rounded-2xl overflow-hidden border border-lime-400/20 bg-black/20">
+                    <img src="{{ asset('storage/'.$noticia->foto2) }}" alt="Imagen complementaria de {{ $noticia->titulo }}" class="w-full h-auto max-h-[520px] object-cover">
+                    <figcaption class="px-4 py-3 text-xs text-gray-400 bg-[#120722]/70">Imagen complementaria de la noticia</figcaption>
+                  </figure>
+                @endif
+              @endforeach
+            @endif
+          </div>
         </div>
       </article>
 
