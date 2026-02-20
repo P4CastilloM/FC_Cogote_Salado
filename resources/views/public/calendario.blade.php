@@ -15,11 +15,11 @@
     .day-selected { box-shadow: 0 0 18px rgba(132, 204, 22, .45); }
   </style>
 </head>
-<body class="h-full bg-gradient-to-br from-club-dark via-club-gray to-club-dark font-['Outfit'] text-white overflow-auto">
+<body class="h-full bg-club-dark font-inter text-white overflow-auto">
   @include('public.partials.header')
 
-  <main class="w-full min-h-full pt-24">
-    <section class="py-12 md:py-16 px-4 text-center">
+  <main class="w-full min-h-full pt-28">
+    <section class="py-10 md:py-14 px-4 text-center">
       <div class="max-w-4xl mx-auto">
         <span id="season-badge" class="inline-block px-4 py-1.5 bg-lime-500/20 text-lime-400 text-sm font-semibold rounded-full mb-4 border border-lime-500/30">Temporada {{ date('Y') }}</span>
         <h1 id="page-title" class="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 bg-gradient-to-r from-white via-amber-300 to-lime-400 bg-clip-text text-transparent">Calendario</h1>

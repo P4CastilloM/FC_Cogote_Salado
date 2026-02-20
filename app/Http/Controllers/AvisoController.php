@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Aviso;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AvisoController extends Controller
 {
@@ -31,8 +34,16 @@ class AvisoController extends Controller
 
     public function home()
     {
-        $avisos = Aviso::where('temporada_id', 2025)
-            ->orderBy('fecha', 'desc')
+        $avisosQuery = DB::table('avisos');
+
+        if (Schema::hasColumn('avisos', 'fijado')) {
+            $avisosQuery->orderByDesc('fijado');
+        }
+
+        $avisos = $avisosQuery
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
+            ->limit(6)
             ->get();
 
         $jugadores = DB::table('jugadores')
@@ -66,6 +77,32 @@ class AvisoController extends Controller
             ->limit(6)
             ->get();
 
-        return view('public.home', compact('avisos', 'jugadores', 'noticias', 'partidos'));
+        $directivaTop = DB::table('ayudantes')
+            ->where('activo', true)
+            ->when(Schema::hasColumn('ayudantes', 'prioridad'), fn ($q) => $q->orderByDesc('prioridad'))
+            ->orderByDesc('id')
+            ->limit(3)
+            ->get()
+            ->map(function ($item) {
+                return (object) [
+                    'nombre' => trim(($item->nombre ?? '').' '.($item->apellido ?? '')),
+                    'rol' => $item->descripcion_rol ?: 'Integrante',
+                    'prioridad' => (int) ($item->prioridad ?? 10),
+                    'foto_url' => ! empty($item->foto) ? asset('storage/'.$item->foto) : null,
+                ];
+            });
+
+        $fotos = collect(Storage::disk('public')->files('fotos'))
+            ->filter(fn (string $path) => preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $path) === 1)
+            ->shuffle()
+            ->take(8)
+            ->values()
+            ->map(fn (string $path) => [
+                'src' => asset('storage/'.$path),
+                'alt' => (string) Str::of(pathinfo($path, PATHINFO_FILENAME))->replace(['-', '_'], ' ')->title(),
+            ]);
+
+        return view('public.home', compact('avisos', 'jugadores', 'noticias', 'partidos', 'directivaTop', 'fotos'));
     }
+
 }

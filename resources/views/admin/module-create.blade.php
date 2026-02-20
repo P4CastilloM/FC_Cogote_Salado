@@ -80,6 +80,7 @@
                     <div><label class="text-sm text-slate-300">📆 Fecha *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha" required value="{{ old('fecha') }}"></div>
                 </div>
                 <div><label class="text-sm text-slate-300">🗒️ Descripción *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion" maxlength="120" required value="{{ old('descripcion') }}"></div>
+                <label class="inline-flex items-center gap-2 text-slate-200"><input type="checkbox" name="fijado" value="1" @checked(old('fijado'))> 📌 Fijar aviso</label>
                 <div><label class="text-sm text-slate-300">🖼️ Imagen (opcional)</label><input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp"></div>
             @endif
 

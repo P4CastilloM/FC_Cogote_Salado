@@ -51,6 +51,7 @@
                 <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="titulo" maxlength="50" required value="{{ old('titulo', $item->titulo) }}" placeholder="📣 Título">
                 <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="descripcion" maxlength="120" required value="{{ old('descripcion', $item->descripcion) }}" placeholder="🗒️ Descripción">
                 <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
+                <label class="inline-flex items-center gap-2 text-slate-200"><input type="checkbox" name="fijado" value="1" @checked(old('fijado', (string) ($item->fijado ?? 0)) == '1')> 📌 Fijar aviso</label>
                 <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
             @endif
 

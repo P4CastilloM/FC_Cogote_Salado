@@ -21,7 +21,7 @@ class ModuleController extends Controller
     private array $modules = [
         'plantel' => ['table' => 'jugadores', 'fields' => ['rut', 'nombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion'], 'label' => 'Plantel', 'icon' => '👥'],
         'noticias' => ['table' => 'noticias', 'fields' => ['temporada_id', 'titulo', 'subtitulo', 'cuerpo', 'fecha', 'foto', 'foto2'], 'label' => 'Noticias', 'icon' => '📰'],
-        'avisos' => ['table' => 'avisos', 'fields' => ['temporada_id', 'titulo', 'descripcion', 'fecha', 'foto'], 'label' => 'Avisos', 'icon' => '📢'],
+        'avisos' => ['table' => 'avisos', 'fields' => ['temporada_id', 'titulo', 'descripcion', 'fecha', 'foto', 'fijado'], 'label' => 'Avisos', 'icon' => '📢'],
         'album' => ['table' => null, 'fields' => ['foto'], 'label' => 'Álbum / Fotos', 'icon' => '📸'],
         'directiva' => ['table' => 'ayudantes', 'fields' => ['nombre', 'apellido', 'descripcion_rol', 'prioridad', 'foto', 'activo'], 'label' => 'Directiva', 'icon' => '🏛️'],
         'partidos' => ['table' => 'partidos', 'fields' => ['fecha', 'hora', 'rival', 'nombre_lugar', 'direccion', 'temporada_id'], 'label' => 'Partidos', 'icon' => '📅'],
@@ -192,8 +192,15 @@ class ModuleController extends Controller
                 'titulo' => ['required', 'string', 'max:50'],
                 'descripcion' => ['required', 'string', 'max:120'],
                 'fecha' => ['required', 'date'],
+                'fijado' => ['nullable', 'boolean'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             ]);
+
+            if (Schema::hasColumn('avisos', 'fijado')) {
+                $data['fijado'] = $request->boolean('fijado');
+            } else {
+                unset($data['fijado']);
+            }
 
             if ($request->hasFile('foto')) {
                 $data['foto'] = $request->file('foto')->store('avisos', 'public');
@@ -415,8 +422,14 @@ class ModuleController extends Controller
                 'titulo' => ['required', 'string', 'max:50'],
                 'descripcion' => ['required', 'string', 'max:120'],
                 'fecha' => ['required', 'date'],
+                'fijado' => ['nullable', 'boolean'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             ]);
+            if (Schema::hasColumn('avisos', 'fijado')) {
+                $data['fijado'] = $request->boolean('fijado');
+            } else {
+                unset($data['fijado']);
+            }
             if ($request->hasFile('foto')) {
                 $old = DB::table('avisos')->where('id', $id)->value('foto');
                 if ($old) {
