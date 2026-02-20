@@ -18,7 +18,7 @@ class PlantelController extends Controller
                 $jugador->posicion_label = match ($jugador->posicion) {
                     'ARQUERO' => 'Arquero',
                     'DEFENSA' => 'Defensa',
-                    'MEDIOCAMPISTA' => 'Mediocampista',
+                    'MEDIOCAMPISTA', 'CENTRAL' => 'Mediocampista',
                     'DELANTERO' => 'Delantero',
                     default => ucfirst(mb_strtolower((string) $jugador->posicion)),
                 };

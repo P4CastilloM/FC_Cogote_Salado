@@ -37,7 +37,7 @@
 
             <select name="posicion" required class="player-input player-select w-full rounded-xl px-4 py-3">
                 @foreach(['ARQUERO' => '🧤 Arquero','DEFENSA' => '🛡️ Defensa','MEDIOCAMPISTA' => '🎯 Mediocampista','DELANTERO' => '⚽ Delantero'] as $value => $label)
-                    <option value="{{ $value }}" @selected(old('posicion', $item->posicion) === $value)>{{ $label }}</option>
+                    <option value="{{ $value }}" @selected(($value === 'MEDIOCAMPISTA' && in_array(old('posicion', $item->posicion), ['MEDIOCAMPISTA','CENTRAL'], true)) || old('posicion', $item->posicion) === $value)>{{ $label }}</option>
                 @endforeach
             </select>
 
