@@ -289,74 +289,53 @@
     ========================================================== --}}
     <section id="noticias" class="py-16 bg-club-gray">
       <div class="max-w-7xl mx-auto px-4">
-        <h2 id="noticias-title" class="font-bebas text-3xl md:text-4xl tracking-wider mb-8">
-          <span class="text-club-gold">📰</span> ÚLTIMAS NOTICIAS
-        </h2>
+        <div class="flex items-center justify-between gap-4 mb-8">
+          <h2 id="noticias-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">📰</span> ÚLTIMAS NOTICIAS
+          </h2>
+          <a href="{{ route('fccs.noticias.index') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver todas →</a>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="flex items-center justify-end gap-2 mb-4">
+          <button id="noticia-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
+          <button id="noticia-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
+        </div>
 
-          {{-- Noticia 1 --}}
-          <article class="news-card group cursor-pointer">
-            <div class="relative rounded-2xl overflow-hidden bg-club-dark border border-club-gold/10 hover:border-club-gold/30 transition-all">
-              <div class="h-48 bg-gradient-to-br from-club-red to-club-gold/50 relative overflow-hidden">
-                <svg class="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 100 100">
-                  <circle cx="70" cy="30" r="40" fill="#fff" opacity="0.1" />
-                  <circle cx="20" cy="80" r="30" fill="#d4af37" opacity="0.2" />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center"><span class="text-6xl">🏆</span></div>
-                <div class="news-overlay absolute inset-0 bg-club-gold/80 flex items-center justify-center opacity-0 transition-opacity">
-                  <span class="font-bebas text-xl text-club-dark">LEER MÁS →</span>
-                </div>
+        <div id="noticias-container" class="overflow-hidden">
+          <div id="noticias-carousel" class="noticias-carousel">
+            @forelse($noticias ?? [] as $noticia)
+              <article class="noticia-card news-card group">
+                <a href="{{ route('fccs.noticias.show', $noticia->id) }}" class="block relative rounded-2xl overflow-hidden bg-club-dark border border-club-gold/10 hover:border-club-gold/30 transition-all h-full">
+                  <div class="h-48 relative overflow-hidden bg-gradient-to-br from-club-red/50 to-club-gold/20">
+                    @if(!empty($noticia->foto))
+                      <img src="{{ asset('storage/'.$noticia->foto) }}" alt="{{ $noticia->titulo }}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    @endif
+                    <div class="absolute inset-0 flex items-center justify-center" @if(!empty($noticia->foto)) style="display:none" @endif>
+                      <span class="text-6xl">📰</span>
+                    </div>
+                    <div class="news-overlay absolute inset-0 bg-club-gold/80 flex items-center justify-center opacity-0 transition-opacity">
+                      <span class="font-bebas text-xl text-club-dark">LEER MÁS →</span>
+                    </div>
+                  </div>
+                  <div class="p-5">
+                    <span class="text-xs text-club-gold font-semibold">{{ \Carbon\Carbon::parse($noticia->fecha)->translatedFormat('d M Y') }}</span>
+                    <h3 class="font-bebas text-xl mt-2 mb-2 group-hover:text-club-gold transition-colors">{{ \Illuminate\Support\Str::limit(strtoupper($noticia->titulo), 55) }}</h3>
+                    <p class="text-gray-400 text-sm line-clamp-2">{{ \Illuminate\Support\Str::limit($noticia->subtitulo ?: strip_tags($noticia->cuerpo), 100) }}</p>
+                  </div>
+                </a>
+              </article>
+            @empty
+              <div class="noticia-card col-span-1 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
+                Aún no hay noticias publicadas.
               </div>
-              <div class="p-5">
-                <span class="text-xs text-club-gold font-semibold">VICTORIA • 15 ENE 2025</span>
-                <h3 class="font-bebas text-xl mt-2 mb-2 group-hover:text-club-gold transition-colors">¡GANAMOS EL TORNEO RELÁMPAGO!</h3>
-                <p class="text-gray-400 text-sm line-clamp-2">El equipo demostró su garra y se llevó el primer lugar del torneo local.</p>
-              </div>
-            </div>
-          </article>
+            @endforelse
+          </div>
+        </div>
 
-          {{-- Noticia 2 --}}
-          <article class="news-card group cursor-pointer">
-            <div class="relative rounded-2xl overflow-hidden bg-club-dark border border-club-gold/10 hover:border-club-gold/30 transition-all">
-              <div class="h-48 bg-gradient-to-br from-blue-600 to-purple-600 relative overflow-hidden">
-                <svg class="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 100 100">
-                  <rect x="10" y="10" width="30" height="30" fill="#fff" opacity="0.1" rx="5" />
-                  <rect x="60" y="60" width="25" height="25" fill="#d4af37" opacity="0.2" rx="5" />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center"><span class="text-6xl">🤝</span></div>
-                <div class="news-overlay absolute inset-0 bg-club-gold/80 flex items-center justify-center opacity-0 transition-opacity">
-                  <span class="font-bebas text-xl text-club-dark">LEER MÁS →</span>
-                </div>
-              </div>
-              <div class="p-5">
-                <span class="text-xs text-club-gold font-semibold">FICHAJES • 10 ENE 2025</span>
-                <h3 class="font-bebas text-xl mt-2 mb-2 group-hover:text-club-gold transition-colors">NUEVOS INTEGRANTES AL EQUIPO</h3>
-                <p class="text-gray-400 text-sm line-clamp-2">Damos la bienvenida a 3 nuevos jugadores que se unen a la familia.</p>
-              </div>
-            </div>
-          </article>
-
-          {{-- Noticia 3 --}}
-          <article class="news-card group cursor-pointer">
-            <div class="relative rounded-2xl overflow-hidden bg-club-dark border border-club-gold/10 hover:border-club-gold/30 transition-all">
-              <div class="h-48 bg-gradient-to-br from-green-600 to-teal-600 relative overflow-hidden">
-                <svg class="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 100 100">
-                  <polygon points="50,10 90,90 10,90" fill="#fff" opacity="0.1" />
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center"><span class="text-6xl">📸</span></div>
-                <div class="news-overlay absolute inset-0 bg-club-gold/80 flex items-center justify-center opacity-0 transition-opacity">
-                  <span class="font-bebas text-xl text-club-dark">LEER MÁS →</span>
-                </div>
-              </div>
-              <div class="p-5">
-                <span class="text-xs text-club-gold font-semibold">GALERÍA • 05 ENE 2025</span>
-                <h3 class="font-bebas text-xl mt-2 mb-2 group-hover:text-club-gold transition-colors">FOTOS DEL ÚLTIMO PARTIDO</h3>
-                <p class="text-gray-400 text-sm line-clamp-2">Revive los mejores momentos del partido contra Los Tigres.</p>
-              </div>
-            </div>
-          </article>
-
+        <div id="noticia-dots" class="flex justify-center gap-2 mt-6 md:hidden">
+          @for($i = 0; $i < max(1, min(8, count($noticias ?? []))); $i++)
+            <button class="carousel-dot {{ $i === 0 ? 'active bg-club-gold' : 'bg-white/40' }} w-2 h-2 rounded-full" data-noticia="{{ $i }}"></button>
+          @endfor
         </div>
       </div>
     </section>
@@ -366,76 +345,93 @@
     ========================================================== --}}
     <section id="plantel" class="py-16 bg-gradient-to-b from-club-gray to-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider mb-8">
-          <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
-        </h2>
+        <div class="flex items-center justify-between gap-4 mb-8">
+          <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
+          </h2>
+          <a href="{{ route('fccs.plantel') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver más →</a>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div class="flex items-center justify-end gap-2 mb-4">
+          <button id="destacado-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
+          <button id="destacado-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
+        </div>
 
-          {{-- Jugador 1 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">👨</span></div>
+        <div id="destacados-container" class="overflow-hidden">
+          <div id="destacados-carousel" class="destacados-carousel">
+            @forelse($jugadores ?? [] as $jugador)
+              <div class="destacado-card player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-gold/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
+                <div class="aspect-[3/4] relative">
+                  @if(!empty($jugador->foto))
+                    <img
+                      src="{{ asset('storage/'.$jugador->foto) }}"
+                      alt="{{ $jugador->primer_nombre }}"
+                      class="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    >
+                  @endif
+
+                  <div class="absolute inset-0 flex items-center justify-center" @if(!empty($jugador->foto)) style="display:none" @endif>
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-gold/30 flex items-center justify-center">
+                      <span class="text-4xl md:text-5xl">👤</span>
+                    </div>
+                  </div>
+
+                  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
+
+                  <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                    <div class="text-club-gold font-bebas text-3xl md:text-4xl">#{{ $jugador->numero_camiseta }}</div>
+                    <h3 class="font-bebas text-lg md:text-xl">{{ $jugador->primer_nombre }}</h3>
+                    <p class="text-gray-300 text-xs md:text-sm">{{ $jugador->posicion_label }}</p>
+                  </div>
+                </div>
               </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#10</div>
-                <h3 class="font-bebas text-lg md:text-xl">CARLOS "EL CRACK"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Mediocampista</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">⚽ 12 Goles</span></div>
+            @empty
+              <div class="destacado-card rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">
+                Aún no hay jugadores cargados en el plantel.
               </div>
-            </div>
+            @endforelse
           </div>
+        </div>
 
-          {{-- Jugador 2 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-club-red/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-club-red/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">🧔</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#1</div>
-                <h3 class="font-bebas text-lg md:text-xl">MIGUEL "MURALLA"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Portero</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">🧤 8 P. Imbatido</span></div>
-              </div>
+        <div id="destacado-dots" class="flex justify-center gap-2 mt-6 md:hidden">
+          @for($i = 0; $i < max(1, min(8, count($jugadores ?? []))); $i++)
+            <button class="carousel-dot {{ $i === 0 ? 'active bg-club-gold' : 'bg-white/40' }} w-2 h-2 rounded-full" data-destacado="{{ $i }}"></button>
+          @endfor
+        </div>
+      </div>
+    </section>
+
+
+    {{-- =========================================================
+       ✅ CALENDARIO
+    ========================================================== --}}
+    <section id="calendario" class="py-16 bg-gradient-to-b from-club-dark to-club-gray">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">📅</span> CALENDARIO
+          </h2>
+          <a href="{{ route('fccs.calendario') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver calendario completo →</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @forelse(($partidos ?? collect())->take(6) as $partido)
+            <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <p class="text-xs uppercase tracking-widest text-club-gold">{{ \Carbon\Carbon::parse($partido->fecha)->translatedFormat('d M Y') }}</p>
+              <h3 class="font-bebas text-2xl mt-2">vs {{ $partido->rival ?? 'Rival por confirmar' }}</h3>
+              <p class="text-sm text-gray-300 mt-1">🕒 {{ $partido->hora ?? '--:--' }} hrs</p>
+              <p class="text-sm text-gray-300 mt-1">📍 {{ $partido->nombre_lugar }}</p>
+              @if(!empty($partido->temporada_descripcion))
+                <p class="text-xs text-gray-400 mt-2">{{ $partido->temporada_descripcion }}</p>
+              @endif
+            </article>
+          @empty
+            <div class="col-span-full bg-white/5 border border-white/10 rounded-2xl p-6 text-center text-gray-300">
+              Aún no hay partidos cargados en el calendario.
             </div>
-          </div>
-
-          {{-- Jugador 3 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-green-600/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-green-600/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">👦</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#7</div>
-                <h3 class="font-bebas text-lg md:text-xl">DAVID "RAYO"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Extremo Derecho</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">🎯 15 Asistencias</span></div>
-              </div>
-            </div>
-          </div>
-
-          {{-- Jugador 4 --}}
-          <div class="player-card group relative rounded-2xl overflow-hidden bg-gradient-to-b from-purple-600/20 to-club-dark border border-club-gold/20 hover:border-club-gold/50 transition-all">
-            <div class="aspect-[3/4] relative">
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-club-dark/90"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-purple-600/30 flex items-center justify-center"><span class="text-4xl md:text-5xl">🧑</span></div>
-              </div>
-              <div class="player-info absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                <div class="text-club-gold font-bebas text-3xl md:text-4xl">#4</div>
-                <h3 class="font-bebas text-lg md:text-xl">PEDRO "TANQUE"</h3>
-                <p class="text-gray-400 text-xs md:text-sm">Defensa Central</p>
-                <div class="flex gap-2 mt-2"><span class="text-xs bg-club-gold/20 px-2 py-1 rounded">🛡️ MVP Defensa</span></div>
-              </div>
-            </div>
-          </div>
-
+          @endforelse
         </div>
       </div>
     </section>
