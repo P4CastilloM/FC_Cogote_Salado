@@ -349,7 +349,7 @@
           <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
             <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
           </h2>
-          <a href="{{ route('fccs.home') }}#plantel" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver más →</a>
+          <a href="{{ route('fccs.plantel') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver más →</a>
         </div>
 
         <div class="flex items-center justify-end gap-2 mb-4">

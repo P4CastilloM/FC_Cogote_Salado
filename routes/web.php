@@ -9,6 +9,7 @@ use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\FotosController;
 use App\Http\Controllers\NoticiasController;
 use App\Http\Controllers\DirectivaController;
+use App\Http\Controllers\PlantelController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -48,6 +49,12 @@ Route::get('/fccogotesalado', [AvisoController::class, 'home'])
     ->name('fccs.home');
 
 
+
+
+/** PLANTEL */
+Route::get('/fccogotesalado/plantel', [PlantelController::class, 'index'])
+    ->middleware(TrackPageVisit::class)
+    ->name('fccs.plantel');
 
 /** DIRECTIVA */
 Route::get('/fccogotesalado/directiva', [DirectivaController::class, 'index'])
