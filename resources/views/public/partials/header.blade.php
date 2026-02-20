@@ -31,8 +31,9 @@
           Plantel
         </a>
 
-        <a href="{{ route('fccs.home') }}#directiva"
-           class="nav-link px-4 h-9 rounded-full text-sm font-semibold transition-all flex items-center">
+        <a href="{{ route('fccs.directiva') }}"
+           class="nav-link px-4 h-9 rounded-full text-sm font-semibold transition-all flex items-center
+           {{ request()->routeIs('fccs.directiva') ? 'active' : '' }}">
           Directiva
         </a>
 
@@ -80,7 +81,7 @@
         <a href="{{ route('fccs.home') }}#plantel" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
           <span class="flex items-center gap-3"><span class="text-lg">👥</span> Plantel</span>
         </a>
-        <a href="{{ route('fccs.home') }}#directiva" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all">
+        <a href="{{ route('fccs.directiva') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.directiva') ? 'active' : '' }}">
           <span class="flex items-center gap-3"><span class="text-lg">🏛️</span> Directiva</span>
         </a>
         <a href="{{ route('fccs.noticias.index') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.noticias.*') ? 'active' : '' }}">

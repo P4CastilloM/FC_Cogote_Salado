@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\FotosController;
 use App\Http\Controllers\NoticiasController;
+use App\Http\Controllers\DirectivaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -46,6 +47,12 @@ Route::get('/fccogotesalado', [AvisoController::class, 'home'])
     ->middleware(TrackPageVisit::class)
     ->name('fccs.home');
 
+
+
+/** DIRECTIVA */
+Route::get('/fccogotesalado/directiva', [DirectivaController::class, 'index'])
+    ->middleware(TrackPageVisit::class)
+    ->name('fccs.directiva');
 
 /** NOTICIAS */
 Route::get('/fccogotesalado/noticias', [NoticiasController::class, 'index'])
