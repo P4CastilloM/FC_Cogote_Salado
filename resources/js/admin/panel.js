@@ -32,11 +32,14 @@ document.querySelectorAll('[data-accordion-trigger]').forEach((trigger) => {
 const userTrigger = document.querySelector('[data-action="toggle-user-menu"]');
 userTrigger?.addEventListener('click', (event) => {
   event.stopPropagation();
+  const willOpen = userMenu?.classList.contains('hidden');
   userMenu?.classList.toggle('hidden');
+  userTrigger.classList.toggle('open', Boolean(willOpen));
 });
 
 document.addEventListener('click', (event) => {
   if (!event.target.closest('#user-menu') && !event.target.closest('[data-action="toggle-user-menu"]')) {
     userMenu?.classList.add('hidden');
+    userTrigger?.classList.remove('open');
   }
 });

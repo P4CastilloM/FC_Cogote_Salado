@@ -48,7 +48,11 @@
                 <div class="accordion-group">
                     <button type="button" class="admin-accordion-button" data-accordion-trigger="{{ $key }}">
                         <span>{{ $item['title'] }}</span>
-                        <span class="accordion-arrow" data-accordion-arrow="{{ $key }}">⌄</span>
+                        <span class="accordion-arrow" data-accordion-arrow="{{ $key }}" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none" class="accordion-arrow-icon">
+                                <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </span>
                     </button>
                     <div class="accordion-content" data-accordion-content="{{ $key }}">
                         @foreach ($item['routes'] as $action => $label)
@@ -94,7 +98,11 @@
                     <button type="button" class="user-menu-trigger" data-action="toggle-user-menu">
                         <span class="avatar small">{{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}</span>
                         <span class="hidden sm:inline">{{ Auth::user()->name ?? 'Admin' }}</span>
-                        <span>⌄</span>
+                        <span class="user-menu-arrow" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none" class="user-menu-arrow-icon">
+                                <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </span>
                     </button>
 
                     <div id="user-menu" class="user-menu hidden">
