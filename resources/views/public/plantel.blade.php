@@ -74,7 +74,29 @@
                 <div class="absolute inset-4 border-2 border-white/20 rounded-lg pointer-events-none"></div>
                 <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-white/15 pointer-events-none"></div>
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 md:w-32 md:h-32 border-2 border-white/15 rounded-full pointer-events-none"></div>
-                <div id="featured-player" class="relative z-10 text-center"></div>
+                @php $featuredInit = ($jugadores ?? collect())->first(); @endphp
+                <div id="featured-player" class="relative z-10 text-center">
+                  @if($featuredInit)
+                    <div class="player-enter max-w-sm mx-auto">
+                      <article class="group relative rounded-2xl overflow-hidden bg-gradient-to-b from-amber-300/30 to-[#241337] border border-amber-300/25">
+                        <div class="aspect-[3/4] relative">
+                          @if(!empty($featuredInit->foto_url))
+                            <img src="{{ $featuredInit->foto_url }}" alt="{{ $featuredInit->display_name }}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                          @endif
+                          <div class="absolute inset-0 flex items-center justify-center" @if(!empty($featuredInit->foto_url)) style="display:none" @endif>
+                            <div class="w-24 h-24 rounded-full bg-amber-300/30 flex items-center justify-center"><span class="text-5xl">👤</span></div>
+                          </div>
+                          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#241337]/95"></div>
+                          <div class="absolute top-4 right-4 px-3 py-1 rounded-full border bg-white/10 text-xs font-semibold">{{ $featuredInit->posicion_label }}</div>
+                          <div class="absolute bottom-0 left-0 right-0 p-5 text-left">
+                            <div class="text-amber-300 font-display text-5xl leading-none">#{{ $featuredInit->numero_camiseta }}</div>
+                            <h2 class="font-display text-3xl leading-tight mt-1">{{ $featuredInit->display_name }}</h2>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  @endif
+                </div>
               </div>
             </div>
           </div>
@@ -176,16 +198,22 @@
     function renderFeaturedPlayer() {
       const container = document.getElementById('featured-player');
       const player = filteredPlayers[activePlayerIndex];
-      if (!player) {
-        container.innerHTML = `<div class="text-center text-gray-400"><p class="font-display text-xl">No hay jugadores</p></div>`;
+      if (!player || !container) {
+        if (container) {
+          container.innerHTML = `<div class="text-center text-gray-300"><p class="font-display text-xl">No hay jugadores</p></div>`;
+        }
         return;
       }
+
+      const photoBlock = player.foto
+        ? `<img src="${player.foto}" alt="${player.nombre}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+        : '';
 
       container.innerHTML = `
         <div class="player-enter max-w-sm mx-auto">
           <article class="group relative rounded-2xl overflow-hidden bg-gradient-to-b from-amber-300/30 to-[#241337] border border-amber-300/25">
             <div class="aspect-[3/4] relative">
-              ${player.foto ? `<img src="${player.foto}" alt="${player.nombre}" class="absolute inset-0 w-full h-full object-cover">` : ''}
+              ${photoBlock}
               <div class="absolute inset-0 flex items-center justify-center ${player.foto ? 'hidden' : ''}">
                 <div class="w-24 h-24 rounded-full bg-amber-300/30 flex items-center justify-center"><span class="text-5xl">👤</span></div>
               </div>
@@ -198,7 +226,7 @@
                   <div class="stat-card bg-black/35 rounded-lg p-2 text-center border border-white/10"><span class="text-[10px] text-gray-400 block">⚽</span><span class="font-display text-lg text-lime-400">${player.goles}</span></div>
                   <div class="stat-card bg-black/35 rounded-lg p-2 text-center border border-white/10"><span class="text-[10px] text-gray-400 block">🎯</span><span class="font-display text-lg text-amber-300">${player.asistencias}</span></div>
                   <div class="stat-card bg-black/35 rounded-lg p-2 text-center border border-white/10"><span class="text-[10px] text-gray-400 block">🏟️</span><span class="font-display text-lg text-white">${player.partidos}</span></div>
-                  <div class="stat-card bg-black/35 rounded-lg p-2 text-center border border-white/10"><span class="text-[10px] text-gray-400 block">⭐</span><span class="font-display text-lg text-purple-300">${player.rating.toFixed(1)}</span></div>
+                  <div class="stat-card bg-black/35 rounded-lg p-2 text-center border border-white/10"><span class="text-[10px] text-gray-400 block">⭐</span><span class="font-display text-lg text-purple-300">${Number(player.rating || 0).toFixed(1)}</span></div>
                 </div>
               </div>
             </div>
