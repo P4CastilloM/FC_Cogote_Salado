@@ -24,7 +24,7 @@ class ModuleController extends Controller
         'avisos' => ['table' => 'avisos', 'fields' => ['temporada_id', 'titulo', 'descripcion', 'fecha', 'foto'], 'label' => 'Avisos', 'icon' => '📢'],
         'album' => ['table' => null, 'fields' => ['foto'], 'label' => 'Álbum / Fotos', 'icon' => '📸'],
         'directiva' => ['table' => 'ayudantes', 'fields' => ['nombre', 'apellido', 'descripcion_rol', 'prioridad', 'foto', 'activo'], 'label' => 'Directiva', 'icon' => '🏛️'],
-        'partidos' => ['table' => 'partidos', 'fields' => ['fecha', 'nombre_lugar', 'temporada_id'], 'label' => 'Partidos', 'icon' => '📅'],
+        'partidos' => ['table' => 'partidos', 'fields' => ['fecha', 'hora', 'rival', 'nombre_lugar', 'direccion', 'temporada_id'], 'label' => 'Partidos', 'icon' => '📅'],
         'premios' => ['table' => 'premios', 'fields' => ['temporada_id', 'nombre', 'descripcion'], 'label' => 'Premios', 'icon' => '🏆'],
         'temporadas' => ['table' => 'temporadas', 'fields' => ['fecha_inicio', 'fecha_termino', 'descripcion'], 'label' => 'Temporadas', 'icon' => '⏳'],
         'staff' => ['table' => 'ayudantes', 'fields' => ['nombre', 'apellido', 'descripcion_rol', 'foto', 'activo'], 'label' => 'Ayudantes / Staff', 'icon' => '🤝'],
@@ -211,6 +211,9 @@ class ModuleController extends Controller
             $data = $request->validate([
                 'fecha' => ['required', 'date'],
                 'nombre_lugar' => ['required', 'string', 'max:100'],
+                'rival' => ['required', 'string', 'max:100'],
+                'hora' => ['nullable', 'date_format:H:i'],
+                'direccion' => ['nullable', 'string', 'max:180'],
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
             DB::table('partidos')->insert($data);
@@ -431,6 +434,9 @@ class ModuleController extends Controller
             $data = $request->validate([
                 'fecha' => ['required', 'date'],
                 'nombre_lugar' => ['required', 'string', 'max:100'],
+                'rival' => ['required', 'string', 'max:100'],
+                'hora' => ['nullable', 'date_format:H:i'],
+                'direccion' => ['nullable', 'string', 'max:180'],
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
             DB::table('partidos')->where('id', $id)->update($data);
@@ -604,7 +610,7 @@ class ModuleController extends Controller
             'plantel' => $row->nombre ?? null,
             'noticias' => $row->titulo ?? null,
             'avisos' => $row->titulo ?? null,
-            'partidos' => $row->nombre_lugar ?? null,
+            'partidos' => trim((string) (($row->rival ?? 'Partido').' · '.($row->nombre_lugar ?? ''))),
             'premios' => $row->nombre ?? null,
             'temporadas' => $row->descripcion ?? null,
             'staff', 'directiva' => trim(($row->nombre ?? '').' '.($row->apellido ?? '')),
@@ -619,7 +625,7 @@ class ModuleController extends Controller
             'plantel' => ['rut', 'nombre'],
             'noticias' => ['titulo', 'subtitulo'],
             'avisos' => ['titulo', 'descripcion'],
-            'partidos' => ['nombre_lugar', 'fecha'],
+            'partidos' => ['rival', 'nombre_lugar', 'direccion', 'fecha'],
             'premios' => ['nombre', 'descripcion'],
             'temporadas' => ['descripcion', 'fecha_inicio'],
             'staff', 'directiva' => ['nombre', 'apellido'],

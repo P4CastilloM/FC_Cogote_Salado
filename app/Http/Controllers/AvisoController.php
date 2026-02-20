@@ -59,6 +59,13 @@ class AvisoController extends Controller
             ->limit(3)
             ->get();
 
-        return view('public.home', compact('avisos', 'jugadores', 'noticias'));
+        $partidos = DB::table('partidos')
+            ->leftJoin('temporadas', 'temporadas.id', '=', 'partidos.temporada_id')
+            ->select('partidos.*', 'temporadas.descripcion as temporada_descripcion')
+            ->orderBy('partidos.fecha')
+            ->limit(6)
+            ->get();
+
+        return view('public.home', compact('avisos', 'jugadores', 'noticias', 'partidos'));
     }
 }

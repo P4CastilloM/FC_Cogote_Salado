@@ -403,6 +403,39 @@
       </div>
     </section>
 
+
+    {{-- =========================================================
+       ✅ CALENDARIO
+    ========================================================== --}}
+    <section id="calendario" class="py-16 bg-gradient-to-b from-club-dark to-club-gray">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
+            <span class="text-club-gold">📅</span> CALENDARIO
+          </h2>
+          <a href="{{ route('fccs.calendario') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver calendario completo →</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @forelse(($partidos ?? collect())->take(6) as $partido)
+            <article class="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <p class="text-xs uppercase tracking-widest text-club-gold">{{ \Carbon\Carbon::parse($partido->fecha)->translatedFormat('d M Y') }}</p>
+              <h3 class="font-bebas text-2xl mt-2">vs {{ $partido->rival ?? 'Rival por confirmar' }}</h3>
+              <p class="text-sm text-gray-300 mt-1">🕒 {{ $partido->hora ?? '--:--' }} hrs</p>
+              <p class="text-sm text-gray-300 mt-1">📍 {{ $partido->nombre_lugar }}</p>
+              @if(!empty($partido->temporada_descripcion))
+                <p class="text-xs text-gray-400 mt-2">{{ $partido->temporada_descripcion }}</p>
+              @endif
+            </article>
+          @empty
+            <div class="col-span-full bg-white/5 border border-white/10 rounded-2xl p-6 text-center text-gray-300">
+              Aún no hay partidos cargados en el calendario.
+            </div>
+          @endforelse
+        </div>
+      </div>
+    </section>
+
     {{-- =========================================================
        ✅ DIRECTIVA
     ========================================================== --}}

@@ -86,8 +86,11 @@
             @if($module === 'partidos')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label class="text-sm text-slate-300">📆 Fecha *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha" required value="{{ old('fecha') }}"></div>
+                    <div><label class="text-sm text-slate-300">🕒 Hora</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="time" name="hora" value="{{ old('hora') }}"></div>
+                    <div><label class="text-sm text-slate-300">🆚 Rival *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="rival" maxlength="100" required value="{{ old('rival') }}"></div>
                     <div><label class="text-sm text-slate-300">📍 Lugar *</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre_lugar" maxlength="100" required value="{{ old('nombre_lugar') }}"></div>
                 </div>
+                <div><label class="text-sm text-slate-300">🗺️ Dirección</label><input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="direccion" maxlength="180" value="{{ old('direccion') }}"></div>
             @endif
 
             @if($module === 'premios')

@@ -29,7 +29,7 @@
                         'plantel' => $item->nombre,
                         'noticias' => $item->titulo,
                         'avisos' => $item->titulo,
-                        'partidos' => $item->nombre_lugar,
+                        'partidos' => ($item->rival ?? 'Partido').' · '.$item->nombre_lugar,
                         'premios' => $item->nombre,
                         'temporadas' => $item->descripcion ?: 'Temporada #'.$item->id,
                         'staff', 'directiva' => trim($item->nombre.' '.($item->apellido ?? '')),
@@ -38,7 +38,7 @@
                     $secondary = match($module) {
                         'plantel' => 'RUT '.$item->rut,
                         'noticias', 'avisos' => $item->fecha,
-                        'partidos' => $item->fecha,
+                        'partidos' => trim(($item->fecha ?? '').' · '.($item->hora ?? '--:--')),
                         'premios' => $item->descripcion ?? 'Sin descripción',
                         'temporadas' => $item->fecha_inicio,
                         'staff' => $item->descripcion_rol ?? 'Sin rol',

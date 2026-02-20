@@ -31,6 +31,11 @@
           Plantel
         </a>
 
+        <a href="{{ route('fccs.calendario') }}"
+           class="nav-link px-4 h-9 rounded-full text-sm font-semibold transition-all flex items-center {{ request()->routeIs('fccs.calendario') ? 'active' : '' }}">
+          Calendario
+        </a>
+
         <a href="{{ route('fccs.directiva') }}"
            class="nav-link px-4 h-9 rounded-full text-sm font-semibold transition-all flex items-center
            {{ request()->routeIs('fccs.directiva') ? 'active' : '' }}">
@@ -80,6 +85,9 @@
         </a>
         <a href="{{ route('fccs.plantel') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.plantel') ? 'active' : '' }}">
           <span class="flex items-center gap-3"><span class="text-lg">👥</span> Plantel</span>
+        </a>
+        <a href="{{ route('fccs.calendario') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.calendario') ? 'active' : '' }}">
+          <span class="flex items-center gap-3"><span class="text-lg">📅</span> Calendario</span>
         </a>
         <a href="{{ route('fccs.directiva') }}" class="nav-link-mobile px-4 py-3 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('fccs.directiva') ? 'active' : '' }}">
           <span class="flex items-center gap-3"><span class="text-lg">🏛️</span> Directiva</span>

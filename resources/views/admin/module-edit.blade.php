@@ -55,8 +55,13 @@
             @endif
 
             @if($module === 'partidos')
-                <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre_lugar" maxlength="100" required value="{{ old('nombre_lugar', $item->nombre_lugar) }}" placeholder="📍 Lugar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
+                    <input class="module-input w-full rounded-xl px-4 py-3" type="time" name="hora" value="{{ old('hora', $item->hora) }}" placeholder="🕒 Hora">
+                    <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="rival" maxlength="100" required value="{{ old('rival', $item->rival) }}" placeholder="🆚 Rival">
+                    <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre_lugar" maxlength="100" required value="{{ old('nombre_lugar', $item->nombre_lugar) }}" placeholder="📍 Lugar">
+                </div>
+                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="direccion" maxlength="180" value="{{ old('direccion', $item->direccion) }}" placeholder="🗺️ Dirección">
             @endif
 
             @if($module === 'premios')

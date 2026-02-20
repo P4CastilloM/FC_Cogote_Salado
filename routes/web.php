@@ -10,6 +10,7 @@ use App\Http\Controllers\FotosController;
 use App\Http\Controllers\NoticiasController;
 use App\Http\Controllers\DirectivaController;
 use App\Http\Controllers\PlantelController;
+use App\Http\Controllers\CalendarioController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -55,6 +56,11 @@ Route::get('/fccogotesalado', [AvisoController::class, 'home'])
 Route::get('/fccogotesalado/plantel', [PlantelController::class, 'index'])
     ->middleware(TrackPageVisit::class)
     ->name('fccs.plantel');
+
+/** CALENDARIO */
+Route::get('/fccogotesalado/calendario', [CalendarioController::class, 'index'])
+    ->middleware(TrackPageVisit::class)
+    ->name('fccs.calendario');
 
 /** DIRECTIVA */
 Route::get('/fccogotesalado/directiva', [DirectivaController::class, 'index'])
