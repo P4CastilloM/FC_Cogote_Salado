@@ -252,16 +252,16 @@
     {{-- =========================================================
        ✅ NOTICIAS
     ========================================================== --}}
-    <section id="noticias" class="py-12 md:py-14 bg-club-gray">
+    <section id="noticias" class="py-8 md:py-10 bg-club-gray">
       <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between gap-4 mb-8">
+        <div class="flex items-center justify-between gap-4 mb-6">
           <h2 id="noticias-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
             <span class="text-club-gold">📰</span> ÚLTIMAS NOTICIAS
           </h2>
           <a href="{{ route('fccs.noticias.index') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver todas →</a>
         </div>
 
-        <div class="flex items-center justify-end gap-2 mb-4">
+        <div class="flex items-center justify-end gap-2 mb-3">
           <button id="noticia-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
           <button id="noticia-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
         </div>
@@ -308,16 +308,16 @@
     {{-- =========================================================
        ✅ PLANTEL (DESTACADOS)
     ========================================================== --}}
-    <section id="plantel" class="py-12 md:py-14 bg-gradient-to-b from-club-gray to-club-dark">
+    <section id="plantel" class="py-8 md:py-10 bg-gradient-to-b from-club-gray to-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between gap-4 mb-8">
+        <div class="flex items-center justify-between gap-4 mb-6">
           <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
             <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
           </h2>
           <a href="{{ route('fccs.plantel') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver más →</a>
         </div>
 
-        <div class="flex items-center justify-end gap-2 mb-4">
+        <div class="flex items-center justify-end gap-2 mb-3">
           <button id="destacado-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
           <button id="destacado-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
         </div>
@@ -372,7 +372,7 @@
     {{-- =========================================================
        ✅ CALENDARIO
     ========================================================== --}}
-    <section id="calendario" class="py-12 md:py-14 bg-gradient-to-b from-club-dark to-club-gray">
+    <section id="calendario" class="py-8 md:py-10 bg-gradient-to-b from-club-dark to-club-gray">
       <div class="max-w-7xl mx-auto px-4">
         <div class="flex items-center justify-between mb-8">
           <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
@@ -404,7 +404,7 @@
     {{-- =========================================================
        ✅ DIRECTIVA
     ========================================================== --}}
-    <section id="directiva" class="py-12 md:py-14 bg-club-dark">
+    <section id="directiva" class="py-8 md:py-10 bg-club-dark">
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
 
@@ -431,7 +431,7 @@
     {{-- =========================================================
        ✅ GALERÍA
     ========================================================== --}}
-    <section id="fotos" class="py-12 md:py-14 bg-club-gray">
+    <section id="fotos" class="py-8 md:py-10 bg-club-gray">
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">📸</span> GALERÍA DE FOTOS</h2>
 
