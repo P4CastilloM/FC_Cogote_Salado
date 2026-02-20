@@ -83,7 +83,7 @@
                             <option value="">Selecciona una posición</option>
                             <option value="ARQUERO" @selected(old('posicion') === 'ARQUERO')>🧤 Arquero</option>
                             <option value="DEFENSA" @selected(old('posicion') === 'DEFENSA')>🛡️ Defensa</option>
-                            <option value="CENTRAL" @selected(old('posicion') === 'CENTRAL')>🧱 Central</option>
+                            <option value="MEDIOCAMPISTA" @selected(old('posicion') === 'MEDIOCAMPISTA')>🎯 Mediocampista</option>
                             <option value="DELANTERO" @selected(old('posicion') === 'DELANTERO')>⚽ Delantero</option>
                         </select>
                     </div>

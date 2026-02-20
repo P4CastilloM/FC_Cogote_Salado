@@ -36,7 +36,7 @@
             <input class="player-input w-full rounded-xl px-4 py-3" type="number" name="numero_camiseta" min="1" max="65535" required value="{{ old('numero_camiseta', $item->numero_camiseta) }}" placeholder="# Número camiseta">
 
             <select name="posicion" required class="player-input player-select w-full rounded-xl px-4 py-3">
-                @foreach(['ARQUERO' => '🧤 Arquero','DEFENSA' => '🛡️ Defensa','CENTRAL' => '🧱 Central','DELANTERO' => '⚽ Delantero'] as $value => $label)
+                @foreach(['ARQUERO' => '🧤 Arquero','DEFENSA' => '🛡️ Defensa','MEDIOCAMPISTA' => '🎯 Mediocampista','DELANTERO' => '⚽ Delantero'] as $value => $label)
                     <option value="{{ $value }}" @selected(old('posicion', $item->posicion) === $value)>{{ $label }}</option>
                 @endforeach
             </select>

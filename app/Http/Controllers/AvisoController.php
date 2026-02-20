@@ -45,7 +45,7 @@ class AvisoController extends Controller
                 $jugador->posicion_label = match ($jugador->posicion) {
                     'ARQUERO' => 'Portero',
                     'DEFENSA' => 'Defensa',
-                    'CENTRAL' => 'Central',
+                    'MEDIOCAMPISTA' => 'Mediocampista',
                     'DELANTERO' => 'Delantero',
                     default => ucfirst(mb_strtolower((string) $jugador->posicion)),
                 };

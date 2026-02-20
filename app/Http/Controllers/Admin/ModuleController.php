@@ -135,7 +135,7 @@ class ModuleController extends Controller
                 'rut' => ['required', 'integer', 'min:1', 'max:99999999', 'unique:jugadores,rut'],
                 'nombre' => ['required', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
-                'posicion' => ['required', 'in:ARQUERO,DELANTERO,CENTRAL,DEFENSA'],
+                'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -353,7 +353,7 @@ class ModuleController extends Controller
             $data = $request->validate([
                 'nombre' => ['required', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
-                'posicion' => ['required', 'in:ARQUERO,DELANTERO,CENTRAL,DEFENSA'],
+                'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
