@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ModuleController extends Controller
@@ -147,7 +149,7 @@ class ModuleController extends Controller
             }
 
             if ($request->hasFile('foto')) {
-                $data['foto'] = $request->file('foto')->store('jugadores', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'jugadores');
             }
 
             $data['goles'] = $data['goles'] ?? 0;
@@ -173,10 +175,10 @@ class ModuleController extends Controller
             ]);
 
             if ($request->hasFile('foto')) {
-                $data['foto'] = $request->file('foto')->store('noticias', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'noticias');
             }
             if ($request->hasFile('foto2')) {
-                $data['foto2'] = $request->file('foto2')->store('noticias', 'public');
+                $data['foto2'] = $this->storeUploadedWebp($request->file('foto2'), 'noticias');
             }
 
             $data['created_at'] = now();
@@ -204,7 +206,7 @@ class ModuleController extends Controller
             }
 
             if ($request->hasFile('foto')) {
-                $data['foto'] = $request->file('foto')->store('avisos', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'avisos');
             }
 
             $data['created_at'] = now();
@@ -277,7 +279,7 @@ class ModuleController extends Controller
             $data = $request->validate($rules);
 
             if ($request->hasFile('foto')) {
-                $data['foto'] = $request->file('foto')->store('ayudantes', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'ayudantes');
             }
 
             $data['activo'] = $request->boolean('activo', true);
@@ -318,7 +320,7 @@ class ModuleController extends Controller
                 'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
-            $path = $request->file('foto')->store('fotos', 'public');
+            $path = $this->storeUploadedWebp($request->file('foto'), 'fotos');
             $this->logModification('album', 'añadir', basename($path), basename($path));
 
             return redirect()->route('admin.album.create')->with('status', 'item-created');
@@ -383,7 +385,7 @@ class ModuleController extends Controller
                 if ($old) {
                     Storage::disk('public')->delete($old);
                 }
-                $data['foto'] = $request->file('foto')->store('jugadores', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'jugadores');
             }
             $data['goles'] = $data['goles'] ?? 0;
             $data['asistencia'] = $data['asistencia'] ?? 0;
@@ -409,7 +411,7 @@ class ModuleController extends Controller
                     if ($old) {
                         Storage::disk('public')->delete($old);
                     }
-                    $data[$field] = $request->file($field)->store('noticias', 'public');
+                    $data[$field] = $this->storeUploadedWebp($request->file($field), 'noticias');
                 }
             }
             $data['updated_at'] = now();
@@ -437,7 +439,7 @@ class ModuleController extends Controller
                 if ($old) {
                     Storage::disk('public')->delete($old);
                 }
-                $data['foto'] = $request->file('foto')->store('avisos', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'avisos');
             }
             $data['updated_at'] = now();
             DB::table('avisos')->where('id', $id)->update($data);
@@ -501,7 +503,7 @@ class ModuleController extends Controller
                 if ($old) {
                     Storage::disk('public')->delete($old);
                 }
-                $data['foto'] = $request->file('foto')->store('ayudantes', 'public');
+                $data['foto'] = $this->storeUploadedWebp($request->file('foto'), 'ayudantes');
             }
             $data['activo'] = $request->boolean('activo', true);
             if ($module !== 'directiva') {
@@ -591,6 +593,49 @@ class ModuleController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+
+    private function storeUploadedWebp(UploadedFile $file, string $directory): string
+    {
+        if (! function_exists('imagewebp')) {
+            return $file->store($directory, 'public');
+        }
+
+        $image = $this->createImageResource($file->getRealPath(), strtolower($file->getClientOriginalExtension()));
+
+        if (! $image) {
+            return $file->store($directory, 'public');
+        }
+
+        $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $filename = Str::slug($filename) ?: 'img';
+        $filename .= '-'.Str::random(8).'.webp';
+        $path = trim($directory, '/').'/'.$filename;
+
+        ob_start();
+        $saved = imagewebp($image, null, 82);
+        $binary = ob_get_clean();
+        imagedestroy($image);
+
+        if (! $saved || $binary === false) {
+            return $file->store($directory, 'public');
+        }
+
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
+    }
+
+    private function createImageResource(string $path, string $extension)
+    {
+        return match ($extension) {
+            'jpg', 'jpeg' => @imagecreatefromjpeg($path),
+            'png' => @imagecreatefrompng($path),
+            'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : null,
+            'gif' => @imagecreatefromgif($path),
+            default => null,
+        };
     }
 
 

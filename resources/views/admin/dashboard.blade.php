@@ -16,6 +16,14 @@
         @endforeach
     </div>
 
+
+    @if(session('status'))
+        <div class="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{{ session('error') }}</div>
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
         <div class="glass-card rounded-2xl p-5">
             <p class="text-xs uppercase text-slate-400 tracking-wide">📱 Dispositivos únicos hoy</p>
@@ -70,6 +78,17 @@
                 <a class="quick-link" href="{{ route('admin.staff.index') }}">🤝 Gestionar ayudantes</a>
             @endif
         </div>
+
+
+        @if($isAdmin)
+            <form method="POST" action="{{ route('admin.dashboard.convert-images-webp') }}" class="mt-4">
+                @csrf
+                <button type="submit" class="quick-link w-full text-left border border-amber-400/40 hover:border-amber-300">
+                    🛠️ Convertir imágenes antiguas a WebP (una sola vez)
+                </button>
+                <p class="text-xs text-slate-500 mt-2">Convierte fotos históricas (jugadores, noticias, avisos, ayudantes y álbum) a .webp y actualiza rutas en base de datos para no perder imágenes.</p>
+            </form>
+        @endif
     </div>
 @endsection
 
