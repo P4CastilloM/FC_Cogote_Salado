@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Galería FC Cogote Salado</title>
+    <title>Galería FC Cogote Salado</title>
+  @include('public.partials.seo-meta', [
+    'seoTitle' => 'Galería - FC Cogote Salado',
+    'seoDescription' => 'Fotos y momentos destacados de FC Cogote Salado.',
+    'seoUrl' => route('fccs.fotos'),
+  ])
 
   <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
 
