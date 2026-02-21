@@ -47,12 +47,14 @@ class AvisoController extends Controller
             ->get();
 
         $jugadores = DB::table('jugadores')
-            ->select('rut', 'nombre', 'foto', 'numero_camiseta', 'posicion')
+            ->select('rut', 'nombre', 'sobrenombre', 'foto', 'numero_camiseta', 'posicion')
             ->orderBy('numero_camiseta')
             ->limit(8)
             ->get()
             ->map(function ($jugador) {
-                $jugador->primer_nombre = mb_strtoupper(trim(explode(' ', trim((string) $jugador->nombre))[0] ?? 'JUGADOR'));
+                $sobrenombre = trim((string) ($jugador->sobrenombre ?? ''));
+                $primerNombre = trim(explode(' ', trim((string) $jugador->nombre))[0] ?? 'JUGADOR');
+                $jugador->primer_nombre = mb_strtoupper($sobrenombre !== '' ? $sobrenombre : $primerNombre);
                 $jugador->posicion_label = match ($jugador->posicion) {
                     'ARQUERO' => 'Portero',
                     'DEFENSA' => 'Defensa',
