@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CalendarioController extends Controller
 {
@@ -18,7 +19,7 @@ class CalendarioController extends Controller
             return [
                 'fecha' => $partido->fecha,
                 'rival' => $partido->rival ?? 'Rival por confirmar',
-                'hora' => $partido->hora,
+                'hora' => filled($partido->hora) ? Str::of((string) $partido->hora)->substr(0, 5)->toString() : null,
                 'ubicacion' => $partido->nombre_lugar,
                 'direccion' => $partido->direccion,
                 'temporada' => $partido->temporada_descripcion,

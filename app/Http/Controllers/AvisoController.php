@@ -75,7 +75,12 @@ class AvisoController extends Controller
             ->select('partidos.*', 'temporadas.descripcion as temporada_descripcion')
             ->orderBy('partidos.fecha')
             ->limit(6)
-            ->get();
+            ->get()
+            ->map(function ($partido) {
+                $partido->hora = filled($partido->hora) ? Str::of((string) $partido->hora)->substr(0, 5)->toString() : null;
+
+                return $partido;
+            });
 
         $hasPriority = Schema::hasColumn('ayudantes', 'prioridad');
 
