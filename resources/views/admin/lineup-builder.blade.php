@@ -123,14 +123,14 @@
       const color = item.team === 'A' ? '#84cc16' : '#fbbf24';
 
       return `
-        <div class="field-player rounded-lg p-1.5 md:p-2 bg-black/60 border-2" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 10px ${color}80" data-player-id="${item.playerId}" draggable="true">
+        <div class="field-player rounded-xl p-1.5 md:p-2 bg-gradient-to-b from-slate-800/95 to-slate-900/95 border-2 w-[84px] md:w-[98px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 12px ${color}70" data-player-id="${item.playerId}" draggable="true">
           <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
-          <div class="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden border border-white/30 bg-white/10 flex items-center justify-center">
+          <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border border-white/25 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-[10px] md:text-[11px] font-bold">${getInitials(player.name)}</span>`
-              : `<span class="text-white text-[10px] md:text-[11px] font-bold">${getInitials(player.name)}</span>`}
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
+              : `<span class="text-white text-sm font-bold">${getInitials(player.name)}</span>`}
           </div>
-          <div class="text-[10px] md:text-[11px] text-white truncate max-w-[72px] md:max-w-[84px] text-center font-medium">${player.name}</div>
+          <div class="mt-1 text-[10px] md:text-[11px] text-white text-center font-semibold leading-tight whitespace-normal break-words min-h-[1.6rem]">${player.name}</div>
         </div>`;
     }
 
