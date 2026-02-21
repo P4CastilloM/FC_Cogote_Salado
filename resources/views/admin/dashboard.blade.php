@@ -78,17 +78,6 @@
                 <a class="quick-link" href="{{ route('admin.staff.index') }}">🤝 Gestionar ayudantes</a>
             @endif
         </div>
-
-
-        @if($isAdmin)
-            <form method="POST" action="{{ route('admin.dashboard.convert-images-webp') }}" class="mt-4">
-                @csrf
-                <button type="submit" class="quick-link w-full text-left border border-amber-400/40 hover:border-amber-300">
-                    🛠️ Convertir imágenes antiguas a WebP (una sola vez)
-                </button>
-                <p class="text-xs text-slate-500 mt-2">Convierte fotos históricas (jugadores, noticias, avisos, ayudantes y álbum) a .webp y actualiza rutas en base de datos para no perder imágenes.</p>
-            </form>
-        @endif
     </div>
 @endsection
 
