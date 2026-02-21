@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ $noticia->titulo }} - FC Cogote Salado</title>
+    <title>{{ $noticia->titulo }} - FC Cogote Salado</title>
+  @include('public.partials.seo-meta', [
+    'seoTitle' => $noticia->titulo.' - FC Cogote Salado',
+    'seoDescription' => $noticia->subtitulo ?: 'Lee la noticia completa de FC Cogote Salado.',
+    'seoUrl' => route('fccs.noticias.show', $noticia->id),
+    'seoImage' => $noticia->foto ? asset('storage/'.$noticia->foto) : asset('storage/logo/logo_fccs_s_f.png'),
+  ])
   <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

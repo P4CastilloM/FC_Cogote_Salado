@@ -4,7 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - FC Cogote Salado</title>
+        <title>Login - FC Cogote Salado</title>
+    @include('public.partials.seo-meta', [
+        'seoTitle' => 'Login - FC Cogote Salado',
+        'seoDescription' => 'Accede al panel de administración de FC Cogote Salado.',
+        'seoUrl' => route('login'),
+    ])
 
     @vite(['resources/css/app.css', 'resources/css/auth-login.css', 'resources/js/app.js', 'resources/js/auth-login.js'])
 </head>

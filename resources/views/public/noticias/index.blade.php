@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Noticias - FC Cogote Salado</title>
+    <title>Noticias - FC Cogote Salado</title>
+  @include('public.partials.seo-meta', [
+    'seoTitle' => 'Noticias - FC Cogote Salado',
+    'seoDescription' => 'Últimas noticias y novedades de FC Cogote Salado.',
+    'seoUrl' => route('fccs.noticias.index'),
+  ])
   <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
