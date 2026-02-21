@@ -186,12 +186,12 @@
 
           {{-- Controles PC --}}
           <div class="hidden md:flex gap-2">
-            <button id="aviso-prev" class="w-10 h-10 rounded-full bg-club-gold/20 hover:bg-club-gold/40 flex items-center justify-center transition-colors">
+            <button id="aviso-prev" class="w-10 h-10 rounded-full border border-lime-400/40 bg-lime-500/15 text-lime-300 hover:bg-lime-500/30 flex items-center justify-center transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
             </button>
-            <button id="aviso-next" class="w-10 h-10 rounded-full bg-club-gold/20 hover:bg-club-gold/40 flex items-center justify-center transition-colors">
+            <button id="aviso-next" class="w-10 h-10 rounded-full border border-lime-400/40 bg-lime-500/15 text-lime-300 hover:bg-lime-500/30 flex items-center justify-center transition-colors">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
@@ -258,12 +258,11 @@
           <h2 id="noticias-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
             <span class="text-club-gold">📰</span> ÚLTIMAS NOTICIAS
           </h2>
-          <a href="{{ route('fccs.noticias.index') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver todas →</a>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 mb-3">
-          <button id="noticia-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
-          <button id="noticia-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
+          <div class="flex items-center gap-2">
+            <a href="{{ route('fccs.noticias.index') }}" class="px-4 py-2 rounded-xl border border-lime-400/40 text-lime-300 hover:bg-lime-500/20 transition">Ver todas →</a>
+            <button id="noticia-prev" class="w-9 h-9 rounded-full border border-lime-400/40 bg-lime-500/15 hover:bg-lime-500/30 text-lime-300 flex items-center justify-center">‹</button>
+            <button id="noticia-next" class="w-9 h-9 rounded-full border border-lime-400/40 bg-lime-500/15 hover:bg-lime-500/30 text-lime-300 flex items-center justify-center">›</button>
+          </div>
         </div>
 
         <div id="noticias-container" class="overflow-hidden">
@@ -314,12 +313,11 @@
           <h2 id="destacados-title" class="font-bebas text-3xl md:text-4xl tracking-wider">
             <span class="text-club-gold">⭐</span> JUGADORES DESTACADOS
           </h2>
-          <a href="{{ route('fccs.plantel') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver más →</a>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 mb-3">
-          <button id="destacado-prev" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">‹</button>
-          <button id="destacado-next" class="w-9 h-9 rounded-full bg-white/10 hover:bg-club-gold/20 text-club-gold flex items-center justify-center">›</button>
+          <div class="flex items-center gap-2">
+            <a href="{{ route('fccs.plantel') }}" class="px-4 py-2 rounded-xl border border-lime-400/40 text-lime-300 hover:bg-lime-500/20 transition">Ver más →</a>
+            <button id="destacado-prev" class="w-9 h-9 rounded-full border border-lime-400/40 bg-lime-500/15 hover:bg-lime-500/30 text-lime-300 flex items-center justify-center">‹</button>
+            <button id="destacado-next" class="w-9 h-9 rounded-full border border-lime-400/40 bg-lime-500/15 hover:bg-lime-500/30 text-lime-300 flex items-center justify-center">›</button>
+          </div>
         </div>
 
         <div id="destacados-container" class="overflow-hidden">
@@ -411,12 +409,7 @@
     ========================================================== --}}
     <section id="directiva" class="py-8 md:py-10 bg-club-dark">
       <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider">
-            <span class="text-club-gold">📅</span> CALENDARIO
-          </h2>
-          <a href="{{ route('fccs.calendario') }}" class="px-4 py-2 rounded-xl border border-club-gold/40 text-club-gold hover:bg-club-gold/10 transition">Ver calendario completo →</a>
-        </div>
+        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(4) as $dir)
