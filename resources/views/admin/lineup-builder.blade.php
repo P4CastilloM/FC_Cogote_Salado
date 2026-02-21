@@ -38,7 +38,7 @@
     }
   </style>
 
-  <section class="max-w-7xl mx-auto">
+  <section class="w-full">
     <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4">
       <div class="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
         <div class="flex items-center gap-3">
@@ -63,7 +63,7 @@
       </div>
 
       <div id="field-wrapper" class="w-full">
-        <div id="field" class="field-container w-full aspect-[16/10] rounded-xl border-2 md:border-4 border-white/30 overflow-hidden">
+        <div id="field" class="field-container w-full aspect-[16/10] lg:aspect-[18/9] xl:aspect-[19/9] rounded-xl border-2 md:border-4 border-white/30 overflow-hidden">
           <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 62.5" preserveAspectRatio="none">
             <rect x="2" y="2" width="96" height="58.5" fill="none" stroke="rgba(255,255,255,.45)" stroke-width=".5"/>
             <line x1="50" y1="2" x2="50" y2="60.5" stroke="rgba(255,255,255,.45)" stroke-width=".5"/>
@@ -123,14 +123,14 @@
       const color = item.team === 'A' ? '#84cc16' : '#fbbf24';
 
       return `
-        <div class="field-player rounded-xl p-1.5 md:p-2 bg-gradient-to-b from-slate-800/95 to-slate-900/95 border-2 w-[84px] md:w-[98px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 12px ${color}70" data-player-id="${item.playerId}" draggable="true">
+        <div class="field-player rounded-xl p-1 md:p-1.5 bg-gradient-to-b from-slate-800/95 to-slate-900/95 border-2 w-[72px] md:w-[84px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 12px ${color}70" data-player-id="${item.playerId}" draggable="true">
           <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
           <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border border-white/25 bg-white/10 flex items-center justify-center">
             ${player.photo
               ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-sm font-bold">${getInitials(player.name)}</span>`}
           </div>
-          <div class="mt-1 text-[10px] md:text-[11px] text-white text-center font-semibold leading-tight whitespace-normal break-words min-h-[1.6rem]">${player.name}</div>
+          <div class="mt-1 text-[9px] md:text-[10px] text-white text-center font-semibold leading-tight whitespace-normal break-words min-h-[1.35rem]">${player.name}</div>
         </div>`;
     }
 
