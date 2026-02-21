@@ -13,6 +13,7 @@
     .glass-card { background: rgba(255,255,255,.06); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.1); }
     .day-hover:hover { transform: translateY(-2px); background: rgba(132, 204, 22, 0.1); }
     .day-selected { box-shadow: 0 0 18px rgba(132, 204, 22, .45); }
+    .info-icon-box { width:2rem; height:2rem; border-radius:.7rem; display:flex; align-items:center; justify-content:center; font-size:.95rem; }
   </style>
 </head>
 <body class="h-full bg-club-dark font-inter text-white overflow-auto">
@@ -43,11 +44,12 @@
         </div>
 
         <div class="lg:w-96 glass-card rounded-2xl p-4 md:p-6">
-          <h3 class="text-lg font-bold text-white mb-4">📌 Detalle del día</h3>
+          <h3 class="text-2xl font-bebas tracking-wide text-white mb-4 flex items-center gap-2">📅 <span>Detalle del día</span></h3>
           <div id="event-panel">
-            <div id="no-selection" class="text-center py-12 text-gray-400">Selecciona un día para ver los eventos</div>
+            <div id="no-selection" class="text-center py-12 text-gray-400"><div class="text-3xl mb-2">🗓️</div><p>Selecciona un día para ver los eventos</p></div>
             <div id="event-card" class="hidden"></div>
             <div id="no-event" class="hidden text-center py-12">
+              <div class="text-3xl mb-2">⚽</div>
               <p id="no-event-date" class="text-white font-medium mb-2"></p>
               <p class="text-gray-400 text-sm">No hay partidos programados</p>
             </div>
@@ -120,18 +122,41 @@
       if (match) {
         noEvent.classList.add('hidden');
         eventCard.classList.remove('hidden');
+        const safeAddress = (match.direccion || '').replace(/'/g, "\\'");
+        const mapsQuery = encodeURIComponent(match.direccion || match.ubicacion || '');
+
         eventCard.innerHTML = `
           <div class="space-y-4">
-            <div class="pb-4 border-b border-white/10">
-              <p class="text-xs text-lime-400 font-semibold uppercase tracking-wider">Próximo partido</p>
-              <p class="text-lg font-bold text-white">vs ${match.rival}</p>
+            <div class="flex items-center gap-3 pb-4 border-b border-white/10">
+              <div class="w-12 h-12 rounded-xl bg-lime-500/20 flex items-center justify-center text-xl">⚽</div>
+              <div>
+                <p class="text-xs text-lime-400 font-semibold uppercase tracking-wider">Próximo partido</p>
+                <p class="text-2xl font-bebas leading-none text-white">vs ${match.rival}</p>
+              </div>
             </div>
-            <div class="space-y-2 text-sm text-gray-200">
-              <p><span class="text-gray-400">Fecha:</span> ${formatDisplayDate(match.fecha)}</p>
-              <p><span class="text-gray-400">Hora:</span> ${match.hora || '--:--'} hrs</p>
-              <p><span class="text-gray-400">Lugar:</span> ${match.ubicacion}</p>
-              <p><span class="text-gray-400">Dirección:</span> ${match.direccion || 'Por confirmar'}</p>
-              <p><span class="text-gray-400">Temporada:</span> ${match.temporada || 'Activa'}</p>
+
+            <div class="space-y-3 text-sm text-gray-200">
+              <div class="flex items-start gap-3">
+                <div class="info-icon-box bg-amber-500/20">📅</div>
+                <div><p class="text-xs text-gray-400">Fecha</p><p class="text-white text-lg font-semibold leading-tight">${formatDisplayDate(match.fecha)}</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="info-icon-box bg-lime-500/20">🕒</div>
+                <div><p class="text-xs text-gray-400">Hora</p><p class="text-white text-2xl font-bebas leading-none">${match.hora || '--:--'} hrs</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="info-icon-box bg-white/10">📍</div>
+                <div><p class="text-xs text-gray-400">Ubicación</p><p class="text-white text-lg font-semibold leading-tight">${match.ubicacion}</p></div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="info-icon-box bg-white/10">🗺️</div>
+                <div><p class="text-xs text-gray-400">Dirección</p><p class="text-white text-lg font-semibold leading-tight">${match.direccion || 'Por confirmar'}</p></div>
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-2">
+              <button onclick="copyAddress('${safeAddress}')" class="w-full py-3 px-4 bg-lime-500 hover:bg-lime-400 text-black font-bold rounded-xl transition">📋 Copiar dirección</button>
+              <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition flex items-center justify-center">🧭 Abrir en Maps</a>
             </div>
           </div>
         `;
@@ -139,6 +164,15 @@
         eventCard.classList.add('hidden');
         noEvent.classList.remove('hidden');
         noEventDate.textContent = formatDisplayDate(dateStr);
+      }
+    }
+
+    async function copyAddress(address) {
+      if (!address) return;
+      try {
+        await navigator.clipboard.writeText(address);
+      } catch (error) {
+        console.error('No se pudo copiar la dirección', error);
       }
     }
 
