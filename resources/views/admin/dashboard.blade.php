@@ -29,13 +29,17 @@
             <p class="text-xs uppercase text-slate-400 tracking-wide">🗓️ Visitas del año</p>
             <p class="text-3xl font-bold text-white mt-2">{{ $visitSummary['year'] }}</p>
         </div>
+        <div class="glass-card rounded-2xl p-5">
+            <p class="text-xs uppercase text-slate-400 tracking-wide">📱 Dispositivos únicos (desde hoy)</p>
+            <p class="text-3xl font-bold text-white mt-2">{{ $visitSummary['unique_devices_since_today'] }}</p>
+        </div>
     </div>
 
     <div class="glass-card rounded-2xl p-5 mt-6">
-        <h2 class="text-lg font-semibold text-white mb-3">📈 Visitas por día (últimos 30 días)</h2>
-        <p class="text-sm text-slate-400 mb-4">Gráfico simple y liviano para evitar bloqueos en el panel.</p>
+        <h2 class="text-lg font-semibold text-white mb-3">📈 Dispositivos que entran (desde hoy)</h2>
+        <p class="text-sm text-slate-400 mb-4">Este gráfico ignora los datos históricos anteriores a hoy para partir desde 0.</p>
         <div class="h-72">
-            <canvas id="dailyVisitsChart"></canvas>
+            <canvas id="deviceVisitsChart"></canvas>
         </div>
     </div>
 
@@ -60,61 +64,48 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-        const dailySeries = @json($dailySeries);
+        const deviceSeries = @json($deviceSeries);
         const chartTheme = {
             borderColor: '#84cc16',
-            backgroundColor: 'rgba(132, 204, 22, 0.25)',
             textColor: '#cbd5e1'
         };
 
-        const simpleOptions = {
+        const pieOptions = {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
                 duration: 700,
                 easing: 'easeOutQuart'
             },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            },
             plugins: {
-                legend: {display: false}
-            },
-            scales: {
-                x: {
-                    ticks: {
+                legend: {
+                    labels: {
                         color: chartTheme.textColor,
-                        maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 8
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: {color: chartTheme.textColor}
+                    },
                 }
             }
         };
 
-        const dailyCtx = document.getElementById('dailyVisitsChart');
-        if (dailyCtx) {
-            new Chart(dailyCtx, {
-                type: 'line',
+        const deviceCtx = document.getElementById('deviceVisitsChart');
+        if (deviceCtx) {
+            new Chart(deviceCtx, {
+                type: 'doughnut',
                 data: {
-                    labels: dailySeries.map(item => item.label),
+                    labels: deviceSeries.map(item => item.label),
                     datasets: [{
-                        label: 'Visitas',
-                        data: dailySeries.map(item => item.total),
-                        borderColor: chartTheme.borderColor,
-                        backgroundColor: chartTheme.backgroundColor,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 2,
-                        pointHoverRadius: 4
+                        label: 'Dispositivos únicos',
+                        data: deviceSeries.map(item => item.total),
+                        backgroundColor: [
+                            'rgba(132, 204, 22, 0.85)',
+                            'rgba(56, 189, 248, 0.85)',
+                            'rgba(251, 191, 36, 0.85)',
+                            'rgba(167, 139, 250, 0.85)',
+                        ],
+                        borderColor: 'rgba(15, 23, 42, 0.9)',
+                        borderWidth: 2,
                     }]
                 },
-                options: simpleOptions
+                options: pieOptions
             });
         }
     </script>

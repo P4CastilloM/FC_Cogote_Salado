@@ -442,7 +442,7 @@
         <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">📸</span> GALERÍA DE FOTOS</h2>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          @forelse(($fotos ?? collect())->take(7) as $foto)
+          @forelse(($fotos ?? collect())->take(3) as $foto)
             <a href="{{ route('fccs.fotos') }}" class="aspect-square rounded-xl overflow-hidden border border-club-gold/20 relative group block">
               <img src="{{ $foto['src'] }}" alt="{{ $foto['alt'] }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
               <div class="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent opacity-90"></div>

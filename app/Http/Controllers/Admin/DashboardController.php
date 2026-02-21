@@ -36,9 +36,10 @@ class DashboardController extends Controller
             'today' => 0,
             'month' => 0,
             'year' => 0,
+            'unique_devices_since_today' => 0,
         ];
 
-        $dailySeries = [];
+        $deviceSeries = [];
         if (Schema::hasTable('page_visits')) {
             $today = now()->toDateString();
             $monthStart = now()->startOfMonth()->toDateString();
@@ -48,26 +49,29 @@ class DashboardController extends Controller
                 'today' => DB::table('page_visits')->whereDate('visited_on', $today)->count(),
                 'month' => DB::table('page_visits')->whereDate('visited_on', '>=', $monthStart)->count(),
                 'year' => DB::table('page_visits')->whereDate('visited_on', '>=', $yearStart)->count(),
+                'unique_devices_since_today' => DB::table('page_visits')
+                    ->whereDate('visited_on', '>=', $today)
+                    ->selectRaw("COUNT(DISTINCT CONCAT(COALESCE(ip_address, ''), '|', COALESCE(user_agent, ''))) AS total")
+                    ->value('total') ?? 0,
             ];
 
-            $dailySeries = DB::table('page_visits')
-                ->selectRaw('visited_on as label, COUNT(*) as total')
-                ->whereDate('visited_on', '>=', now()->subDays(29)->toDateString())
-                ->groupBy('visited_on')
-                ->orderBy('visited_on')
+            $deviceSeries = DB::table('page_visits')
+                ->selectRaw("\n                    CASE\n                        WHEN user_agent LIKE '%Mobile%' AND user_agent NOT LIKE '%Tablet%' THEN 'Móvil'\n                        WHEN user_agent LIKE '%Tablet%' OR user_agent LIKE '%iPad%' THEN 'Tablet'\n                        WHEN user_agent LIKE '%Windows%' OR user_agent LIKE '%Macintosh%' OR user_agent LIKE '%Linux%' THEN 'Escritorio'\n                        ELSE 'Otro'\n                    END AS label,\n                    COUNT(DISTINCT CONCAT(COALESCE(ip_address, ''), '|', COALESCE(user_agent, ''))) AS total\n                ")
+                ->whereDate('visited_on', '>=', $today)
+                ->groupBy('label')
+                ->orderByDesc('total')
                 ->get()
                 ->map(fn ($row) => [
                     'label' => $row->label,
                     'total' => (int) $row->total,
                 ])
                 ->all();
-
         }
 
         return view('admin.dashboard', [
             'stats' => $stats,
             'visitSummary' => $visitSummary,
-            'dailySeries' => $dailySeries,
+            'deviceSeries' => $deviceSeries,
         ]);
     }
 }
