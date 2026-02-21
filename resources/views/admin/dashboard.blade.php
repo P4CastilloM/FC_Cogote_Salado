@@ -16,22 +16,26 @@
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
         <div class="glass-card rounded-2xl p-5">
-            <p class="text-xs uppercase text-slate-400 tracking-wide">👀 Visitas hoy</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ $visitSummary['today'] }}</p>
+            <p class="text-xs uppercase text-slate-400 tracking-wide">📱 Dispositivos únicos hoy</p>
+            <p class="text-3xl font-bold text-white mt-2">{{ $uniqueSummary['today'] }}</p>
+            <p class="text-xs text-slate-500 mt-2">Visitas totales hoy: {{ $visitSummary['today'] }}</p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-            <p class="text-xs uppercase text-slate-400 tracking-wide">📆 Visitas del mes</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ $visitSummary['month'] }}</p>
+            <p class="text-xs uppercase text-slate-400 tracking-wide">📆 Dispositivos únicos del mes</p>
+            <p class="text-3xl font-bold text-white mt-2">{{ $uniqueSummary['month'] }}</p>
+            <p class="text-xs text-slate-500 mt-2">Visitas totales mes: {{ $visitSummary['month'] }}</p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-            <p class="text-xs uppercase text-slate-400 tracking-wide">🗓️ Visitas del año</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ $visitSummary['year'] }}</p>
+            <p class="text-xs uppercase text-slate-400 tracking-wide">🗓️ Dispositivos únicos del año</p>
+            <p class="text-3xl font-bold text-white mt-2">{{ $uniqueSummary['year'] }}</p>
+            <p class="text-xs text-slate-500 mt-2">Visitas totales año: {{ $visitSummary['year'] }}</p>
         </div>
         <div class="glass-card rounded-2xl p-5">
-            <p class="text-xs uppercase text-slate-400 tracking-wide">📱 Dispositivos únicos (desde hoy)</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ $visitSummary['unique_devices_since_today'] }}</p>
+            <p class="text-xs uppercase text-slate-400 tracking-wide">📊 Dispositivos hoy por categoría</p>
+            <p class="text-3xl font-bold text-white mt-2">{{ array_sum(array_column($deviceSeries, 'total')) }}</p>
+            <p class="text-xs text-slate-500 mt-2">Agrupado en móvil/tablet/escritorio/otro</p>
         </div>
     </div>
 
@@ -40,6 +44,14 @@
         <p class="text-sm text-slate-400 mb-4">Este gráfico ignora los datos históricos anteriores a hoy para partir desde 0.</p>
         <div class="h-72">
             <canvas id="deviceVisitsChart"></canvas>
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-5 mt-6">
+        <h2 class="text-lg font-semibold text-white mb-3">📉 Dispositivos únicos por día (últimos 30 días)</h2>
+        <p class="text-sm text-slate-400 mb-4">Mismo enfoque del gráfico anterior, pero deduplicando por dispositivo para no contar tus recargas repetidas.</p>
+        <div class="h-72">
+            <canvas id="dailyUniqueDevicesChart"></canvas>
         </div>
     </div>
 
@@ -65,6 +77,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
         const deviceSeries = @json($deviceSeries);
+        const dailyUniqueSeries = @json($dailyUniqueSeries);
         const chartTheme = {
             borderColor: '#84cc16',
             textColor: '#cbd5e1'
@@ -106,6 +119,43 @@
                     }]
                 },
                 options: pieOptions
+            });
+        }
+
+        const dailyUniqueCtx = document.getElementById('dailyUniqueDevicesChart');
+        if (dailyUniqueCtx) {
+            new Chart(dailyUniqueCtx, {
+                type: 'line',
+                data: {
+                    labels: dailyUniqueSeries.map(item => item.label),
+                    datasets: [{
+                        label: 'Dispositivos únicos',
+                        data: dailyUniqueSeries.map(item => item.total),
+                        borderColor: '#84cc16',
+                        backgroundColor: 'rgba(132, 204, 22, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 700, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { labels: { color: chartTheme.textColor } }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: chartTheme.textColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: chartTheme.textColor }
+                        }
+                    }
+                }
             });
         }
     </script>

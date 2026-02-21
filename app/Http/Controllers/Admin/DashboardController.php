@@ -36,10 +36,16 @@ class DashboardController extends Controller
             'today' => 0,
             'month' => 0,
             'year' => 0,
-            'unique_devices_since_today' => 0,
+        ];
+
+        $uniqueSummary = [
+            'today' => 0,
+            'month' => 0,
+            'year' => 0,
         ];
 
         $deviceSeries = [];
+        $dailyUniqueSeries = [];
         if (Schema::hasTable('page_visits')) {
             $today = now()->toDateString();
             $monthStart = now()->startOfMonth()->toDateString();
@@ -49,10 +55,21 @@ class DashboardController extends Controller
                 'today' => DB::table('page_visits')->whereDate('visited_on', $today)->count(),
                 'month' => DB::table('page_visits')->whereDate('visited_on', '>=', $monthStart)->count(),
                 'year' => DB::table('page_visits')->whereDate('visited_on', '>=', $yearStart)->count(),
-                'unique_devices_since_today' => DB::table('page_visits')
-                    ->whereDate('visited_on', '>=', $today)
+            ];
+
+            $uniqueSummary = [
+                'today' => (int) (DB::table('page_visits')
+                    ->whereDate('visited_on', $today)
                     ->selectRaw("COUNT(DISTINCT CONCAT(COALESCE(ip_address, ''), '|', COALESCE(user_agent, ''))) AS total")
-                    ->value('total') ?? 0,
+                    ->value('total') ?? 0),
+                'month' => (int) (DB::table('page_visits')
+                    ->whereDate('visited_on', '>=', $monthStart)
+                    ->selectRaw("COUNT(DISTINCT CONCAT(COALESCE(ip_address, ''), '|', COALESCE(user_agent, ''))) AS total")
+                    ->value('total') ?? 0),
+                'year' => (int) (DB::table('page_visits')
+                    ->whereDate('visited_on', '>=', $yearStart)
+                    ->selectRaw("COUNT(DISTINCT CONCAT(COALESCE(ip_address, ''), '|', COALESCE(user_agent, ''))) AS total")
+                    ->value('total') ?? 0),
             ];
 
             $deviceSeries = DB::table('page_visits')
@@ -66,12 +83,33 @@ class DashboardController extends Controller
                     'total' => (int) $row->total,
                 ])
                 ->all();
+
+            $rangeStart = now()->subDays(29)->toDateString();
+            $dailyUniqueMap = DB::table('page_visits')
+                ->selectRaw("visited_on as label, COUNT(DISTINCT CONCAT(COALESCE(ip_address, ''), '|', COALESCE(user_agent, ''))) as total")
+                ->whereDate('visited_on', '>=', $rangeStart)
+                ->groupBy('visited_on')
+                ->orderBy('visited_on')
+                ->get()
+                ->keyBy('label');
+
+            $dailyUniqueSeries = collect(range(0, 29))
+                ->map(function ($offset) use ($dailyUniqueMap) {
+                    $date = now()->subDays(29 - $offset)->toDateString();
+                    return [
+                        'label' => $date,
+                        'total' => (int) optional($dailyUniqueMap->get($date))->total,
+                    ];
+                })
+                ->all();
         }
 
         return view('admin.dashboard', [
             'stats' => $stats,
             'visitSummary' => $visitSummary,
+            'uniqueSummary' => $uniqueSummary,
             'deviceSeries' => $deviceSeries,
+            'dailyUniqueSeries' => $dailyUniqueSeries,
         ]);
     }
 }
