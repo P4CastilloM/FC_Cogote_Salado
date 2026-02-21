@@ -139,7 +139,7 @@ class ModuleController extends Controller
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
             if (($data['posicion'] ?? null) === 'MEDIOCAMPISTA') {
@@ -372,7 +372,7 @@ class ModuleController extends Controller
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
             if (($data['posicion'] ?? null) === 'MEDIOCAMPISTA') {
                 $data['posicion'] = 'CENTRAL';
