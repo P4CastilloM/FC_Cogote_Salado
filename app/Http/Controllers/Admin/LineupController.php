@@ -13,17 +13,19 @@ class LineupController extends Controller
     public function index(): View
     {
         $players = DB::table('jugadores')
-            ->select('rut', 'nombre', 'foto', 'numero_camiseta')
+            ->select('rut', 'nombre', 'sobrenombre', 'foto', 'numero_camiseta')
             ->orderBy('numero_camiseta')
             ->orderBy('nombre')
             ->get()
             ->map(function ($player) {
+                $nickname = trim((string) ($player->sobrenombre ?? ''));
                 $fullName = trim((string) ($player->nombre ?? ''));
                 $firstName = trim((string) Str::of($fullName)->before(' '));
+                $displayName = $nickname !== '' ? $nickname : ($firstName !== '' ? $firstName : 'Jugador');
 
                 return [
                     'id' => (string) $player->rut,
-                    'name' => $firstName !== '' ? $firstName : 'Jugador',
+                    'name' => $displayName,
                     'photo' => ! empty($player->foto) ? Storage::url($player->foto) : null,
                 ];
             })

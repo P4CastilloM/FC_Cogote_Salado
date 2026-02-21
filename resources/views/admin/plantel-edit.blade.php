@@ -33,6 +33,8 @@
             </div>
 
             <input class="player-input w-full rounded-xl px-4 py-3" type="text" name="nombre" maxlength="25" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre completo">
+            <input class="player-input w-full rounded-xl px-4 py-3" type="text" name="sobrenombre" maxlength="25" value="{{ old('sobrenombre', $item->sobrenombre ?? '') }}" placeholder="✨ Sobrenombre (opcional)">
+            <p class="col-span-full text-xs text-slate-400">Se mostrará este sobrenombre en plantel y plantilla si está cargado.</p>
             <input class="player-input w-full rounded-xl px-4 py-3" type="number" name="numero_camiseta" min="1" max="65535" required value="{{ old('numero_camiseta', $item->numero_camiseta) }}" placeholder="# Número camiseta">
 
             <select name="posicion" required class="player-input player-select w-full rounded-xl px-4 py-3">

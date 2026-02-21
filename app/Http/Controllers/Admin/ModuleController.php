@@ -19,7 +19,7 @@ class ModuleController extends Controller
 
     /** @var array<string, array{table: string|null, fields: array<int, string>, label: string, icon: string}> */
     private array $modules = [
-        'plantel' => ['table' => 'jugadores', 'fields' => ['rut', 'nombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion'], 'label' => 'Plantel', 'icon' => '👥'],
+        'plantel' => ['table' => 'jugadores', 'fields' => ['rut', 'nombre', 'sobrenombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion'], 'label' => 'Plantel', 'icon' => '👥'],
         'noticias' => ['table' => 'noticias', 'fields' => ['temporada_id', 'titulo', 'subtitulo', 'cuerpo', 'fecha', 'foto', 'foto2'], 'label' => 'Noticias', 'icon' => '📰'],
         'avisos' => ['table' => 'avisos', 'fields' => ['temporada_id', 'titulo', 'descripcion', 'fecha', 'foto', 'fijado'], 'label' => 'Avisos', 'icon' => '📢'],
         'album' => ['table' => null, 'fields' => ['foto'], 'label' => 'Álbum / Fotos', 'icon' => '📸'],
@@ -134,6 +134,7 @@ class ModuleController extends Controller
             $data = $request->validate([
                 'rut' => ['required', 'integer', 'min:1', 'max:99999999', 'unique:jugadores,rut'],
                 'nombre' => ['required', 'string', 'max:25'],
+                'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
@@ -366,6 +367,7 @@ class ModuleController extends Controller
         if ($module === 'plantel') {
             $data = $request->validate([
                 'nombre' => ['required', 'string', 'max:25'],
+                'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
@@ -635,7 +637,7 @@ class ModuleController extends Controller
     private function searchableColumnsFor(string $module): array
     {
         return match ($module) {
-            'plantel' => ['rut', 'nombre'],
+            'plantel' => ['rut', 'nombre', 'sobrenombre'],
             'noticias' => ['titulo', 'subtitulo'],
             'avisos' => ['titulo', 'descripcion'],
             'partidos' => ['rival', 'nombre_lugar', 'direccion', 'fecha'],

@@ -9,11 +9,16 @@ class PlantelController extends Controller
     public function index()
     {
         $jugadores = DB::table('jugadores')
-            ->select('rut', 'nombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion')
+            ->select('rut', 'nombre', 'sobrenombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion')
             ->orderBy('numero_camiseta')
             ->get()
             ->map(function ($jugador) {
-                $jugador->display_name = trim((string) ($jugador->nombre ?? 'Jugador sin nombre'));
+                $displayName = trim((string) ($jugador->sobrenombre ?? ''));
+                if ($displayName === '') {
+                    $displayName = trim((string) ($jugador->nombre ?? 'Jugador sin nombre'));
+                }
+
+                $jugador->display_name = $displayName !== '' ? $displayName : 'Jugador sin nombre';
                 $jugador->foto_url = ! empty($jugador->foto) ? asset('storage/'.$jugador->foto) : null;
                 $jugador->posicion_label = match ($jugador->posicion) {
                     'ARQUERO' => 'Arquero',
