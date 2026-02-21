@@ -48,75 +48,162 @@ heroDots.forEach(dot => {
 setInterval(nextHeroSlide, 5000);
 
 /* =========================================================
-   ✅ AVISOS CAROUSEL
+   ✅ CAROUSELS (AVISOS, NOTICIAS, DESTACADOS)
 ========================================================== */
-let currentAviso = 0;
-const avisosCarousel = document.getElementById('avisos-carousel');
-const avisosContainer = document.getElementById('avisos-container');
-const avisoCards = document.querySelectorAll('.aviso-card');
-const avisoDots = document.querySelectorAll('[data-aviso]');
-let avisosPerView = 1;
+function createCarousel(config) {
+  const state = {
+    current: 0,
+    perView: 1,
+    touchStartX: 0,
+    touchEndX: 0,
+  };
 
-function updateAvisosPerView() {
-  if (window.innerWidth >= 1024) avisosPerView = 3;
-  else if (window.innerWidth >= 768) avisosPerView = 2;
-  else avisosPerView = 1;
+  const carousel = document.getElementById(config.carouselId);
+  const container = document.getElementById(config.containerId);
+  const cards = Array.from(document.querySelectorAll(config.cardSelector));
+  const dots = Array.from(document.querySelectorAll(config.dotSelector));
+
+  if (!carousel || !container || cards.length === 0) {
+    return {
+      show: () => {},
+      next: () => {},
+      prev: () => {},
+      refresh: () => {},
+    };
+  }
+
+  function updatePerView() {
+    if (window.innerWidth >= 1024) state.perView = 3;
+    else if (window.innerWidth >= 768) state.perView = 2;
+    else state.perView = 1;
+  }
+
+  function renderDots(maxIndex) {
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('hidden', i > maxIndex);
+      dot.classList.toggle('active', i === state.current);
+      dot.classList.toggle('bg-club-gold', i === state.current);
+      dot.classList.toggle('bg-white/40', i !== state.current);
+    });
+  }
+
+  function show(index) {
+    updatePerView();
+    const maxIndex = Math.max(0, cards.length - state.perView);
+    state.current = Math.min(Math.max(0, index), maxIndex);
+
+    const translateX = -(state.current * (100 / state.perView));
+    carousel.style.transform = `translateX(${translateX}%)`;
+    renderDots(maxIndex);
+  }
+
+  function prev() { show(state.current - 1); }
+  function next() { show(state.current + 1); }
+
+  document.getElementById(config.prevId)?.addEventListener('click', prev);
+  document.getElementById(config.nextId)?.addEventListener('click', next);
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => show(parseInt(dot.dataset[config.dotDataKey], 10) || 0));
+  });
+
+  container.addEventListener('touchstart', (e) => {
+    state.touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  container.addEventListener('touchend', (e) => {
+    state.touchEndX = e.changedTouches[0].screenX;
+    const diff = state.touchStartX - state.touchEndX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) next();
+      else prev();
+    }
+  }, { passive: true });
+
+  show(0);
+
+  return {
+    show,
+    next,
+    prev,
+    refresh: () => show(state.current),
+    getCurrent: () => state.current,
+    getPerView: () => state.perView,
+    cardsCount: cards.length,
+  };
 }
 
-function showAviso(index) {
-  updateAvisosPerView();
-  const maxIndex = Math.max(0, avisoCards.length - avisosPerView);
-  currentAviso = Math.min(Math.max(0, index), maxIndex);
+const avisosCarouselCtl = createCarousel({
+  carouselId: 'avisos-carousel',
+  containerId: 'avisos-container',
+  cardSelector: '.aviso-card',
+  dotSelector: '[data-aviso]',
+  dotDataKey: 'aviso',
+  prevId: 'aviso-prev',
+  nextId: 'aviso-next',
+});
 
-  const translateX = -(currentAviso * (100 / avisosPerView));
-  if (avisosCarousel) avisosCarousel.style.transform = `translateX(${translateX}%)`;
+const noticiasCarouselCtl = createCarousel({
+  carouselId: 'noticias-carousel',
+  containerId: 'noticias-container',
+  cardSelector: '.noticia-card',
+  dotSelector: '[data-noticia]',
+  dotDataKey: 'noticia',
+  prevId: 'noticia-prev',
+  nextId: 'noticia-next',
+});
 
-  avisoDots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === currentAviso);
-    dot.classList.toggle('bg-club-gold', i === currentAviso);
-    dot.classList.toggle('bg-white/40', i !== currentAviso);
+const destacadosCarouselCtl = createCarousel({
+  carouselId: 'destacados-carousel',
+  containerId: 'destacados-container',
+  cardSelector: '.destacado-card',
+  dotSelector: '[data-destacado]',
+  dotDataKey: 'destacado',
+  prevId: 'destacado-prev',
+  nextId: 'destacado-next',
+});
+
+
+function initAvisosTextOverflow() {
+  const elements = Array.from(document.querySelectorAll('.js-aviso-desc'));
+  elements.forEach((el) => {
+    const fullText = (el.dataset.fullText || el.textContent || '').trim();
+    el.dataset.fullText = fullText;
+    el.classList.remove('aviso-scroll');
+    el.innerHTML = fullText;
+
+    const lineHeight = parseFloat(window.getComputedStyle(el).lineHeight || '20');
+    const maxHeight = lineHeight * 3;
+    el.style.maxHeight = `${maxHeight}px`;
+
+    if (el.scrollHeight > maxHeight + 2) {
+      el.classList.add('aviso-scroll');
+      const inner = document.createElement('span');
+      inner.className = 'aviso-desc-inner';
+      inner.textContent = fullText;
+      el.innerHTML = '';
+      el.appendChild(inner);
+
+      const distance = Math.max(0, inner.scrollHeight - maxHeight);
+      const duration = Math.max(7, Math.round(distance / 14) + 6);
+      el.style.setProperty('--aviso-scroll-distance', `${distance}px`);
+      el.style.setProperty('--aviso-duration', `${duration}s`);
+    }
   });
 }
 
-document.getElementById('aviso-prev')?.addEventListener('click', () => showAviso(currentAviso - 1));
-document.getElementById('aviso-next')?.addEventListener('click', () => showAviso(currentAviso + 1));
-
-avisoDots.forEach(dot => {
-  dot.addEventListener('click', () => showAviso(parseInt(dot.dataset.aviso, 10)));
-});
-
-/* =========================================================
-   ✅ SWIPE EN MÓVIL (AVISOS)
-========================================================== */
-let touchStartX = 0;
-let touchEndX = 0;
-
-avisosContainer?.addEventListener('touchstart', (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-}, { passive: true });
-
-avisosContainer?.addEventListener('touchend', (e) => {
-  touchEndX = e.changedTouches[0].screenX;
-  const swipeThreshold = 50;
-  const diff = touchStartX - touchEndX;
-
-  if (Math.abs(diff) > swipeThreshold) {
-    if (diff > 0) showAviso(currentAviso + 1);
-    else showAviso(currentAviso - 1);
-  }
-}, { passive: true });
-
-/* =========================================================
-   ✅ AUTO-AVANCE AVISOS
-========================================================== */
 setInterval(() => {
-  updateAvisosPerView();
-  const maxIndex = Math.max(0, avisoCards.length - avisosPerView);
-  if (currentAviso >= maxIndex) showAviso(0);
-  else showAviso(currentAviso + 1);
+  const maxIndex = Math.max(0, avisosCarouselCtl.cardsCount - avisosCarouselCtl.getPerView());
+  if (avisosCarouselCtl.getCurrent() >= maxIndex) avisosCarouselCtl.show(0);
+  else avisosCarouselCtl.next();
 }, 6000);
 
-window.addEventListener('resize', () => showAviso(currentAviso));
+window.addEventListener('resize', () => {
+  avisosCarouselCtl.refresh();
+  noticiasCarouselCtl.refresh();
+  destacadosCarouselCtl.refresh();
+  initAvisosTextOverflow();
+});
 
 /* =========================================================
    ✅ ELEMENT SDK INTEGRATION (EDIT PANEL)
@@ -193,7 +280,7 @@ window.elementSdk?.init({
 /* =========================================================
    ✅ INIT
 ========================================================== */
-showAviso(0);
+initAvisosTextOverflow();
 
 /* =========================================================
    ✅ MOBILE MENU
@@ -209,7 +296,7 @@ mobileMenuBtn?.addEventListener('click', () => {
   closeIcon?.classList.toggle('hidden');
 });
 
-document.querySelectorAll('#mobile-menu a[href^="#"]').forEach(link => {
+document.querySelectorAll('#mobile-menu a').forEach(link => {
   link.addEventListener('click', () => {
     mobileMenu?.classList.add('hidden');
     menuIcon?.classList.remove('hidden');
