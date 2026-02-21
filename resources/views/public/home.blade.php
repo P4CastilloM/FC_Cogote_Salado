@@ -405,8 +405,9 @@
       </div>
     </section>
 
+
     {{-- =========================================================
-       ✅ DIRECTIVA
+       ✅ CALENDARIO
     ========================================================== --}}
     <section id="directiva" class="py-8 md:py-10 bg-club-dark">
       <div class="max-w-7xl mx-auto px-4">
