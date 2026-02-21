@@ -117,10 +117,10 @@
                   <div class="member-card glass-card rounded-2xl p-6 md:p-8 max-w-md w-full">
                     <div class="flex flex-col items-center text-center h-full justify-center">
                       <div class="relative mb-4">
-                        <div class="member-photo w-24 h-24 md:w-28 md:h-28 rounded-xl bg-gradient-to-br from-lime-500 to-green-700 p-1 transition-all duration-300">
-                          <div class="w-full h-full rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 overflow-hidden flex items-center justify-center">
+                        <div class="member-photo w-28 h-32 md:w-32 md:h-36 rounded-2xl bg-gradient-to-br from-lime-500 to-green-700 p-1.5 transition-all duration-300 shadow-lg shadow-black/35">
+                          <div class="w-full h-full rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 overflow-hidden flex items-center justify-center">
                             @if($lineup->left->foto_url)
-                              <img src="{{ $lineup->left->foto_url }}" alt="{{ $lineup->left->full_name }}" class="w-full h-full object-cover">
+                              <img src="{{ $lineup->left->foto_url }}" alt="{{ $lineup->left->full_name }}" class="w-full h-full object-cover object-top">
                             @else
                               <svg class="w-14 h-14 text-green-200/50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                             @endif
@@ -141,10 +141,10 @@
                   <div class="member-card glass-card rounded-2xl p-6 md:p-8 max-w-md w-full border-amber-400/30">
                     <div class="flex flex-col items-center text-center h-full justify-center">
                       <div class="relative mb-4">
-                        <div class="member-photo w-24 h-24 md:w-28 md:h-28 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 p-1 transition-all duration-300">
-                          <div class="w-full h-full rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 overflow-hidden flex items-center justify-center">
+                        <div class="member-photo w-28 h-32 md:w-32 md:h-36 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 p-1.5 transition-all duration-300 shadow-lg shadow-black/35">
+                          <div class="w-full h-full rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 overflow-hidden flex items-center justify-center">
                             @if($lineup->right->foto_url)
-                              <img src="{{ $lineup->right->foto_url }}" alt="{{ $lineup->right->full_name }}" class="w-full h-full object-cover">
+                              <img src="{{ $lineup->right->foto_url }}" alt="{{ $lineup->right->full_name }}" class="w-full h-full object-cover object-top">
                             @else
                               <svg class="w-14 h-14 text-amber-200/50" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                             @endif
