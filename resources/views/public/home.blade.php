@@ -413,16 +413,16 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(4) as $dir)
-            <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-5 border border-club-gold/25">
-              <div class="flex items-start gap-4">
-                <div class="w-14 h-14 rounded-full bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-4 md:p-5 border border-club-gold/25">
+              <div class="flex items-center gap-4">
+                <div class="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-club-gold/35 shadow-lg shadow-black/20">
                   @if(!empty($dir->foto_url))
-                    <img src="{{ $dir->foto_url }}" alt="{{ $dir->nombre }}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <img src="{{ $dir->foto_url }}" alt="{{ $dir->nombre }}" class="w-full h-full object-cover object-top" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                   @endif
-                  <span class="text-2xl {{ !empty($dir->foto_url) ? 'hidden' : 'flex' }}">🏛️</span>
+                  <span class="text-3xl {{ !empty($dir->foto_url) ? 'hidden' : 'flex' }}">🏛️</span>
                 </div>
                 <div class="min-w-0">
-                  <h3 class="font-bebas text-2xl leading-tight uppercase text-white">{{ $dir->nombre }}</h3>
+                  <h3 class="font-bebas text-xl md:text-2xl leading-tight uppercase text-white">{{ $dir->nombre }}</h3>
                   <p class="text-gray-300 text-sm mt-1">{{ $dir->rol }}</p>
                 </div>
               </div>
