@@ -62,6 +62,11 @@
                 </div>
             @endforeach
 
+
+            <a href="{{ route('admin.lineup.index') }}" class="admin-nav-item {{ request()->routeIs('admin.lineup.*') ? 'active-alt' : '' }}">
+                🧩 Crear Plantilla
+            </a>
+
             <div class="border-t border-white/10 my-4"></div>
 
             @if($isAdmin)
