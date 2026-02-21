@@ -35,6 +35,18 @@ body { box-sizing: border-box; }
   .destacado-card{ min-width:33.333%; padding:0 .5rem; }
 }
 
+.noticias-carousel,.destacados-carousel{ display:flex; transition:transform 0.5s ease-out; }
+.noticia-card{ min-width:100%; padding:0 .45rem; }
+.destacado-card{ min-width:100%; padding:0 .5rem; }
+@media (min-width:768px){
+  .noticia-card,
+  .destacado-card{ min-width:50%; padding:0 .5rem; }
+}
+@media (min-width:1024px){
+  .noticia-card,
+  .destacado-card{ min-width:33.333%; padding:0 .5rem; }
+}
+
 /* =========================================================
    ✅ EFECTOS UI
 ========================================================== */
