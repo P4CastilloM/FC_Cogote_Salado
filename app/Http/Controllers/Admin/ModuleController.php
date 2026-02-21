@@ -168,8 +168,8 @@ class ModuleController extends Controller
                 'subtitulo' => ['nullable', 'string', 'max:100'],
                 'cuerpo' => ['required', 'string'],
                 'fecha' => ['required', 'date'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-                'foto2' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'foto2' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
             if ($request->hasFile('foto')) {
@@ -194,7 +194,7 @@ class ModuleController extends Controller
                 'descripcion' => ['required', 'string', 'max:120'],
                 'fecha' => ['required', 'date'],
                 'fijado' => ['nullable', 'boolean'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
             if (Schema::hasColumn('avisos', 'fijado')) {
@@ -262,7 +262,7 @@ class ModuleController extends Controller
                 'apellido' => ['nullable', 'string', 'max:20'],
                 'descripcion_rol' => ['nullable', 'string', 'max:50'],
                 'activo' => ['nullable', 'boolean'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ];
 
             if ($module === 'directiva') {
@@ -315,7 +315,7 @@ class ModuleController extends Controller
 
         if ($module === 'album') {
             $request->validate([
-                'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
             $path = $request->file('foto')->store('fotos', 'public');
@@ -400,8 +400,8 @@ class ModuleController extends Controller
                 'subtitulo' => ['nullable', 'string', 'max:100'],
                 'cuerpo' => ['required', 'string'],
                 'fecha' => ['required', 'date'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-                'foto2' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'foto2' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
             foreach (['foto', 'foto2'] as $field) {
                 if ($request->hasFile($field)) {
@@ -425,7 +425,7 @@ class ModuleController extends Controller
                 'descripcion' => ['required', 'string', 'max:120'],
                 'fecha' => ['required', 'date'],
                 'fijado' => ['nullable', 'boolean'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
             if (Schema::hasColumn('avisos', 'fijado')) {
                 $data['fijado'] = $request->boolean('fijado');
@@ -488,7 +488,7 @@ class ModuleController extends Controller
                 'apellido' => ['nullable', 'string', 'max:20'],
                 'descripcion_rol' => ['nullable', 'string', 'max:50'],
                 'activo' => ['nullable', 'boolean'],
-                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ];
 
             if ($module === 'directiva') {
