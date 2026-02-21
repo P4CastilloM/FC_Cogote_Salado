@@ -1,14 +1,10 @@
 let photos = [];
 let currentPhotoIndex = 0;
+let renderedCount = 0;
+const BATCH_SIZE = 20;
+let observer = null;
 
 function qs(id) { return document.getElementById(id); }
-
-/**
- * Asegura que el src quede bien aunque venga como:
- * - "/storage/fotos/benja.jpeg"
- * - "benja.jpeg"
- * - "https://..."
-*/
 
 const resolveSrc = (s) => {
   if (!s) return '';
@@ -16,23 +12,8 @@ const resolveSrc = (s) => {
   return `/fccogotesalado/storage/fotos/${s}`;
 };
 
-function renderGallery(photosData) {
-  photos = photosData || [];
-  const galleryContainer = qs('galleryContainer');
-  const emptyState = qs('emptyState');
-
-  if (!galleryContainer) return;
-
-  if (photos.length === 0) {
-    galleryContainer.classList.add('hidden');
-    emptyState?.classList.remove('hidden');
-    return;
-  }
-
-  galleryContainer.classList.remove('hidden');
-  emptyState?.classList.add('hidden');
-
-  galleryContainer.innerHTML = photos.map((photo, index) => `
+function photoCard(photo, index) {
+  return `
     <div class="gallery-item loading" data-index="${index}">
       <img
         src="${resolveSrc(photo.src)}"
@@ -46,29 +27,95 @@ function renderGallery(photosData) {
       </div>
       <div class="zoom-icon">
         <svg class="w-6 h-6 text-club-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
         </svg>
       </div>
     </div>
-  `).join('');
+  `;
+}
 
-  document.querySelectorAll('.gallery-item').forEach(item => {
+function bindCardClicks(scope = document) {
+  scope.querySelectorAll('.gallery-item').forEach((item) => {
+    if (item.dataset.bound === '1') return;
+    item.dataset.bound = '1';
     item.addEventListener('click', () => openModal(parseInt(item.dataset.index, 10)));
   });
+}
+
+function appendBatch() {
+  const galleryContainer = qs('galleryContainer');
+  if (!galleryContainer || renderedCount >= photos.length) return;
+
+  const next = photos.slice(renderedCount, renderedCount + BATCH_SIZE);
+  const html = next.map((photo, idx) => photoCard(photo, renderedCount + idx)).join('');
+  galleryContainer.insertAdjacentHTML('beforeend', html);
+  bindCardClicks(galleryContainer);
+
+  renderedCount += next.length;
+
+  if (renderedCount >= photos.length) {
+    const sentinel = qs('gallerySentinel');
+    if (sentinel) sentinel.remove();
+    observer?.disconnect();
+  }
+}
+
+function setupInfiniteLoading() {
+  const galleryContainer = qs('galleryContainer');
+  if (!galleryContainer) return;
+
+  let sentinel = qs('gallerySentinel');
+  if (!sentinel) {
+    sentinel = document.createElement('div');
+    sentinel.id = 'gallerySentinel';
+    sentinel.className = 'h-8 w-full';
+    galleryContainer.parentElement?.appendChild(sentinel);
+  }
+
+  observer?.disconnect();
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) appendBatch();
+    });
+  }, { rootMargin: '300px 0px' });
+
+  observer.observe(sentinel);
+}
+
+function renderGallery(photosData) {
+  photos = photosData || [];
+  renderedCount = 0;
+
+  const galleryContainer = qs('galleryContainer');
+  const emptyState = qs('emptyState');
+  if (!galleryContainer) return;
+
+  galleryContainer.innerHTML = '';
+
+  if (photos.length === 0) {
+    galleryContainer.classList.add('hidden');
+    emptyState?.classList.remove('hidden');
+    qs('gallerySentinel')?.remove();
+    observer?.disconnect();
+    return;
+  }
+
+  galleryContainer.classList.remove('hidden');
+  emptyState?.classList.add('hidden');
+
+  appendBatch();
+  setupInfiniteLoading();
 }
 
 function openModal(index) {
   currentPhotoIndex = index;
   updateModalImage();
-  const modal = qs('photoModal');
-  modal?.classList.add('active');
+  qs('photoModal')?.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  const modal = qs('photoModal');
-  modal?.classList.remove('active');
+  qs('photoModal')?.classList.remove('active');
   document.body.style.overflow = '';
 }
 
@@ -99,8 +146,29 @@ function prevPhoto() {
   updateModalImage();
 }
 
+function initMobileMenu() {
+  const mobileMenuBtn = qs('mobile-menu-btn');
+  const mobileMenu = qs('mobile-menu');
+  const menuIcon = qs('menu-icon');
+  const closeIcon = qs('close-icon');
+
+  mobileMenuBtn?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    menuIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
+  });
+
+  document.querySelectorAll('#mobile-menu a').forEach((link) => {
+    link.addEventListener('click', () => {
+      mobileMenu?.classList.add('hidden');
+      menuIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  // photosData viene desde Blade (window.__PHOTOS__)
+  initMobileMenu();
   renderGallery(window.__PHOTOS__ || []);
 
   qs('closeModal')?.addEventListener('click', closeModal);
@@ -119,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowLeft') prevPhoto();
   });
 
-  // Swipe en modal
   let touchStartX = 0;
   let touchEndX = 0;
 
@@ -130,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
   modal?.addEventListener('touchend', (e) => {
     touchEndX = e.changedTouches[0].screenX;
     const diff = touchStartX - touchEndX;
-
     if (Math.abs(diff) > 50) {
       diff > 0 ? nextPhoto() : prevPhoto();
     }
