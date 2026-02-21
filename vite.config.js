@@ -20,6 +20,14 @@ export default defineConfig({
         // ✅ tus archivos de navbar
         'resources/css/public/navbar.css',
 
+        // ✅ login privado
+        'resources/css/auth-login.css',
+        'resources/js/auth-login.js',
+
+        // ✅ panel admin
+        'resources/css/admin/panel.css',
+        'resources/js/admin/panel.js',
+
       ],
       refresh: true,
     }),
