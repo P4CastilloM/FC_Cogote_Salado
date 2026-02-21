@@ -32,6 +32,10 @@
     .drop-zone-active {
       box-shadow: inset 0 0 32px rgba(132, 204, 22, .35);
     }
+
+    .lineup-exporting .no-export {
+      display: none !important;
+    }
   </style>
 
   <section class="max-w-7xl mx-auto">
@@ -119,14 +123,14 @@
       const color = item.team === 'A' ? '#84cc16' : '#fbbf24';
 
       return `
-        <div class="field-player rounded-lg p-1 bg-black/60 border-2" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 10px ${color}80" data-player-id="${item.playerId}" draggable="true">
-          <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none" data-remove-player="${item.playerId}">×</button>
-          <div class="w-8 h-8 rounded-full overflow-hidden border border-white/30 bg-white/10 flex items-center justify-center">
+        <div class="field-player rounded-lg p-1.5 md:p-2 bg-black/60 border-2" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 10px ${color}80" data-player-id="${item.playerId}" draggable="true">
+          <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
+          <div class="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden border border-white/30 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-[9px] font-bold">${getInitials(player.name)}</span>`
-              : `<span class="text-white text-[9px] font-bold">${getInitials(player.name)}</span>`}
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-[10px] md:text-[11px] font-bold">${getInitials(player.name)}</span>`
+              : `<span class="text-white text-[10px] md:text-[11px] font-bold">${getInitials(player.name)}</span>`}
           </div>
-          <div class="text-[9px] text-white truncate max-w-[58px] text-center">${player.name}</div>
+          <div class="text-[10px] md:text-[11px] text-white truncate max-w-[72px] md:max-w-[84px] text-center font-medium">${player.name}</div>
         </div>`;
     }
 
@@ -223,15 +227,18 @@
 
     async function downloadPng() {
       const btn = document.getElementById('btn-download');
+      const wrapper = document.getElementById('field-wrapper');
       btn.disabled = true;
       btn.textContent = 'Generando...';
+      wrapper.classList.add('lineup-exporting');
       try {
-        const canvas = await html2canvas(document.getElementById('field-wrapper'), { scale: 2, useCORS: true, backgroundColor: null });
+        const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: null });
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
         link.download = `plantilla-fccs-${Date.now()}.png`;
         link.click();
       } finally {
+        wrapper.classList.remove('lineup-exporting');
         btn.disabled = false;
         btn.textContent = 'Descargar PNG';
       }
