@@ -18,7 +18,7 @@ body { box-sizing: border-box; }
    ✅ AVISOS CAROUSEL
 ========================================================== */
 .aviso-carousel{ display:flex; transition:transform 0.5s ease-out; }
-.aviso-card{ min-width:100%; padding:0 .5rem; }
+.aviso-card{ min-width:100%; padding:0 .45rem; }
 
 @media (min-width:768px){ .aviso-card{ min-width:50%; } }
 @media (min-width:1024px){ .aviso-card{ min-width:33.333%; } }
@@ -94,3 +94,30 @@ body { box-sizing: border-box; }
 }
 
 .destacado-card > .player-card{ height:100%; }
+
+.aviso-desc{
+  line-height: 1.45;
+  max-height: calc(1.45em * 3);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.aviso-desc.aviso-scroll{
+  display:block;
+  -webkit-line-clamp: initial;
+  -webkit-box-orient: initial;
+}
+
+.aviso-desc.aviso-scroll .aviso-desc-inner{
+  display:block;
+  animation: avisoTextScroll var(--aviso-duration, 10s) ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes avisoTextScroll {
+  0%, 20% { transform: translateY(0); }
+  80%, 100% { transform: translateY(calc(-1 * var(--aviso-scroll-distance, 0px))); }
+}
+

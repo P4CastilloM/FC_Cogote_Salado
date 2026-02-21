@@ -224,10 +224,10 @@
                     <div class="w-12 h-12 rounded-full {{ $hasFoto ? 'bg-white/20' : 'bg-white/20' }} flex items-center justify-center flex-shrink-0">
                       <span class="text-2xl">{{ !empty($aviso->fijado) ? '📌' : '📢' }}</span>
                     </div>
-                    <div>
+                    <div class="aviso-content min-w-0 flex-1">
                       <span class="text-xs {{ $hasFoto ? 'text-club-gold' : 'opacity-80' }} font-semibold uppercase tracking-wider">{{ !empty($aviso->fijado) ? 'Fijado' : 'Aviso' }}</span>
                       <h3 class="font-bebas text-xl mt-1 mb-2 uppercase">{{ $aviso->titulo }}</h3>
-                      <p class="text-sm {{ $hasFoto ? 'text-gray-100' : '' }}">{{ $aviso->descripcion }}</p>
+                      <p class="text-sm {{ $hasFoto ? 'text-gray-100' : '' }} aviso-desc js-aviso-desc">{{ $aviso->descripcion }}</p>
                       <p class="text-xs mt-3 font-semibold {{ $hasFoto ? 'text-club-gold' : '' }}">🗓️ {{ \Carbon\Carbon::parse($aviso->fecha)->translatedFormat('d M Y') }}</p>
                     </div>
                   </div>

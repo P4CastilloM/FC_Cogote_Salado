@@ -163,6 +163,35 @@ const destacadosCarouselCtl = createCarousel({
   nextId: 'destacado-next',
 });
 
+
+function initAvisosTextOverflow() {
+  const elements = Array.from(document.querySelectorAll('.js-aviso-desc'));
+  elements.forEach((el) => {
+    const fullText = (el.dataset.fullText || el.textContent || '').trim();
+    el.dataset.fullText = fullText;
+    el.classList.remove('aviso-scroll');
+    el.innerHTML = fullText;
+
+    const lineHeight = parseFloat(window.getComputedStyle(el).lineHeight || '20');
+    const maxHeight = lineHeight * 3;
+    el.style.maxHeight = `${maxHeight}px`;
+
+    if (el.scrollHeight > maxHeight + 2) {
+      el.classList.add('aviso-scroll');
+      const inner = document.createElement('span');
+      inner.className = 'aviso-desc-inner';
+      inner.textContent = fullText;
+      el.innerHTML = '';
+      el.appendChild(inner);
+
+      const distance = Math.max(0, inner.scrollHeight - maxHeight);
+      const duration = Math.max(7, Math.round(distance / 14) + 6);
+      el.style.setProperty('--aviso-scroll-distance', `${distance}px`);
+      el.style.setProperty('--aviso-duration', `${duration}s`);
+    }
+  });
+}
+
 setInterval(() => {
   const maxIndex = Math.max(0, avisosCarouselCtl.cardsCount - avisosCarouselCtl.getPerView());
   if (avisosCarouselCtl.getCurrent() >= maxIndex) avisosCarouselCtl.show(0);
@@ -173,6 +202,7 @@ window.addEventListener('resize', () => {
   avisosCarouselCtl.refresh();
   noticiasCarouselCtl.refresh();
   destacadosCarouselCtl.refresh();
+  initAvisosTextOverflow();
 });
 
 /* =========================================================
@@ -250,6 +280,7 @@ window.elementSdk?.init({
 /* =========================================================
    ✅ INIT
 ========================================================== */
+initAvisosTextOverflow();
 
 /* =========================================================
    ✅ MOBILE MENU
