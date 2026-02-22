@@ -332,14 +332,15 @@ class ModuleController extends Controller
         }
 
         if ($module === 'album') {
+            @set_time_limit(300);
             $mode = $request->input('upload_mode', 'single');
 
             if ($mode === 'album') {
                 $data = $request->validate([
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_nombre' => ['required', 'string', 'max:90'],
-                    'fotos' => ['required', 'array', 'min:1', 'max:40'],
-                    'fotos.*' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                    'fotos' => ['required', 'array', 'min:1', 'max:80'],
+                    'fotos.*' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif,bmp,avif,tif,tiff', 'max:10240'],
                 ]);
 
                 $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
@@ -354,7 +355,7 @@ class ModuleController extends Controller
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_id' => ['nullable', 'integer', 'exists:foto_albums,id'],
                     'single_album_nombre' => ['nullable', 'string', 'max:90'],
-                    'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                    'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif,bmp,avif,tif,tiff', 'max:10240'],
                 ]);
 
                 $albumId = $this->resolveAlbumId($data['album_id'] ?? null, $data['single_album_nombre'] ?? null);
@@ -764,7 +765,8 @@ class ModuleController extends Controller
             return $file->store($directory, 'public');
         }
 
-        $image = $this->createImageResource($file->getRealPath(), strtolower($file->getClientOriginalExtension()));
+        $extension = strtolower($file->getClientOriginalExtension());
+        $image = $this->createImageResource($file->getRealPath(), $extension);
 
         if (! $image) {
             return $file->store($directory, 'public');
@@ -775,16 +777,29 @@ class ModuleController extends Controller
         $filename .= '-'.Str::random(8).'.webp';
         $path = trim($directory, '/').'/'.$filename;
 
-        ob_start();
-        $saved = imagewebp($image, null, 82);
-        $binary = ob_get_clean();
-        imagedestroy($image);
-
-        if (! $saved || $binary === false) {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-');
+        if ($tmpFile === false) {
+            imagedestroy($image);
             return $file->store($directory, 'public');
         }
 
-        Storage::disk('public')->put($path, $binary);
+        $saved = @imagewebp($image, $tmpFile, 80);
+        imagedestroy($image);
+
+        if (! $saved || ! is_file($tmpFile)) {
+            @unlink($tmpFile);
+            return $file->store($directory, 'public');
+        }
+
+        $stream = @fopen($tmpFile, 'rb');
+        if ($stream === false) {
+            @unlink($tmpFile);
+            return $file->store($directory, 'public');
+        }
+
+        Storage::disk('public')->put($path, $stream);
+        fclose($stream);
+        @unlink($tmpFile);
 
         return $path;
     }
@@ -796,6 +811,8 @@ class ModuleController extends Controller
             'png' => @imagecreatefrompng($path),
             'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : null,
             'gif' => @imagecreatefromgif($path),
+            'bmp' => function_exists('imagecreatefrombmp') ? @imagecreatefrombmp($path) : null,
+            'avif' => function_exists('imagecreatefromavif') ? @imagecreatefromavif($path) : null,
             default => null,
         };
     }

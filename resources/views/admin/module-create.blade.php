@@ -169,7 +169,7 @@
                             <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="single_album_nombre" maxlength="90" placeholder="Ej: Temporada 2026 Fecha 1">
                         </div>
                     </div>
-                    <div><label class="text-sm text-slate-300">📸 Foto *</label><input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp"></div>
+                    <div><label class="text-sm text-slate-300">📸 Foto *</label><input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/*,.avif,.bmp,.tif,.tiff"></div>
                 </div>
 
                 <div id="album-upload-fields" class="space-y-4 hidden">
@@ -179,7 +179,7 @@
                     </div>
                     <div>
                         <label class="text-sm text-slate-300">🖼️ Fotos del álbum *</label>
-                        <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="fotos[]" multiple accept="image/jpeg,image/png,image/webp">
+                        <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="fotos[]" multiple accept="image/*,.avif,.bmp,.tif,.tiff">
                     </div>
                 </div>
 
