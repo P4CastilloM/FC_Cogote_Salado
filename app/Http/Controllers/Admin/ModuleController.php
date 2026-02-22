@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ModuleController extends Controller
@@ -67,6 +68,20 @@ class ModuleController extends Controller
             ]);
         }
 
+        if ($module === 'album') {
+            $albumName = trim((string) $request->query('album', ''));
+            $albumDate = trim((string) $request->query('album_date', ''));
+
+            return view('admin.album-index', [
+                'module' => $module,
+                'config' => $config,
+                'query' => $albumName,
+                'albumDate' => $albumDate,
+                'albums' => $this->albumsForAdmin($albumName, $albumDate),
+                'photos' => $this->albumItemsForAdmin($albumName, $albumDate),
+            ]);
+        }
+
         if ($config['table'] === null) {
             return response()->json([
                 'module' => $module,
@@ -115,6 +130,7 @@ class ModuleController extends Controller
                 'module' => $module,
                 'config' => $this->config($module),
                 'temporadas' => $this->temporadas(),
+                'albums' => $module === 'album' ? $this->albumCatalog() : collect(),
             ]);
         }
 
@@ -316,12 +332,37 @@ class ModuleController extends Controller
         }
 
         if ($module === 'album') {
-            $request->validate([
-                'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            ]);
+            @set_time_limit(300);
+            $mode = $request->input('upload_mode', 'single');
 
-            $path = $this->storeUploadedWebp($request->file('foto'), 'fotos');
-            $this->logModification('album', 'añadir', basename($path), basename($path));
+            if ($mode === 'album') {
+                $data = $request->validate([
+                    'upload_mode' => ['required', Rule::in(['single', 'album'])],
+                    'album_nombre' => ['required', 'string', 'max:90'],
+                    'fotos' => ['required', 'array', 'min:1', 'max:80'],
+                    'fotos.*' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif,bmp,avif,tif,tiff', 'max:10240'],
+                ]);
+
+                $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
+                foreach ($request->file('fotos', []) as $file) {
+                    $path = $this->storeUploadedWebp($file, 'fotos');
+                    $this->persistPhotoItem($path, $albumId);
+                }
+
+                $this->logModification('album', 'añadir', (string) $albumId, 'Álbum: '.$data['album_nombre']);
+            } else {
+                $data = $request->validate([
+                    'upload_mode' => ['required', Rule::in(['single', 'album'])],
+                    'album_id' => ['nullable', 'integer', 'exists:foto_albums,id'],
+                    'single_album_nombre' => ['nullable', 'string', 'max:90'],
+                    'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif,bmp,avif,tif,tiff', 'max:10240'],
+                ]);
+
+                $albumId = $this->resolveAlbumId($data['album_id'] ?? null, $data['single_album_nombre'] ?? null);
+                $path = $this->storeUploadedWebp($request->file('foto'), 'fotos');
+                $this->persistPhotoItem($path, $albumId);
+                $this->logModification('album', 'añadir', basename($path), basename($path));
+            }
 
             return redirect()->route('admin.album.create')->with('status', 'item-created');
         }
@@ -537,11 +578,43 @@ class ModuleController extends Controller
         $config = $this->config($module);
 
         if ($module === 'album') {
+            if ($requestScope = request()->query('scope')) {
+                if ($requestScope === 'album' && ctype_digit($id) && Schema::hasTable('foto_items')) {
+                    $album = DB::table('foto_albums')->where('id', (int) $id)->first();
+                    $items = DB::table('foto_items')->where('album_id', (int) $id)->get();
+                    foreach ($items as $item) {
+                        Storage::disk('public')->delete($item->path);
+                    }
+                    DB::table('foto_items')->where('album_id', (int) $id)->delete();
+                    DB::table('foto_albums')->where('id', (int) $id)->delete();
+                    $this->logModification('album', 'eliminar', $id, 'Álbum: '.($album->nombre ?? $id));
+
+                    return redirect()->route('admin.album.index')->with('status', 'item-deleted');
+                }
+            }
+
+            if (ctype_digit($id) && Schema::hasTable('foto_items')) {
+                $item = DB::table('foto_items')->where('id', (int) $id)->first();
+                $deleted = false;
+                if ($item) {
+                    Storage::disk('public')->delete($item->path);
+                    $deleted = DB::table('foto_items')->where('id', (int) $id)->delete() > 0;
+                }
+                if ($deleted) {
+                    $this->logModification('album', 'eliminar', (string) $id, basename((string) $item->path));
+                }
+
+                return redirect()->route('admin.album.index')
+                    ->with($deleted ? 'status' : 'error', $deleted ? 'item-deleted' : 'delete-failed');
+            }
+
             $deleted = Storage::disk('public')->delete('fotos/'.$id);
             if ($deleted) {
                 $this->logModification('album', 'eliminar', $id, $id);
             }
-            return response()->json(['ok' => $deleted, 'module' => $module, 'filename' => $id]);
+
+            return redirect()->route('admin.album.index')
+                ->with($deleted ? 'status' : 'error', $deleted ? 'item-deleted' : 'delete-failed');
         }
 
         if (! $config['table'] || ! Schema::hasTable($config['table'])) {
@@ -585,6 +658,18 @@ class ModuleController extends Controller
     /** @return array<int, array{filename: string, url: string}> */
     private function albumFiles(): array
     {
+        if (Schema::hasTable('foto_items')) {
+            return DB::table('foto_items')
+                ->orderByDesc('created_at')
+                ->limit(120)
+                ->get(['id', 'path'])
+                ->map(fn ($row) => [
+                    'filename' => (string) $row->id,
+                    'url' => asset('storage/'.$row->path),
+                ])
+                ->all();
+        }
+
         return collect(Storage::disk('public')->files('fotos'))
             ->filter(fn (string $path) => preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $path) === 1)
             ->map(fn (string $path) => [
@@ -595,6 +680,84 @@ class ModuleController extends Controller
             ->all();
     }
 
+    private function resolveAlbumId(?int $albumId, ?string $albumName): ?int
+    {
+        if ($albumId) {
+            return $albumId;
+        }
+
+        $name = trim((string) $albumName);
+        if ($name === '' || ! Schema::hasTable('foto_albums')) {
+            return null;
+        }
+
+        $existing = DB::table('foto_albums')->where('nombre', $name)->value('id');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        return (int) DB::table('foto_albums')->insertGetId([
+            'nombre' => $name,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function persistPhotoItem(string $path, ?int $albumId): void
+    {
+        if (! Schema::hasTable('foto_items')) {
+            return;
+        }
+
+        DB::table('foto_items')->insert([
+            'album_id' => $albumId,
+            'path' => $path,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function albumCatalog()
+    {
+        if (! Schema::hasTable('foto_albums')) {
+            return collect();
+        }
+
+        return DB::table('foto_albums')->orderBy('nombre')->get();
+    }
+
+    private function albumsForAdmin(string $albumName = '', string $albumDate = '')
+    {
+        if (! Schema::hasTable('foto_albums')) {
+            return collect();
+        }
+
+        return DB::table('foto_albums as a')
+            ->leftJoin('foto_items as i', 'i.album_id', '=', 'a.id')
+            ->select('a.id', 'a.nombre', 'a.created_at', DB::raw('COUNT(i.id) as total_fotos'))
+            ->when($albumName !== '', fn ($q) => $q->where('a.nombre', 'like', "%{$albumName}%"))
+            ->when($albumDate !== '', fn ($q) => $q->whereDate('a.created_at', '=', $albumDate))
+            ->groupBy('a.id', 'a.nombre', 'a.created_at')
+            ->orderByDesc('a.created_at')
+            ->get();
+    }
+
+    private function albumItemsForAdmin(string $albumName = '', string $albumDate = '')
+    {
+        if (! Schema::hasTable('foto_items')) {
+            return collect();
+        }
+
+        return DB::table('foto_items as i')
+            ->leftJoin('foto_albums as a', 'a.id', '=', 'i.album_id')
+            ->select('i.id', 'i.path', 'i.created_at', 'a.nombre as album_nombre')
+            ->when($albumName !== '', fn ($q) => $q->where('a.nombre', 'like', "%{$albumName}%"))
+            ->when($albumDate !== '', fn ($q) => $q->whereDate('a.created_at', '=', $albumDate))
+            ->orderByDesc('i.created_at')
+            ->limit(300)
+            ->get();
+    }
+
 
     private function storeUploadedWebp(UploadedFile $file, string $directory): string
     {
@@ -602,7 +765,8 @@ class ModuleController extends Controller
             return $file->store($directory, 'public');
         }
 
-        $image = $this->createImageResource($file->getRealPath(), strtolower($file->getClientOriginalExtension()));
+        $extension = strtolower($file->getClientOriginalExtension());
+        $image = $this->createImageResource($file->getRealPath(), $extension);
 
         if (! $image) {
             return $file->store($directory, 'public');
@@ -613,16 +777,29 @@ class ModuleController extends Controller
         $filename .= '-'.Str::random(8).'.webp';
         $path = trim($directory, '/').'/'.$filename;
 
-        ob_start();
-        $saved = imagewebp($image, null, 82);
-        $binary = ob_get_clean();
-        imagedestroy($image);
-
-        if (! $saved || $binary === false) {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-');
+        if ($tmpFile === false) {
+            imagedestroy($image);
             return $file->store($directory, 'public');
         }
 
-        Storage::disk('public')->put($path, $binary);
+        $saved = @imagewebp($image, $tmpFile, 80);
+        imagedestroy($image);
+
+        if (! $saved || ! is_file($tmpFile)) {
+            @unlink($tmpFile);
+            return $file->store($directory, 'public');
+        }
+
+        $stream = @fopen($tmpFile, 'rb');
+        if ($stream === false) {
+            @unlink($tmpFile);
+            return $file->store($directory, 'public');
+        }
+
+        Storage::disk('public')->put($path, $stream);
+        fclose($stream);
+        @unlink($tmpFile);
 
         return $path;
     }
@@ -634,6 +811,8 @@ class ModuleController extends Controller
             'png' => @imagecreatefrompng($path),
             'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : null,
             'gif' => @imagecreatefromgif($path),
+            'bmp' => function_exists('imagecreatefrombmp') ? @imagecreatefrombmp($path) : null,
+            'avif' => function_exists('imagecreatefromavif') ? @imagecreatefromavif($path) : null,
             default => null,
         };
     }

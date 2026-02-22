@@ -9,7 +9,7 @@
         'temporadas' => ['⏳', 'Crear Temporada', 'Crea una nueva temporada'],
         'staff' => ['🤝', 'Añadir Staff', 'Registra un ayudante o miembro de staff'],
         'directiva' => ['🏛️', 'Añadir Directiva', 'Registra un integrante de directiva'],
-        'album' => ['📸', 'Subir Foto', 'Sube una imagen al álbum'],
+        'album' => ['📸', 'Subir Fotos / Álbum', 'Sube una foto individual o un álbum completo'],
     ];
 
     [$emoji, $title, $subtitle] = $titles[$module] ?? ['🧩', 'Crear Registro', 'Formulario de creación'];
@@ -139,8 +139,73 @@
             @endif
 
             @if($module === 'album')
-                <div><label class="text-sm text-slate-300">📸 Foto *</label><input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" required accept="image/jpeg,image/png,image/webp"></div>
-                <p class="text-xs text-slate-500">Se guarda en <code>storage/app/public/fotos</code>.</p>
+                <div class="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 space-y-4">
+                    <p class="text-emerald-200 text-sm font-semibold">📌 Modo de carga</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="module-input rounded-xl px-4 py-3 flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="upload_mode" value="single" checked>
+                            <span>Subir 1 foto</span>
+                        </label>
+                        <label class="module-input rounded-xl px-4 py-3 flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="upload_mode" value="album">
+                            <span>Subir álbum (varias fotos)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="single-upload-fields" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm text-slate-300">📂 Álbum existente (opcional)</label>
+                            <select name="album_id" class="module-input module-select w-full rounded-xl px-4 py-3 mt-1">
+                                <option value="">Sin álbum</option>
+                                @foreach(($albums ?? collect()) as $album)
+                                    <option value="{{ $album->id }}">{{ $album->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm text-slate-300">🆕 Crear álbum (opcional)</label>
+                            <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="single_album_nombre" maxlength="90" placeholder="Ej: Temporada 2026 Fecha 1">
+                        </div>
+                    </div>
+                    <div><label class="text-sm text-slate-300">📸 Foto *</label><input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/*,.avif,.bmp,.tif,.tiff"></div>
+                </div>
+
+                <div id="album-upload-fields" class="space-y-4 hidden">
+                    <div>
+                        <label class="text-sm text-slate-300">📚 Nombre del álbum *</label>
+                        <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="album_nombre" maxlength="90" placeholder="Ej: Campeonato Apertura 2026">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-300">🖼️ Fotos del álbum *</label>
+                        <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="fotos[]" multiple accept="image/*,.avif,.bmp,.tif,.tiff">
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-500">Se guarda en <code>storage/app/public/fotos</code> y queda disponible para <a class="text-emerald-300 underline" href="{{ route('admin.album.index') }}">gestionar álbumes/fotos</a>.</p>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const radios = document.querySelectorAll('input[name="upload_mode"]');
+                        const single = document.getElementById('single-upload-fields');
+                        const multiple = document.getElementById('album-upload-fields');
+                        const singleFile = document.querySelector('input[name="foto"]');
+                        const albumFiles = document.querySelector('input[name="fotos[]"]');
+
+                        const syncMode = () => {
+                            const mode = document.querySelector('input[name="upload_mode"]:checked')?.value || 'single';
+                            const isAlbum = mode === 'album';
+                            single?.classList.toggle('hidden', isAlbum);
+                            multiple?.classList.toggle('hidden', !isAlbum);
+                            if (singleFile) singleFile.required = !isAlbum;
+                            if (albumFiles) albumFiles.required = isAlbum;
+                        };
+
+                        radios.forEach((radio) => radio.addEventListener('change', syncMode));
+                        syncMode();
+                    });
+                </script>
             @endif
 
             <div class="pt-5 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-3">
