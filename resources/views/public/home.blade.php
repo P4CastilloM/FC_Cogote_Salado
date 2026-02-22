@@ -407,13 +407,13 @@
     {{-- =========================================================
        ✅ CALENDARIO
     ========================================================== --}}
-    <section id="directiva" class="py-8 md:py-10 bg-club-dark">
+    <section id="directiva" class="py-8 md:py-10 bg-club-gray">
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(4) as $dir)
-            <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-4 md:p-5 border border-club-gold/25">
+            <article class="bg-club-dark rounded-2xl p-4 md:p-5 border border-club-gold/20">
               <div class="flex items-center gap-4">
                 <div class="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-club-gold/35 shadow-lg shadow-black/20">
                   @if(!empty($dir->foto_url))
@@ -453,17 +453,6 @@
           @endforelse
 
         </div>
-      </div>
-    </section>
-    {{-- =========================================================
-       ✅ BLOQUE INFORMATIVO LIVIANO
-    ========================================================== --}}
-    <section class="py-12 bg-club-dark/80 border-t border-club-gold/10">
-      <div class="max-w-4xl mx-auto px-4 text-center">
-        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-3">
-          <span class="text-club-gold">⚡</span> SITIO OPTIMIZADO PARA CARGA RÁPIDA
-        </h2>
-        <p class="text-gray-300">Se simplificó esta zona para priorizar rendimiento desde Directiva hacia abajo.</p>
       </div>
     </section>
 
