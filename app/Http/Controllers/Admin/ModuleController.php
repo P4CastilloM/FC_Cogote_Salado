@@ -336,6 +336,13 @@ class ModuleController extends Controller
             $mode = $request->input('upload_mode', 'single');
 
             if ($mode === 'album') {
+                if (empty($request->file('fotos'))) {
+                    $message = 'No se recibieron archivos. Revisa límites de servidor (post_max_size / upload_max_filesize / max_file_uploads) o intenta lotes más pequeños.';
+                    return $request->expectsJson()
+                        ? response()->json(['ok' => false, 'message' => $message], 422)
+                        : redirect()->back()->withErrors(['fotos' => $message])->withInput();
+                }
+
                 $data = $request->validate([
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_nombre' => ['required', 'string', 'max:90'],
@@ -350,6 +357,10 @@ class ModuleController extends Controller
                 }
 
                 $this->logModification('album', 'añadir', (string) $albumId, 'Álbum: '.$data['album_nombre']);
+
+                if ($request->expectsJson()) {
+                    return response()->json(['ok' => true, 'album_id' => $albumId]);
+                }
             } else {
                 $data = $request->validate([
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
@@ -362,6 +373,10 @@ class ModuleController extends Controller
                 $path = $this->storeUploadedWebp($request->file('foto'), 'fotos');
                 $this->persistPhotoItem($path, $albumId);
                 $this->logModification('album', 'añadir', basename($path), basename($path));
+
+                if ($request->expectsJson()) {
+                    return response()->json(['ok' => true, 'album_id' => $albumId, 'path' => $path]);
+                }
             }
 
             return redirect()->route('admin.album.create')->with('status', 'item-created');

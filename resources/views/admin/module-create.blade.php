@@ -181,17 +181,22 @@
                         <label class="text-sm text-slate-300">🖼️ Fotos del álbum *</label>
                         <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="fotos[]" multiple accept="image/*,.avif,.bmp,.tif,.tiff">
                     </div>
+                    <div id="album-upload-status" class="hidden rounded-xl border border-lime-400/30 bg-lime-500/10 px-4 py-3 text-sm text-lime-200"></div>
                 </div>
 
                 <p class="text-xs text-slate-500">Se guarda en <code>storage/app/public/fotos</code> y queda disponible para <a class="text-emerald-300 underline" href="{{ route('admin.album.index') }}">gestionar álbumes/fotos</a>.</p>
 
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
+                        const form = document.querySelector('form[action="{{ route('admin.'.$module.'.store') }}"]');
                         const radios = document.querySelectorAll('input[name="upload_mode"]');
                         const single = document.getElementById('single-upload-fields');
                         const multiple = document.getElementById('album-upload-fields');
                         const singleFile = document.querySelector('input[name="foto"]');
                         const albumFiles = document.querySelector('input[name="fotos[]"]');
+                        const albumName = document.querySelector('input[name="album_nombre"]');
+                        const statusBox = document.getElementById('album-upload-status');
+                        const submitBtn = form?.querySelector('button[type="submit"]');
 
                         const syncMode = () => {
                             const mode = document.querySelector('input[name="upload_mode"]:checked')?.value || 'single';
@@ -204,6 +209,70 @@
 
                         radios.forEach((radio) => radio.addEventListener('change', syncMode));
                         syncMode();
+
+                        form?.addEventListener('submit', async (event) => {
+                            const mode = document.querySelector('input[name="upload_mode"]:checked')?.value || 'single';
+                            if (mode !== 'album') return;
+
+                            event.preventDefault();
+
+                            const files = Array.from(albumFiles?.files || []);
+                            const name = (albumName?.value || '').trim();
+
+                            if (!name || files.length === 0) {
+                                return;
+                            }
+
+                            const chunkSize = 8;
+                            const totalChunks = Math.ceil(files.length / chunkSize);
+                            const csrf = form.querySelector('input[name="_token"]')?.value || '';
+                            const endpoint = form.getAttribute('action');
+
+                            if (submitBtn) {
+                                submitBtn.disabled = true;
+                                submitBtn.textContent = 'Subiendo...';
+                            }
+
+                            statusBox?.classList.remove('hidden');
+                            if (statusBox) statusBox.textContent = `Preparando ${files.length} fotos en ${totalChunks} lote(s)...`;
+
+                            try {
+                                for (let i = 0; i < totalChunks; i++) {
+                                    const chunk = files.slice(i * chunkSize, (i + 1) * chunkSize);
+                                    const fd = new FormData();
+                                    fd.append('_token', csrf);
+                                    fd.append('upload_mode', 'album');
+                                    fd.append('album_nombre', name);
+                                    chunk.forEach((file) => fd.append('fotos[]', file));
+
+                                    const response = await fetch(endpoint, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                        },
+                                        body: fd,
+                                    });
+
+                                    const data = await response.json().catch(() => ({}));
+                                    if (!response.ok || data.ok === false) {
+                                        throw new Error(data.message || `Error al subir lote ${i + 1}`);
+                                    }
+
+                                    if (statusBox) statusBox.textContent = `Subiendo... lote ${i + 1}/${totalChunks}`;
+                                }
+
+                                if (statusBox) statusBox.textContent = '✅ Álbum subido correctamente.';
+                                window.location.href = '{{ route('admin.album.index') }}';
+                            } catch (error) {
+                                if (statusBox) statusBox.textContent = `❌ ${error.message || 'No se pudo completar la subida.'}`;
+                            } finally {
+                                if (submitBtn) {
+                                    submitBtn.disabled = false;
+                                    submitBtn.textContent = '✔ Guardar';
+                                }
+                            }
+                        });
                     });
                 </script>
             @endif
