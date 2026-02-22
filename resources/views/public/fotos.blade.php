@@ -38,6 +38,22 @@
         <div class="w-24 h-1 bg-gradient-to-r from-club-gold to-club-gray mx-auto mt-4 rounded-full"></div>
       </div>
 
+
+      <form method="GET" action="{{ route('fccs.fotos') }}" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3 bg-black/20 border border-white/10 rounded-xl p-4">
+        <div>
+          <label class="text-xs text-gray-300">Álbum</label>
+          <input type="text" name="album" value="{{ $albumFilter }}" class="w-full mt-1 rounded-lg bg-[#1a0a2e]/70 border border-white/10 px-3 py-2 text-sm" placeholder="Buscar por nombre de álbum">
+        </div>
+        <div>
+          <label class="text-xs text-gray-300">Fecha de creación del álbum</label>
+          <input type="date" name="album_date" value="{{ $albumDateFilter }}" class="w-full mt-1 rounded-lg bg-[#1a0a2e]/70 border border-white/10 px-3 py-2 text-sm">
+        </div>
+        <div class="flex items-end gap-2">
+          <button class="px-4 py-2 rounded-lg bg-lime-500/80 hover:bg-lime-500 text-black text-sm font-semibold">Filtrar</button>
+          <a href="{{ route('fccs.fotos') }}" class="px-4 py-2 rounded-lg border border-white/20 text-sm">Ver todas</a>
+        </div>
+      </form>
+
       <div class="gallery-container" id="galleryContainer"></div>
 
       <div id="emptyState" class="hidden text-center py-16">
