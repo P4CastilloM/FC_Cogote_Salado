@@ -9,7 +9,7 @@ class PlantelController extends Controller
     public function index()
     {
         $jugadores = DB::table('jugadores')
-            ->select('rut', 'nombre', 'sobrenombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion')
+            ->select('rut', 'nombre', 'sobrenombre', 'foto', 'goles', 'asistencia', 'atajadas', 'partidos_jugados', 'numero_camiseta', 'posicion')
             ->orderBy('numero_camiseta')
             ->get()
             ->map(function ($jugador) {
@@ -28,7 +28,7 @@ class PlantelController extends Controller
                     default => ucfirst(mb_strtolower((string) $jugador->posicion)),
                 };
 
-                $jugador->partidos = 0;
+                $jugador->partidos = (int) ($jugador->partidos_jugados ?? 0);
                 $jugador->rating = 0;
                 return $jugador;
             });
