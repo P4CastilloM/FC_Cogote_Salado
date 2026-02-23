@@ -17,6 +17,15 @@ const defaultConfig = {
 
 let config = { ...defaultConfig };
 
+function acceptEssentialCookies() {
+  const oneYear = 60 * 60 * 24 * 365;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `fccs_cookie_consent=accepted; Max-Age=${oneYear}; Path=/; SameSite=Lax${secure}`;
+}
+
+acceptEssentialCookies();
+
+
 /* =========================================================
    ✅ HERO SLIDER
 ========================================================== */
@@ -330,5 +339,13 @@ function updateActiveNav() {
   });
 }
 
-window.addEventListener('scroll', updateActiveNav);
+let navTicking = false;
+window.addEventListener('scroll', () => {
+  if (navTicking) return;
+  navTicking = true;
+  window.requestAnimationFrame(() => {
+    updateActiveNav();
+    navTicking = false;
+  });
+}, { passive: true });
 updateActiveNav();

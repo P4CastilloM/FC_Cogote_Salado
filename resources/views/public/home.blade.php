@@ -407,13 +407,13 @@
     {{-- =========================================================
        ✅ CALENDARIO
     ========================================================== --}}
-    <section id="directiva" class="py-8 md:py-10 bg-club-dark">
+    <section id="directiva" class="py-8 md:py-10 bg-club-gray">
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
           @forelse(($directivaTop ?? collect())->take(4) as $dir)
-            <article class="bg-gradient-to-br from-club-gold/15 to-club-dark rounded-2xl p-4 md:p-5 border border-club-gold/25">
+            <article class="bg-club-dark rounded-2xl p-4 md:p-5 border border-club-gold/20">
               <div class="flex items-center gap-4">
                 <div class="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-club-gold/35 shadow-lg shadow-black/20">
                   @if(!empty($dir->foto_url))
@@ -452,73 +452,7 @@
             <div class="col-span-2 md:col-span-4 rounded-xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay fotos cargadas todavía.</div>
           @endforelse
 
-          <a href="https://www.instagram.com/fc_cogote_salado?igsh=dmptcDF1M2x0YXp3" target="_blank" rel="noopener noreferrer"
-             class="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 relative group cursor-pointer flex items-center justify-center">
-            <div class="text-center">
-              <svg class="w-10 h-10 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-              <span class="font-bebas text-lg">VER MÁS</span>
-            </div>
-          </a>
-
         </div>
-      </div>
-    </section>
-
-    {{-- =========================================================
-       ✅ CTA INSTAGRAM
-    ========================================================== --}}
-    <section class="py-20 bg-club-dark relative overflow-hidden">
-      <div class="absolute inset-0 opacity-10">
-        <svg class="w-full h-full" viewBox="0 0 400 200">
-          <defs>
-            <linearGradient id="igGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#833ab4" />
-              <stop offset="50%" stop-color="#fd1d1d" />
-              <stop offset="100%" stop-color="#fcb045" />
-            </linearGradient>
-          </defs>
-          <circle cx="50" cy="100" r="80" fill="url(#igGrad)" opacity="0.5" />
-          <circle cx="350" cy="100" r="100" fill="url(#igGrad)" opacity="0.3" />
-          <circle cx="200" cy="50" r="60" fill="url(#igGrad)" opacity="0.4" />
-        </svg>
-      </div>
-
-      <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
-        <div class="mb-8">
-          <div class="instagram-glow inline-block p-1 rounded-3xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400">
-            <div class="bg-club-dark rounded-3xl px-8 py-6">
-              <svg class="w-16 h-16 mx-auto mb-4" fill="url(#instagramGradient)" viewBox="0 0 24 24">
-                <defs>
-                  <linearGradient id="instagramGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#fcb045" />
-                    <stop offset="50%" stop-color="#fd1d1d" />
-                    <stop offset="100%" stop-color="#833ab4" />
-                  </linearGradient>
-                </defs>
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-
-              <h2 class="font-bebas text-3xl md:text-5xl tracking-wider mb-2">
-                ¡SÍGUENOS EN
-                <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">INSTAGRAM</span>!
-              </h2>
-
-              <p class="text-gray-300 mb-6">@fc_cogote_salado</p>
-
-              <a href="https://www.instagram.com/fc_cogote_salado?igsh=dmptcDF1M2x0YXp3" target="_blank" rel="noopener noreferrer"
-                 class="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white font-bold px-8 py-4 rounded-full text-lg hover:scale-105 transition-transform shadow-lg">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058 1.265-.07 1.644-.07 4.849 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/>
-                </svg>
-                SEGUIR AHORA
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <p class="text-gray-400 text-sm">📷 Fotos • 🎥 Videos • 📊 Resultados • 🎉 Momentos</p>
       </div>
     </section>
 
@@ -536,7 +470,7 @@
           <span class="font-bebas text-lg tracking-wider text-club-gold">FC COGOTE SALADO</span>
         </div>
 
-        <p class="text-gray-500 text-sm">© 2025 FC Cogote Salado. Más que amigos, familia.</p>
+        <p class="text-gray-500 text-sm">© {{ date('Y') }} FC Cogote Salado. Más que amigos, familia.</p>
       </div>
     </footer>
 

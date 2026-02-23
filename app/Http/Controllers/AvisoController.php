@@ -109,15 +109,26 @@ class AvisoController extends Controller
             ->take(4)
             ->values();
 
-        $fotos = collect(Storage::disk('public')->files('fotos'))
-            ->filter(fn (string $path) => preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $path) === 1)
-            ->shuffle()
-            ->take(8)
-            ->values()
-            ->map(fn (string $path) => [
-                'src' => asset('storage/'.$path),
-                'alt' => (string) Str::of(pathinfo($path, PATHINFO_FILENAME))->replace(['-', '_'], ' ')->title(),
-            ]);
+        if (Schema::hasTable('foto_items')) {
+            $fotos = DB::table('foto_items')
+                ->inRandomOrder()
+                ->limit(8)
+                ->get(['path'])
+                ->map(fn ($row) => [
+                    'src' => asset('storage/'.$row->path),
+                    'alt' => (string) Str::of(pathinfo($row->path, PATHINFO_FILENAME))->replace(['-', '_'], ' ')->title(),
+                ]);
+        } else {
+            $fotos = collect(Storage::disk('public')->files('fotos'))
+                ->filter(fn (string $path) => preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $path) === 1)
+                ->shuffle()
+                ->take(8)
+                ->values()
+                ->map(fn (string $path) => [
+                    'src' => asset('storage/'.$path),
+                    'alt' => (string) Str::of(pathinfo($path, PATHINFO_FILENAME))->replace(['-', '_'], ' ')->title(),
+                ]);
+        }
 
         return view('public.home', compact('avisos', 'jugadores', 'noticias', 'partidos', 'directivaTop', 'fotos'));
     }
