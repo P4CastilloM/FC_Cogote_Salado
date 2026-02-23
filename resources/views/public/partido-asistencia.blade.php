@@ -86,7 +86,9 @@
 
       let guestCount = 0;
       const token = @json($partido->attendance_token);
-      const searchUrl = `{{ route('fccs.partidos.asistencia.search', ['token' => '__TOKEN__']) }}`.replace('__TOKEN__', token);
+      const searchRouteTemplate = @json(route('fccs.partidos.asistencia.search', ['token' => '__TOKEN__']));
+      const searchUrlObj = new URL(searchRouteTemplate.replace('__TOKEN__', token), window.location.origin);
+      const searchUrl = `${window.location.origin}${searchUrlObj.pathname}`;
 
       function sanitizeRut(value) {
         return String(value || '').replace(/\D+/g, '');
@@ -94,11 +96,25 @@
 
       async function fetchPlayersByRut(rut) {
         const cleanRut = sanitizeRut(rut);
-        if (cleanRut.length < 5) return [];
+        if (cleanRut.length < 5) return { players: [] };
 
-        const response = await fetch(`${searchUrl}?rut=${encodeURIComponent(cleanRut)}`);
+        let response;
+        try {
+          response = await fetch(`${searchUrl}?rut=${encodeURIComponent(cleanRut)}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+          });
+        } catch (error) {
+          return { error: 'No se pudo conectar al servidor para buscar jugadores.' };
+        }
+
+        if (!response.ok) {
+          return { error: 'No se pudo completar la búsqueda. Intenta nuevamente.' };
+        }
+
         const data = await response.json().catch(() => ({ players: [] }));
-        return data.players || [];
+        return { players: data.players || [] };
       }
 
       function renderPlayerButtons(container, players, onSelect) {
@@ -126,7 +142,13 @@
         }
 
         results.innerHTML = '<p class="text-sm text-slate-400">Buscando...</p>';
-        const players = await fetchPlayersByRut(rut);
+        const result = await fetchPlayersByRut(rut);
+        if (result.error) {
+          results.innerHTML = `<p class="text-sm text-amber-300">${result.error}</p>`;
+          return;
+        }
+
+        const players = result.players || [];
         renderPlayerButtons(results, players, (selectedRut, selectedName) => {
           actorRut.value = selectedRut;
           selectedPlayer.textContent = `Rut | Nombre: ${selectedRut} | ${selectedName}`;
@@ -168,7 +190,13 @@
           }
 
           guestResults.innerHTML = '<p class="text-sm text-slate-400">Buscando...</p>';
-          const players = await fetchPlayersByRut(rut);
+          const result = await fetchPlayersByRut(rut);
+          if (result.error) {
+            guestResults.innerHTML = `<p class="text-sm text-amber-300">${result.error}</p>`;
+            return;
+          }
+
+          const players = result.players || [];
           renderPlayerButtons(guestResults, players, (selectedRut, selectedName) => {
             rutInput.value = selectedRut;
             hiddenRut.value = selectedRut;
