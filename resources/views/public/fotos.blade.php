@@ -13,7 +13,7 @@
   <link rel="icon" type="image/png" href="{{ asset('storage/logo/logo_fccs_s_f.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   @vite([
     'resources/css/app.css',
@@ -25,58 +25,123 @@
 <body class="h-full w-full bg-club-dark font-inter text-white overflow-auto">
   @include('public.partials.header')
 
-  <main class="pt-24 pb-10 px-4 sm:px-6 max-w-7xl mx-auto">
-    <section class="text-center mb-8 sm:mb-10">
-      <h1 class="font-bebas text-5xl sm:text-6xl text-[#78c51c] tracking-wider mb-2">📸 Galería de Fotos</h1>
-      <p class="text-gray-300 text-base sm:text-lg">Los mejores momentos del FC Cogote Salado</p>
-      <div class="w-28 h-1 rounded-full bg-gradient-to-r from-[#78c51c] to-[#2a869c] mx-auto mt-4"></div>
+  <main class="gallery-page pt-20 min-h-full">
+    <section class="gallery-hero">
+      <div class="gallery-hero__decoration gallery-hero__decoration--top"></div>
+      <div class="gallery-hero__decoration gallery-hero__decoration--bottom"></div>
+
+      <div class="gallery-shell text-center">
+        <div class="gallery-badge">
+          <span class="gallery-badge__dot"></span>
+          <span id="badgeText">Actualizado</span>
+        </div>
+
+        <h1 class="gallery-title">
+          <span>Galería de Fotos</span>
+        </h1>
+        <p class="gallery-subtitle">Los mejores momentos del FC Cogote Salado capturados para la eternidad.</p>
+
+        <div class="gallery-stats">
+          <div class="gallery-stat">
+            <strong id="photoCount">0</strong>
+            <span>Fotos</span>
+          </div>
+          <div class="gallery-stat">
+            <strong id="albumCount">0</strong>
+            <span>Álbumes</span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <form method="GET" action="{{ route('fccs.fotos') }}" class="gallery-filters mb-7">
-      <div>
-        <label class="filter-label">Álbum</label>
-        <input type="text" name="album" value="{{ $albumFilter }}" class="filter-input" placeholder="Buscar por nombre de álbum">
-      </div>
-      <div>
-        <label class="filter-label">Fecha de creación del álbum</label>
-        <input type="date" name="album_date" value="{{ $albumDateFilter }}" class="filter-input">
-      </div>
-      <div class="filter-actions">
-        <button class="btn-filter" type="submit">Filtrar</button>
-        <a href="{{ route('fccs.fotos') }}" class="btn-all">Ver todas</a>
-      </div>
-    </form>
+    <section class="gallery-toolbar-wrap">
+      <div class="gallery-shell">
+        <div class="gallery-toolbar">
+          <div class="gallery-toolbar__top">
+            <label class="gallery-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input id="searchInput" type="text" placeholder="Buscar por álbum...">
+            </label>
 
-    <div class="gallery-container" id="galleryContainer"></div>
+            <div class="gallery-dates">
+              <input id="dateFrom" type="date">
+              <input id="dateTo" type="date">
+            </div>
+          </div>
 
-    <div id="emptyState" class="hidden text-center py-16">
-      <h3 class="font-bebas text-2xl text-club-gold mb-2">No hay fotos disponibles</h3>
-      <p class="text-gray-400 text-sm">Sube imágenes a <code class="text-white/80">storage/app/public/fotos</code></p>
-    </div>
+          <div class="gallery-toolbar__bottom">
+            <div class="gallery-chips-row">
+              <span class="gallery-chips-label">Álbumes:</span>
+              <div id="albumChips" class="gallery-chips"></div>
+            </div>
+
+            <button id="clearFiltersBtn" type="button" class="gallery-clear-btn">Limpiar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery-content">
+      <div class="gallery-shell">
+        <div class="gallery-results-row">
+          <p>Mostrando <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> fotos</p>
+
+          <label class="gallery-sort">
+            <span>Ordenar:</span>
+            <select id="sortSelect">
+              <option value="recent">Más recientes</option>
+              <option value="oldest">Más antiguas</option>
+              <option value="album">Por álbum</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="gallery-grid" id="galleryContainer"></div>
+
+        <div id="emptyState" class="gallery-empty hidden">
+          <h3>No se encontraron fotos</h3>
+          <p>Intenta ajustar los filtros de búsqueda.</p>
+        </div>
+
+        <div id="loadMoreWrap" class="gallery-load-more hidden">
+          <button id="loadMoreBtn" type="button">Cargar más fotos</button>
+          <p><span id="remainingCount">0</span> fotos más disponibles</p>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <div class="modal-backdrop" id="photoModal">
-    <div class="modal-content">
-      <button class="modal-close" id="closeModal" type="button" aria-label="Cerrar">
+  <div class="gallery-modal" id="photoModal" aria-hidden="true">
+    <div class="gallery-modal__backdrop" id="closeModalBackdrop"></div>
+
+    <div class="gallery-modal__body">
+      <button class="gallery-modal__close" id="closeModal" type="button" aria-label="Cerrar">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
-      <button class="modal-nav prev" id="prevPhoto" type="button" aria-label="Anterior">
+      <button class="gallery-modal__nav prev" id="prevPhoto" type="button" aria-label="Anterior">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
 
       <img src="" alt="Foto ampliada" id="modalImage">
 
-      <button class="modal-nav next" id="nextPhoto" type="button" aria-label="Siguiente">
+      <button class="gallery-modal__nav next" id="nextPhoto" type="button" aria-label="Siguiente">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </button>
-    </div>
 
-    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-300 text-sm" id="photoCounter">1 / 1</div>
+      <div class="gallery-modal__footer">
+        <div>
+          <h3 id="lightboxTitle">Foto</h3>
+          <p><span id="lightboxAlbum">Álbum</span> • <span id="lightboxDate">Fecha</span></p>
+        </div>
+        <span id="photoCounter">1 / 1</span>
+      </div>
+    </div>
   </div>
 
   <script>
     window.__PHOTOS__ = @json($photos);
+    window.__ALBUMS__ = @json($albums);
   </script>
 </body>
 </html>

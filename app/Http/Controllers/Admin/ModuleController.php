@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -242,6 +244,12 @@ class ModuleController extends Controller
                 'direccion' => ['nullable', 'string', 'max:180'],
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
+
+            $attendanceData = $this->buildAttendanceWindow($data['fecha']);
+            $data['attendance_token'] = Str::random(48);
+            $data['attendance_starts_at'] = $attendanceData['starts_at'];
+            $data['attendance_ends_at'] = $attendanceData['ends_at'];
+
             DB::table('partidos')->insert($data);
             $this->logModification('partidos', 'añadir', null, $data['nombre_lugar'] ?? null);
 
@@ -346,15 +354,27 @@ class ModuleController extends Controller
                 $data = $request->validate([
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_nombre' => ['required', 'string', 'max:90'],
+                    'upload_token' => ['nullable', 'string', 'max:120'],
+                    'chunk_index' => ['nullable', 'integer', 'min:0'],
                     'fotos' => ['required', 'array', 'min:1', 'max:80'],
                     'fotos.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:20480'],
                 ]);
+
+                $uploadToken = trim((string) ($data['upload_token'] ?? ''));
+                $chunkIndex = isset($data['chunk_index']) ? (int) $data['chunk_index'] : null;
+                if ($request->expectsJson() && $uploadToken !== '' && $chunkIndex !== null) {
+                    $chunkKey = "album-upload:{$uploadToken}:{$chunkIndex}";
+                    $accepted = Cache::add($chunkKey, true, now()->addMinutes(30));
+                    if (! $accepted) {
+                        return response()->json(['ok' => true, 'duplicate' => true]);
+                    }
+                }
 
                 $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
                 $storedPaths = [];
 
                 foreach ($request->file('fotos', []) as $file) {
-                    $path = $this->storeUploadedWebp($file, 'fotos', false);
+                    $path = $this->storeUploadedWebp($file, 'fotos', true);
 
                     if ($path === '' || ! Storage::disk('public')->exists($path)) {
                         foreach ($storedPaths as $storedPath) {
@@ -556,6 +576,13 @@ class ModuleController extends Controller
                 'direccion' => ['nullable', 'string', 'max:180'],
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
+
+            $existingToken = DB::table('partidos')->where('id', $id)->value('attendance_token');
+            $attendanceData = $this->buildAttendanceWindow($data['fecha']);
+            $data['attendance_token'] = is_string($existingToken) && $existingToken !== '' ? $existingToken : Str::random(48);
+            $data['attendance_starts_at'] = $attendanceData['starts_at'];
+            $data['attendance_ends_at'] = $attendanceData['ends_at'];
+
             DB::table('partidos')->where('id', $id)->update($data);
             $this->logModification('partidos', 'actualizar', $id, $data['nombre_lugar'] ?? null);
             return redirect()->route('admin.partidos.edit', $id)->with('status', 'item-updated');
@@ -994,53 +1021,6 @@ class ModuleController extends Controller
         }
 
         $exif = @exif_read_data($file->getRealPath());
-        $orientation = (int) ($exif['Orientation'] ?? 1);
-
-        return $orientation !== 1;
-    }
-
-    private function normalizeImageOrientation($image, string $path, string $extension)
-    {
-        if (! is_resource($image) && ! ($image instanceof \GdImage)) {
-            return $image;
-        }
-
-        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
-            return $image;
-        }
-
-        $exif = @exif_read_data($path);
-        $orientation = (int) ($exif['Orientation'] ?? 1);
-
-        $angle = match ($orientation) {
-            3 => 180,
-            6 => -90,
-            8 => 90,
-            default => null,
-        };
-
-        if ($angle === null) {
-            return $image;
-        }
-
-        $rotated = imagerotate($image, $angle, 0);
-        if (! $rotated) {
-            return $image;
-        }
-
-        imagedestroy($image);
-
-        return $rotated;
-    }
-
-
-    private function shouldStoreOriginalForExif(UploadedFile $file, string $extension): bool
-    {
-        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
-            return false;
-        }
-
-        $exif = @exif_read_data($file->getRealPath());
         $orientation = (int) ($exif['Orientation'] ?? $exif['orientation'] ?? 1);
 
         return $orientation !== 1;
@@ -1138,5 +1118,17 @@ class ModuleController extends Controller
     private function temporadas()
     {
         return Schema::hasTable('temporadas') ? DB::table('temporadas')->orderByDesc('id')->get() : collect();
+    }
+
+    private function buildAttendanceWindow(string $fecha): array
+    {
+        $matchDate = Carbon::parse($fecha)->endOfDay();
+        $twoWeeksBefore = Carbon::parse($fecha)->subDays(14)->startOfDay();
+        $startAt = now()->greaterThan($twoWeeksBefore) ? now() : $twoWeeksBefore;
+
+        return [
+            'starts_at' => $startAt,
+            'ends_at' => $matchDate,
+        ];
     }
 }
