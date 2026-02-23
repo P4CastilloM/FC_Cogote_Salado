@@ -120,10 +120,10 @@
     function fieldCard(item) {
       const player = findPlayer(item.playerId);
       if (!player) return '';
-      const color = item.team === 'A' ? '#84cc16' : '#fbbf24';
+      const color = item.team === 'A' ? '#38bdf8' : '#fbbf24';
 
       return `
-        <div class="field-player rounded-xl p-1 md:p-1.5 bg-gradient-to-b from-slate-800/95 to-slate-900/95 border-2 w-[72px] md:w-[84px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 12px ${color}70" data-player-id="${item.playerId}" draggable="true">
+        <div class="field-player rounded-xl p-1 md:p-1.5 bg-transparent border-[3px] w-[72px] md:w-[84px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 14px ${color}90" data-player-id="${item.playerId}" draggable="true">
           <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
           <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border border-white/25 bg-white/10 flex items-center justify-center">
             ${player.photo
