@@ -123,8 +123,8 @@
                 <tbody>
                     @forelse(($attendanceLogs ?? collect()) as $log)
                         @php
-                            $actor = trim((string) ($log->actor_sobrenombre ?: $log->actor_nombre ?: 'Jugador'));
-                            $target = trim((string) ($log->target_sobrenombre ?: $log->target_nombre ?: 'Jugador'));
+                            $actor = trim((string) ($log->actor_sobrenombre ?? $log->actor_nombre ?? 'Jugador'));
+                            $target = trim((string) ($log->target_sobrenombre ?? $log->target_nombre ?? 'Jugador'));
                         @endphp
                         <tr class="border-t border-white/5 text-slate-200">
                             <td class="px-3 py-2">{{ \Carbon\Carbon::parse($log->checked_at)->translatedFormat('d M Y H:i') }}</td>
