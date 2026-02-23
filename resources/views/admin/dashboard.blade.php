@@ -70,7 +70,8 @@
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
             <a class="quick-link" href="{{ route('admin.noticias.create') }}">📰 Crear noticia</a>
             <a class="quick-link" href="{{ route('admin.avisos.create') }}">📢 Crear aviso</a>
-            <a class="quick-link" href="{{ route('admin.album.create') }}">📸 Subir foto</a>
+            <a class="quick-link" href="{{ route('admin.album.create') }}">📸 Subir foto / álbum</a>
+            <a class="quick-link" href="{{ route('admin.album.index') }}">🗂️ Gestionar fotos</a>
             <a class="quick-link" href="{{ route('admin.plantel.index') }}">👥 Gestionar plantel</a>
             <a class="quick-link" href="{{ route('admin.partidos.index') }}">📅 Gestionar partidos</a>
             @if($isAdmin)
