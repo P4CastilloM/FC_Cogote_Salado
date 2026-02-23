@@ -56,6 +56,21 @@
       </div>
     </div>
 
+    @if(!empty($activeMatch))
+      <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4 border border-lime-400/35">
+        <p class="text-sm text-lime-200">
+          ✅ Plantilla activa para: <strong>{{ \Carbon\Carbon::parse($activeMatch->fecha)->translatedFormat('d M Y') }}</strong>
+          · vs {{ $activeMatch->rival ?? 'Rival por definir' }} · {{ $activeMatch->nombre_lugar ?? 'Lugar por definir' }}
+        </p>
+        <p class="text-xs text-slate-300 mt-1">Solo aparecen en banca jugadores que confirmaron asistencia en el link activo.</p>
+      </div>
+    @else
+      <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4 border border-amber-400/35">
+        <p class="text-sm text-amber-200">⚠️ No hay partido con link activo de asistencia en este momento.</p>
+        <p class="text-xs text-slate-300 mt-1">Crea/edita un partido y comparte el link para confirmar asistencia.</p>
+      </div>
+    @endif
+
     <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4">
       <div class="flex justify-between items-center text-xs mb-2">
         <span id="team-a-label" class="text-lime-300 font-semibold">Equipo A</span>

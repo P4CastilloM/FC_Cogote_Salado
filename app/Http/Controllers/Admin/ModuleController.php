@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -243,6 +244,12 @@ class ModuleController extends Controller
                 'direccion' => ['nullable', 'string', 'max:180'],
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
+
+            $attendanceData = $this->buildAttendanceWindow($data['fecha']);
+            $data['attendance_token'] = Str::random(48);
+            $data['attendance_starts_at'] = $attendanceData['starts_at'];
+            $data['attendance_ends_at'] = $attendanceData['ends_at'];
+
             DB::table('partidos')->insert($data);
             $this->logModification('partidos', 'añadir', null, $data['nombre_lugar'] ?? null);
 
@@ -569,6 +576,13 @@ class ModuleController extends Controller
                 'direccion' => ['nullable', 'string', 'max:180'],
                 'temporada_id' => ['required', 'integer', 'exists:temporadas,id'],
             ]);
+
+            $existingToken = DB::table('partidos')->where('id', $id)->value('attendance_token');
+            $attendanceData = $this->buildAttendanceWindow($data['fecha']);
+            $data['attendance_token'] = is_string($existingToken) && $existingToken !== '' ? $existingToken : Str::random(48);
+            $data['attendance_starts_at'] = $attendanceData['starts_at'];
+            $data['attendance_ends_at'] = $attendanceData['ends_at'];
+
             DB::table('partidos')->where('id', $id)->update($data);
             $this->logModification('partidos', 'actualizar', $id, $data['nombre_lugar'] ?? null);
             return redirect()->route('admin.partidos.edit', $id)->with('status', 'item-updated');
@@ -1104,5 +1118,17 @@ class ModuleController extends Controller
     private function temporadas()
     {
         return Schema::hasTable('temporadas') ? DB::table('temporadas')->orderByDesc('id')->get() : collect();
+    }
+
+    private function buildAttendanceWindow(string $fecha): array
+    {
+        $matchDate = Carbon::parse($fecha)->endOfDay();
+        $twoWeeksBefore = Carbon::parse($fecha)->subDays(14)->startOfDay();
+        $startAt = now()->greaterThan($twoWeeksBefore) ? now() : $twoWeeksBefore;
+
+        return [
+            'starts_at' => $startAt,
+            'ends_at' => $matchDate,
+        ];
     }
 }
