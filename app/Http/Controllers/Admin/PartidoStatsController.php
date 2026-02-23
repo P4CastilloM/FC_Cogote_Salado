@@ -18,7 +18,7 @@ class PartidoStatsController extends Controller
         abort_unless($partido, 404);
 
         $window = $this->statsWindow($partido);
-        $now = now();
+        $now = now($this->clubTimezone());
         $isActiveWindow = $now->betweenIncluded($window['starts_at'], $window['ends_at']);
 
         if (! $isActiveWindow) {
@@ -66,7 +66,7 @@ class PartidoStatsController extends Controller
         }
 
         $window = $this->statsWindow($partido);
-        if (! now()->betweenIncluded($window['starts_at'], $window['ends_at'])) {
+        if (! now($this->clubTimezone())->betweenIncluded($window['starts_at'], $window['ends_at'])) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Fuera de la ventana permitida para cargar estadísticas.',
@@ -172,6 +172,11 @@ class PartidoStatsController extends Controller
         }
     }
 
+    private function clubTimezone(): string
+    {
+        return 'America/Santiago';
+    }
+
     /** @return array{starts_at: Carbon, ends_at: Carbon} */
     private function statsWindow(object $partido): array
     {
@@ -179,7 +184,7 @@ class PartidoStatsController extends Controller
         $hour = trim((string) ($partido->hora ?? '00:00'));
         $time = preg_match('/^\d{2}:\d{2}/', $hour) ? substr($hour, 0, 5) : '00:00';
 
-        $kickoff = Carbon::parse($date.' '.$time);
+        $kickoff = Carbon::parse($date.' '.$time, $this->clubTimezone());
 
         return [
             'starts_at' => $kickoff->copy()->subHour(),
