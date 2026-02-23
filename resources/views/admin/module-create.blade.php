@@ -216,6 +216,10 @@
 
                             event.preventDefault();
 
+                            if (form.dataset.albumUploading === '1') {
+                                return;
+                            }
+
                             const files = Array.from(albumFiles?.files || []);
                             const name = (albumName?.value || '').trim();
 
@@ -231,11 +235,14 @@
                             const totalChunks = Math.ceil(files.length / chunkSize);
                             const csrf = form.querySelector('input[name="_token"]')?.value || '';
                             const endpoint = form.getAttribute('action');
+                            const uploadToken = (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
                             if (submitBtn) {
                                 submitBtn.disabled = true;
                                 submitBtn.textContent = 'Subiendo...';
                             }
+
+                            form.dataset.albumUploading = '1';
 
                             statusBox?.classList.remove('hidden');
                             if (statusBox) statusBox.textContent = `Preparando ${files.length} fotos en ${totalChunks} lote(s)...`;
@@ -247,6 +254,8 @@
                                     fd.append('_token', csrf);
                                     fd.append('upload_mode', 'album');
                                     fd.append('album_nombre', name);
+                                    fd.append('upload_token', uploadToken);
+                                    fd.append('chunk_index', String(i));
                                     chunk.forEach((file) => fd.append('fotos[]', file));
 
                                     const controller = new AbortController();
@@ -281,6 +290,7 @@
                                     submitBtn.disabled = false;
                                     submitBtn.textContent = '✔ Guardar';
                                 }
+                                delete form.dataset.albumUploading;
                             }
                         });
                     });

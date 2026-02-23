@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -346,15 +347,27 @@ class ModuleController extends Controller
                 $data = $request->validate([
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_nombre' => ['required', 'string', 'max:90'],
+                    'upload_token' => ['nullable', 'string', 'max:120'],
+                    'chunk_index' => ['nullable', 'integer', 'min:0'],
                     'fotos' => ['required', 'array', 'min:1', 'max:80'],
                     'fotos.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:20480'],
                 ]);
+
+                $uploadToken = trim((string) ($data['upload_token'] ?? ''));
+                $chunkIndex = isset($data['chunk_index']) ? (int) $data['chunk_index'] : null;
+                if ($request->expectsJson() && $uploadToken !== '' && $chunkIndex !== null) {
+                    $chunkKey = "album-upload:{$uploadToken}:{$chunkIndex}";
+                    $accepted = Cache::add($chunkKey, true, now()->addMinutes(30));
+                    if (! $accepted) {
+                        return response()->json(['ok' => true, 'duplicate' => true]);
+                    }
+                }
 
                 $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
                 $storedPaths = [];
 
                 foreach ($request->file('fotos', []) as $file) {
-                    $path = $this->storeUploadedWebp($file, 'fotos', false);
+                    $path = $this->storeUploadedWebp($file, 'fotos', true);
 
                     if ($path === '' || ! Storage::disk('public')->exists($path)) {
                         foreach ($storedPaths as $storedPath) {
