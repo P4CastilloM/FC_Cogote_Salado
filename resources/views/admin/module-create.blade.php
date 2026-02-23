@@ -220,10 +220,14 @@
                             const name = (albumName?.value || '').trim();
 
                             if (!name || files.length === 0) {
+                                if (statusBox) {
+                                    statusBox.classList.remove('hidden');
+                                    statusBox.textContent = '❌ Debes seleccionar nombre de álbum y al menos 1 foto.';
+                                }
                                 return;
                             }
 
-                            const chunkSize = 8;
+                            const chunkSize = 3;
                             const totalChunks = Math.ceil(files.length / chunkSize);
                             const csrf = form.querySelector('input[name="_token"]')?.value || '';
                             const endpoint = form.getAttribute('action');
@@ -245,6 +249,9 @@
                                     fd.append('album_nombre', name);
                                     chunk.forEach((file) => fd.append('fotos[]', file));
 
+                                    const controller = new AbortController();
+                                    const timeout = setTimeout(() => controller.abort(), 180000);
+
                                     const response = await fetch(endpoint, {
                                         method: 'POST',
                                         headers: {
@@ -252,7 +259,10 @@
                                             'X-Requested-With': 'XMLHttpRequest',
                                         },
                                         body: fd,
+                                        signal: controller.signal,
                                     });
+
+                                    clearTimeout(timeout);
 
                                     const data = await response.json().catch(() => ({}));
                                     if (!response.ok || data.ok === false) {

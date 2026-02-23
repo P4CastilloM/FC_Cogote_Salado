@@ -347,7 +347,7 @@ class ModuleController extends Controller
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_nombre' => ['required', 'string', 'max:90'],
                     'fotos' => ['required', 'array', 'min:1', 'max:80'],
-                    'fotos.*' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif,bmp,avif,tif,tiff', 'max:10240'],
+                    'fotos.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:10240'],
                 ]);
 
                 $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
@@ -362,11 +362,18 @@ class ModuleController extends Controller
                     return response()->json(['ok' => true, 'album_id' => $albumId]);
                 }
             } else {
+                if (! $request->hasFile('foto')) {
+                    $message = 'No se recibió la foto. Revisa límites de servidor (post_max_size / upload_max_filesize) e intenta de nuevo.';
+                    return $request->expectsJson()
+                        ? response()->json(['ok' => false, 'message' => $message], 422)
+                        : redirect()->back()->withErrors(['foto' => $message])->withInput();
+                }
+
                 $data = $request->validate([
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_id' => ['nullable', 'integer', 'exists:foto_albums,id'],
                     'single_album_nombre' => ['nullable', 'string', 'max:90'],
-                    'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif,bmp,avif,tif,tiff', 'max:10240'],
+                    'foto' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:10240'],
                 ]);
 
                 $albumId = $this->resolveAlbumId($data['album_id'] ?? null, $data['single_album_nombre'] ?? null);
@@ -783,40 +790,79 @@ class ModuleController extends Controller
         $extension = strtolower($file->getClientOriginalExtension());
         $image = $this->createImageResource($file->getRealPath(), $extension);
 
-        if (! $image) {
-            return $file->store($directory, 'public');
-        }
+        if ($image) {
+            $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $filename = Str::slug($filename) ?: 'img';
+            $filename .= '-'.Str::random(8).'.webp';
+            $path = trim($directory, '/').'/'.$filename;
 
-        $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $filename = Str::slug($filename) ?: 'img';
-        $filename .= '-'.Str::random(8).'.webp';
-        $path = trim($directory, '/').'/'.$filename;
+            $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-');
+            if ($tmpFile === false) {
+                imagedestroy($image);
+                return $file->store($directory, 'public');
+            }
 
-        $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-');
-        if ($tmpFile === false) {
+            $saved = @imagewebp($image, $tmpFile, 80);
             imagedestroy($image);
-            return $file->store($directory, 'public');
-        }
 
-        $saved = @imagewebp($image, $tmpFile, 80);
-        imagedestroy($image);
+            if (! $saved || ! is_file($tmpFile)) {
+                @unlink($tmpFile);
+                return $file->store($directory, 'public');
+            }
 
-        if (! $saved || ! is_file($tmpFile)) {
+            $stream = @fopen($tmpFile, 'rb');
+            if ($stream === false) {
+                @unlink($tmpFile);
+                return $file->store($directory, 'public');
+            }
+
+            Storage::disk('public')->put($path, $stream);
+            fclose($stream);
             @unlink($tmpFile);
-            return $file->store($directory, 'public');
+
+            return $path;
         }
 
-        $stream = @fopen($tmpFile, 'rb');
-        if ($stream === false) {
-            @unlink($tmpFile);
-            return $file->store($directory, 'public');
+        if (class_exists('Imagick')) {
+            try {
+                $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $filename = Str::slug($filename) ?: 'img';
+                $filename .= '-'.Str::random(8).'.webp';
+                $path = trim($directory, '/').'/'.$filename;
+
+                $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-im-');
+                if ($tmpFile === false) {
+                    return $file->store($directory, 'public');
+                }
+
+                $imagick = new \Imagick();
+                $imagick->readImage($file->getRealPath());
+                $imagick->setImageFormat('webp');
+                $imagick->setImageCompressionQuality(80);
+                $imagick->writeImage($tmpFile);
+                $imagick->clear();
+                $imagick->destroy();
+
+                $stream = @fopen($tmpFile, 'rb');
+                if ($stream === false) {
+                    @unlink($tmpFile);
+                    return $file->store($directory, 'public');
+                }
+
+                Storage::disk('public')->put($path, $stream);
+                fclose($stream);
+                @unlink($tmpFile);
+
+                return $path;
+            } catch (\Throwable $e) {
+                logger()->warning('No se pudo convertir imagen con Imagick a webp', [
+                    'filename' => $file->getClientOriginalName(),
+                    'message' => $e->getMessage(),
+                ]);
+            }
         }
 
-        Storage::disk('public')->put($path, $stream);
-        fclose($stream);
-        @unlink($tmpFile);
-
-        return $path;
+        return $file->store($directory, 'public');
     }
 
     private function createImageResource(string $path, string $extension)
