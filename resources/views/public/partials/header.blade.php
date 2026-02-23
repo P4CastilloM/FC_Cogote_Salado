@@ -94,3 +94,31 @@
     </nav>
   </div>
 </header>
+
+<script>
+  (() => {
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuIcon = document.getElementById('menu-icon');
+    const closeIcon = document.getElementById('close-icon');
+
+    if (!mobileMenuBtn || !mobileMenu) return;
+
+    const toggleMenu = (open) => {
+      mobileMenu.classList.toggle('hidden', !open);
+      menuIcon?.classList.toggle('hidden', open);
+      closeIcon?.classList.toggle('hidden', !open);
+    };
+
+    mobileMenuBtn.dataset.mobileMenuBound = '1';
+
+    mobileMenuBtn.addEventListener('click', () => {
+      const willOpen = mobileMenu.classList.contains('hidden');
+      toggleMenu(willOpen);
+    });
+
+    mobileMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => toggleMenu(false));
+    });
+  })();
+</script>

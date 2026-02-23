@@ -56,6 +56,21 @@
       </div>
     </div>
 
+    @if(!empty($activeMatch))
+      <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4 border border-lime-400/35">
+        <p class="text-sm text-lime-200">
+          ✅ Plantilla activa para: <strong>{{ \Carbon\Carbon::parse($activeMatch->fecha)->translatedFormat('d M Y') }}</strong>
+          · vs {{ $activeMatch->rival ?? 'Rival por definir' }} · {{ $activeMatch->nombre_lugar ?? 'Lugar por definir' }}
+        </p>
+        <p class="text-xs text-slate-300 mt-1">Solo aparecen en banca jugadores que confirmaron asistencia en el link activo.</p>
+      </div>
+    @else
+      <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4 border border-amber-400/35">
+        <p class="text-sm text-amber-200">⚠️ No hay partido con link activo de asistencia en este momento.</p>
+        <p class="text-xs text-slate-300 mt-1">Crea/edita un partido y comparte el link para confirmar asistencia.</p>
+      </div>
+    @endif
+
     <div class="lineup-glass rounded-2xl p-3 md:p-4 mb-4">
       <div class="flex justify-between items-center text-xs mb-2">
         <span id="team-a-label" class="text-lime-300 font-semibold">Equipo A</span>
@@ -110,7 +125,7 @@
         <div class="bench-player lineup-glass rounded-lg p-2 flex flex-col items-center gap-1" draggable="true" data-player-id="${player.id}">
           <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-xs font-bold">${getInitials(player.name)}</span>`
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover object-top" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-xs font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-xs font-bold">${getInitials(player.name)}</span>`}
           </div>
           <span class="text-[11px] text-center text-white truncate w-full">${player.name}</span>
@@ -120,14 +135,14 @@
     function fieldCard(item) {
       const player = findPlayer(item.playerId);
       if (!player) return '';
-      const color = item.team === 'A' ? '#84cc16' : '#fbbf24';
+      const color = item.team === 'A' ? '#38bdf8' : '#fbbf24';
 
       return `
-        <div class="field-player rounded-xl p-1 md:p-1.5 bg-gradient-to-b from-slate-800/95 to-slate-900/95 border-2 w-[72px] md:w-[84px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 12px ${color}70" data-player-id="${item.playerId}" draggable="true">
+        <div class="field-player rounded-xl p-1 md:p-1.5 bg-transparent border-[3px] w-[72px] md:w-[84px]" style="left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);border-color:${color};box-shadow:0 0 14px ${color}90" data-player-id="${item.playerId}" draggable="true">
           <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
           <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border border-white/25 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover object-top" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-sm font-bold">${getInitials(player.name)}</span>`}
           </div>
           <div class="mt-1 text-[9px] md:text-[10px] text-white text-center font-semibold leading-tight whitespace-normal break-words min-h-[1.35rem]">${player.name}</div>
@@ -225,19 +240,84 @@
       }, { passive: true });
     }
 
+
+    async function normalizeImageSrcForCanvas(src) {
+      try {
+        const response = await fetch(src, { mode: 'cors' });
+        const blob = await response.blob();
+        const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+
+        const shouldRotateToPortrait = bitmap.width > bitmap.height;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        if (shouldRotateToPortrait) {
+          canvas.width = bitmap.height;
+          canvas.height = bitmap.width;
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(Math.PI / 2);
+          ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+        } else {
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          ctx.drawImage(bitmap, 0, 0);
+        }
+
+        bitmap.close();
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function prepareFieldImagesForExport(container) {
+      const fieldImages = Array.from(container.querySelectorAll('#field-players img'));
+      const restorers = [];
+
+      for (const img of fieldImages) {
+        const originalSrc = img.getAttribute('src') || '';
+        if (!originalSrc) continue;
+
+        const normalizedSrc = await normalizeImageSrcForCanvas(originalSrc);
+        if (!normalizedSrc) continue;
+
+        restorers.push(() => {
+          img.setAttribute('src', originalSrc);
+        });
+
+        img.setAttribute('src', normalizedSrc);
+      }
+
+      await Promise.all(
+        fieldImages.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        })
+      );
+
+      return () => restorers.forEach((restore) => restore());
+    }
+
     async function downloadPng() {
       const btn = document.getElementById('btn-download');
       const wrapper = document.getElementById('field-wrapper');
       btn.disabled = true;
       btn.textContent = 'Generando...';
       wrapper.classList.add('lineup-exporting');
+      let restoreImages = () => {};
       try {
+        restoreImages = await prepareFieldImagesForExport(wrapper);
         const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: null });
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
         link.download = `plantilla-fccs-${Date.now()}.png`;
         link.click();
       } finally {
+        restoreImages();
         wrapper.classList.remove('lineup-exporting');
         btn.disabled = false;
         btn.textContent = 'Descargar PNG';
