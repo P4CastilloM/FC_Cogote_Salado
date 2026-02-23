@@ -828,6 +828,8 @@ class ModuleController extends Controller
         $image = $this->createImageResource($file->getRealPath(), $extension);
 
         if ($image) {
+            $image = $this->normalizeImageOrientation($image, $file->getRealPath(), $extension);
+
             $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $filename = Str::slug($filename) ?: 'img';
             $filename .= '-'.Str::random(8).'.webp';
@@ -878,6 +880,12 @@ class ModuleController extends Controller
 
                 $imagick = new \Imagick();
                 $imagick->readImage($file->getRealPath());
+                if (method_exists($imagick, 'autoOrient')) {
+                    $imagick->autoOrient();
+                } elseif (method_exists($imagick, 'autoOrientImage')) {
+                    $imagick->autoOrientImage();
+                }
+
                 $imagick->setImageFormat('webp');
                 $imagick->setImageCompressionQuality(80);
                 $imagick->writeImage($tmpFile);
@@ -937,6 +945,40 @@ class ModuleController extends Controller
             'avif' => function_exists('imagecreatefromavif') ? @imagecreatefromavif($path) : null,
             default => null,
         };
+    }
+
+    private function normalizeImageOrientation($image, string $path, string $extension)
+    {
+        if (! is_resource($image) && ! ($image instanceof \GdImage)) {
+            return $image;
+        }
+
+        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
+            return $image;
+        }
+
+        $exif = @exif_read_data($path);
+        $orientation = (int) ($exif['Orientation'] ?? 1);
+
+        $angle = match ($orientation) {
+            3 => 180,
+            6 => -90,
+            8 => 90,
+            default => null,
+        };
+
+        if ($angle === null) {
+            return $image;
+        }
+
+        $rotated = imagerotate($image, $angle, 0);
+        if (! $rotated) {
+            return $image;
+        }
+
+        imagedestroy($image);
+
+        return $rotated;
     }
 
 
