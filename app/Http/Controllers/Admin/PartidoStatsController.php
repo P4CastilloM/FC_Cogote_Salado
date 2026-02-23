@@ -55,6 +55,7 @@ class PartidoStatsController extends Controller
             'players' => $players,
             'windowStart' => $window['starts_at'],
             'windowEnd' => $window['ends_at'],
+            'statsClosedAt' => $partido->stats_closed_at ?? null,
         ]);
     }
 
@@ -63,6 +64,10 @@ class PartidoStatsController extends Controller
         $partido = DB::table('partidos')->where('id', $id)->first();
         if (! $partido) {
             return response()->json(['ok' => false, 'message' => 'Partido no encontrado.'], 404);
+        }
+
+        if (! empty($partido->stats_closed_at)) {
+            return response()->json(['ok' => false, 'message' => 'El partido ya fue cerrado.'], 422);
         }
 
         $window = $this->statsWindow($partido);
@@ -119,23 +124,6 @@ class PartidoStatsController extends Controller
                     'participo' => true,
                 ]);
 
-            if ($effectiveDelta !== 0) {
-                $playerColumn = match ($field) {
-                    'goles' => 'goles',
-                    'asistencias' => 'asistencia',
-                    'atajadas' => 'atajadas',
-                };
-
-                $currentPlayerTotal = (int) DB::table('jugadores')
-                    ->where('rut', $jugadorRut)
-                    ->lockForUpdate()
-                    ->value($playerColumn);
-
-                DB::table('jugadores')
-                    ->where('rut', $jugadorRut)
-                    ->update([$playerColumn => max(0, $currentPlayerTotal + $effectiveDelta)]);
-            }
-
             return [
                 'value' => $next,
                 'effective_delta' => $effectiveDelta,
@@ -149,6 +137,44 @@ class PartidoStatsController extends Controller
         ]);
     }
 
+    public function finish(int $id): RedirectResponse
+    {
+        $partido = DB::table('partidos')->where('id', $id)->first();
+        abort_unless($partido, 404);
+
+        if (! empty($partido->stats_closed_at)) {
+            return redirect()->route('admin.partidos.stats', $id)->with('status', 'El partido ya estaba cerrado.');
+        }
+
+        DB::transaction(function () use ($id): void {
+            $rows = DB::table('jugador_partido')
+                ->where('partido_id', $id)
+                ->where('participo', true)
+                ->select('jugador_rut', 'goles', 'asistencias', 'atajadas')
+                ->get();
+
+            foreach ($rows as $row) {
+                DB::table('jugadores')
+                    ->where('rut', $row->jugador_rut)
+                    ->increment('goles', (int) $row->goles);
+
+                DB::table('jugadores')
+                    ->where('rut', $row->jugador_rut)
+                    ->increment('asistencia', (int) $row->asistencias);
+
+                DB::table('jugadores')
+                    ->where('rut', $row->jugador_rut)
+                    ->increment('atajadas', (int) $row->atajadas);
+            }
+
+            DB::table('partidos')
+                ->where('id', $id)
+                ->update(['stats_closed_at' => now($this->clubTimezone())]);
+        });
+
+        return redirect()->route('admin.partidos.stats', $id)->with('status', '✅ Partido cerrado y estadísticas acumuladas al plantel.');
+    }
+
     private function syncConfirmedPlayers(int $partidoId): void
     {
         $confirmedRuts = DB::table('partido_asistencias')
@@ -156,7 +182,7 @@ class PartidoStatsController extends Controller
             ->pluck('jugador_rut');
 
         foreach ($confirmedRuts as $rut) {
-            DB::table('jugador_partido')->insertOrIgnore([
+            $inserted = DB::table('jugador_partido')->insertOrIgnore([
                 'partido_id' => $partidoId,
                 'jugador_rut' => (int) $rut,
                 'goles' => 0,
@@ -164,6 +190,10 @@ class PartidoStatsController extends Controller
                 'atajadas' => 0,
                 'participo' => true,
             ]);
+
+            if ($inserted > 0) {
+                DB::table('jugadores')->where('rut', (int) $rut)->increment('partidos_jugados', 1);
+            }
 
             DB::table('jugador_partido')
                 ->where('partido_id', $partidoId)

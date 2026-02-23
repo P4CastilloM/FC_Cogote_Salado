@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -103,6 +104,26 @@ class PartidoAsistenciaController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                if ($this->isInsideStatsWindow($partido)) {
+                    $inserted = DB::table('jugador_partido')->insertOrIgnore([
+                        'partido_id' => $partido->id,
+                        'jugador_rut' => (int) $targetRut,
+                        'goles' => 0,
+                        'asistencias' => 0,
+                        'atajadas' => 0,
+                        'participo' => true,
+                    ]);
+
+                    if ($inserted > 0) {
+                        DB::table('jugadores')->where('rut', (int) $targetRut)->increment('partidos_jugados', 1);
+                    }
+
+                    DB::table('jugador_partido')
+                        ->where('partido_id', $partido->id)
+                        ->where('jugador_rut', (int) $targetRut)
+                        ->update(['participo' => true]);
+                }
             }
         });
 
@@ -111,6 +132,20 @@ class PartidoAsistenciaController extends Controller
         return redirect()->route('fccs.partidos.asistencia.show', $token)
             ->with('status', '✅ Asistencia confirmada para '.count($allRuts).' persona(s).')
             ->with('attendance_alert', $this->attendanceAlert($confirmedCount));
+    }
+
+
+    private function isInsideStatsWindow(object $partido): bool
+    {
+        $timezone = 'America/Santiago';
+        $hour = trim((string) ($partido->hora ?? '00:00'));
+        $time = preg_match('/^\d{2}:\d{2}/', $hour) ? substr($hour, 0, 5) : '00:00';
+        $kickoff = Carbon::parse(((string) $partido->fecha).' '.$time, $timezone);
+
+        $startsAt = $kickoff->copy()->subHour();
+        $endsAt = $kickoff->copy()->addHours(2);
+
+        return now($timezone)->betweenIncluded($startsAt, $endsAt);
     }
 
     private function activePartidoByToken(string $token): ?object
