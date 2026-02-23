@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/partidos-activos', [AdminDashboardController::class, 'activeMatches'])->name('partidos.activos');
         Route::get('/partidos/{id}/estadisticas', [PartidoStatsController::class, 'index'])->name('partidos.stats');
         Route::post('/partidos/{id}/estadisticas', [PartidoStatsController::class, 'update'])->name('partidos.stats.update');
+        Route::get('/partidos/{id}/estadisticas/data', [PartidoStatsController::class, 'data'])->name('partidos.stats.data');
         Route::post('/partidos/{id}/estadisticas/finalizar', [PartidoStatsController::class, 'finish'])->name('partidos.stats.finish');
         Route::post('/dashboard/convert-images-webp', [AdminDashboardController::class, 'convertImagesToWebp'])->name('dashboard.convert-images-webp');
         Route::get('/plantilla', [LineupController::class, 'index'])->name('lineup.index');

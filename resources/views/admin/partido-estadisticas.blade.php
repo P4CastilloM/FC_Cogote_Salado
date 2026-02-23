@@ -85,6 +85,7 @@
 function statsApp() {
     return {
         endpoint: @json(route('admin.partidos.stats.update', $partido->id)),
+        dataEndpoint: @json(route('admin.partidos.stats.data', $partido->id)),
         storageKey: @json('partido-stats-queue-'.$partido->id),
         online: navigator.onLine,
         search: '',
@@ -98,17 +99,21 @@ function statsApp() {
         ],
         players: @json($players),
         queue: [],
+        pollTimer: null,
 
         init() {
             this.queue = this.readQueue();
             this.bindConnectivity();
             this.flushQueue();
+            this.refreshFromServer();
+            this.startPolling();
         },
 
         bindConnectivity() {
             window.addEventListener('online', () => {
                 this.online = true;
                 this.flushQueue();
+                this.refreshFromServer();
             });
             window.addEventListener('offline', () => {
                 this.online = false;
@@ -172,6 +177,33 @@ function statsApp() {
             localStorage.setItem(this.storageKey, JSON.stringify(this.queue));
         },
 
+
+        startPolling() {
+            if (this.pollTimer) return;
+            this.pollTimer = setInterval(() => {
+                this.refreshFromServer();
+            }, 6000);
+        },
+
+        async refreshFromServer() {
+            if (!this.online) return;
+
+            try {
+                const response = await fetch(this.dataEndpoint, {
+                    headers: { 'Accept': 'application/json' },
+                });
+
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!data || !data.ok) return;
+
+                this.closed = Boolean(data.closed);
+                if (Array.isArray(data.players)) {
+                    this.players = data.players;
+                }
+            } catch (_) {}
+        },
+
         async flushQueue() {
             if (this.syncing || !this.online || this.queue.length === 0) return;
             this.syncing = true;
@@ -202,6 +234,7 @@ function statsApp() {
 
                     this.queue.shift();
                     this.saveQueue();
+                    await this.refreshFromServer();
                 } catch (error) {
                     this.errorMessage = 'Sin conexión o error de red';
                     this.online = navigator.onLine;

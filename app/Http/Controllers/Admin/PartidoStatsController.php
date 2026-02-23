@@ -29,26 +29,7 @@ class PartidoStatsController extends Controller
 
         $this->syncConfirmedPlayers($id);
 
-        $players = DB::table('jugador_partido as jp')
-            ->join('jugadores as j', 'j.rut', '=', 'jp.jugador_rut')
-            ->join('partido_asistencias as pa', function ($join) use ($id): void {
-                $join->on('pa.jugador_rut', '=', 'jp.jugador_rut')
-                    ->where('pa.partido_id', '=', $id);
-            })
-            ->where('jp.partido_id', $id)
-            ->select(
-                'j.rut',
-                'j.nombre',
-                'j.sobrenombre',
-                'j.numero_camiseta',
-                'j.posicion',
-                'jp.goles',
-                'jp.asistencias',
-                'jp.atajadas',
-                'jp.participo'
-            )
-            ->orderByRaw("COALESCE(NULLIF(j.sobrenombre, ''), j.nombre) asc")
-            ->get();
+        $players = $this->playersForMatch($id);
 
         return view('admin.partido-estadisticas', [
             'partido' => $partido,
@@ -56,6 +37,23 @@ class PartidoStatsController extends Controller
             'windowStart' => $window['starts_at'],
             'windowEnd' => $window['ends_at'],
             'statsClosedAt' => $partido->stats_closed_at ?? null,
+        ]);
+    }
+
+
+    public function data(int $id): JsonResponse
+    {
+        $partido = DB::table('partidos')->where('id', $id)->first();
+        if (! $partido) {
+            return response()->json(['ok' => false, 'message' => 'Partido no encontrado.'], 404);
+        }
+
+        $this->syncConfirmedPlayers($id);
+
+        return response()->json([
+            'ok' => true,
+            'closed' => ! empty($partido->stats_closed_at),
+            'players' => $this->playersForMatch($id),
         ]);
     }
 
@@ -173,6 +171,31 @@ class PartidoStatsController extends Controller
         });
 
         return redirect()->route('admin.partidos.stats', $id)->with('status', '✅ Partido cerrado y estadísticas acumuladas al plantel.');
+    }
+
+
+    private function playersForMatch(int $matchId)
+    {
+        return DB::table('jugador_partido as jp')
+            ->join('jugadores as j', 'j.rut', '=', 'jp.jugador_rut')
+            ->join('partido_asistencias as pa', function ($join) use ($matchId): void {
+                $join->on('pa.jugador_rut', '=', 'jp.jugador_rut')
+                    ->where('pa.partido_id', '=', $matchId);
+            })
+            ->where('jp.partido_id', $matchId)
+            ->select(
+                'j.rut',
+                'j.nombre',
+                'j.sobrenombre',
+                'j.numero_camiseta',
+                'j.posicion',
+                'jp.goles',
+                'jp.asistencias',
+                'jp.atajadas',
+                'jp.participo'
+            )
+            ->orderByRaw("COALESCE(NULLIF(j.sobrenombre, ''), j.nombre) asc")
+            ->get();
     }
 
     private function syncConfirmedPlayers(int $partidoId): void
