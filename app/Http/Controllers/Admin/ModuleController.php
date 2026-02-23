@@ -833,7 +833,7 @@ class ModuleController extends Controller
 
 
         if ($image) {
-            $image = $this->normalizeImageOrientation($image, $file->getRealPath(), $extension);
+            $image = $this->normalizeUploadedImageOrientation($image, $file->getRealPath(), $extension);
 
             $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $filename = Str::slug($filename) ?: 'img';
@@ -1011,6 +1011,53 @@ class ModuleController extends Controller
 
         $exif = @exif_read_data($path);
         $orientation = (int) ($exif['Orientation'] ?? 1);
+
+        $angle = match ($orientation) {
+            3 => 180,
+            6 => -90,
+            8 => 90,
+            default => null,
+        };
+
+        if ($angle === null) {
+            return $image;
+        }
+
+        $rotated = imagerotate($image, $angle, 0);
+        if (! $rotated) {
+            return $image;
+        }
+
+        imagedestroy($image);
+
+        return $rotated;
+    }
+
+
+    private function shouldStoreOriginalForExif(UploadedFile $file, string $extension): bool
+    {
+        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
+            return false;
+        }
+
+        $exif = @exif_read_data($file->getRealPath());
+        $orientation = (int) ($exif['Orientation'] ?? $exif['orientation'] ?? 1);
+
+        return $orientation !== 1;
+    }
+
+    private function normalizeUploadedImageOrientation($image, string $path, string $extension)
+    {
+        if (! is_resource($image) && ! ($image instanceof \GdImage)) {
+            return $image;
+        }
+
+        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
+            return $image;
+        }
+
+        $exif = @exif_read_data($path);
+        $orientation = (int) ($exif['Orientation'] ?? $exif['orientation'] ?? 1);
 
         $angle = match ($orientation) {
             3 => 180,
