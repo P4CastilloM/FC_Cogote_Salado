@@ -82,69 +82,6 @@
         </div>
     </div>
 
-    <div class="glass-card rounded-2xl p-6 mt-6">
-        <h2 class="text-lg font-semibold text-white">📅 Asistencia de Partidos (link activo)</h2>
-        <p class="text-sm text-slate-400 mt-1">Aquí se generan y monitorean links para confirmar asistencia. Solo deben compartirse por privado.</p>
-
-        <div class="space-y-3 mt-4">
-            @php($matches = $attendanceMatches ?? collect())
-            @if($matches->isNotEmpty())
-                @foreach($matches as $match)
-                    <div class="rounded-xl border border-white/10 bg-slate-900/40 p-4">
-                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
-                            <div>
-                                <p class="text-white font-semibold">{{ \Carbon\Carbon::parse($match->fecha)->translatedFormat('d M Y') }} · vs {{ $match->rival ?? 'Rival por definir' }}</p>
-                                <p class="text-xs text-slate-400">{{ $match->nombre_lugar ?? 'Lugar por definir' }}</p>
-                                <p class="text-xs mt-1 {{ $match->is_active ? 'text-lime-300' : 'text-amber-300' }}">
-                                    {{ $match->is_active ? '✅ Link activo' : '⏳ Link fuera de ventana activa' }} · Confirmados: {{ (int) $match->confirmed_count }}
-                                </p>
-                            </div>
-
-                            <div class="flex flex-wrap items-center gap-2">
-                                @if($match->attendance_url)
-                                    <a href="{{ $match->attendance_url }}" target="_blank" class="px-3 py-2 rounded-lg border border-lime-400/40 text-lime-300 bg-lime-500/10 hover:bg-lime-500/20 text-sm">Abrir link</a>
-                                    <button class="px-3 py-2 rounded-lg border border-sky-400/40 text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 text-sm" onclick="navigator.clipboard.writeText('{{ $match->attendance_url }}')">Copiar link</button>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            @else
-                <p class="text-sm text-slate-400">Aún no hay partidos con link de asistencia generado.</p>
-            @endif
-        </div>
-
-        <h3 class="text-sm font-semibold text-white mt-6 mb-2">🧾 Historial reciente de checks</h3>
-        <div class="overflow-auto rounded-xl border border-white/10">
-            <table class="w-full text-sm">
-                <thead class="bg-slate-900/50 text-slate-300">
-                    <tr>
-                        <th class="text-left px-3 py-2">Fecha</th>
-                        <th class="text-left px-3 py-2">Acción</th>
-                        <th class="text-left px-3 py-2">Partido</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php($logs = $attendanceLogs ?? collect())
-                    @if($logs->isNotEmpty())
-                        @foreach($logs as $log)
-                            @php
-                                $actor = trim((string) ($log->actor_sobrenombre ?? $log->actor_nombre ?? 'Jugador'));
-                                $target = trim((string) ($log->target_sobrenombre ?? $log->target_nombre ?? 'Jugador'));
-                            @endphp
-                            <tr class="border-t border-white/5 text-slate-200">
-                                <td class="px-3 py-2">{{ \Carbon\Carbon::parse($log->checked_at)->translatedFormat('d M Y H:i') }}</td>
-                                <td class="px-3 py-2">{{ $actor }} hizo check por {{ $target }}</td>
-                                <td class="px-3 py-2">{{ \Carbon\Carbon::parse($log->fecha)->translatedFormat('d M') }} · {{ $log->rival ?? 'Rival' }}</td>
-                            </tr>
-                        @endforeach
-                    @else
-                        <tr><td class="px-3 py-3 text-slate-400" colspan="3">Sin historial de checks por ahora.</td></tr>
-                    @endif
-                </tbody>
-            </table>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
