@@ -13,6 +13,7 @@ use App\Http\Controllers\DirectivaController;
 use App\Http\Controllers\PlantelController;
 use App\Http\Controllers\CalendarioController;
 use App\Http\Controllers\PartidoAsistenciaController;
+use App\Http\Controllers\Admin\PartidoStatsController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -34,6 +35,8 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/partidos-activos', [AdminDashboardController::class, 'activeMatches'])->name('partidos.activos');
+        Route::get('/partidos/{id}/estadisticas', [PartidoStatsController::class, 'index'])->name('partidos.stats');
+        Route::post('/partidos/{id}/estadisticas', [PartidoStatsController::class, 'update'])->name('partidos.stats.update');
         Route::post('/dashboard/convert-images-webp', [AdminDashboardController::class, 'convertImagesToWebp'])->name('dashboard.convert-images-webp');
         Route::get('/plantilla', [LineupController::class, 'index'])->name('lineup.index');
 

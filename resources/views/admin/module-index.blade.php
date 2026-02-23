@@ -47,10 +47,21 @@
                     };
                 @endphp
 
-                <a href="{{ route('admin.'.$module.'.edit', $key) }}" class="block module-wrap rounded-xl px-4 py-3 hover:border-emerald-400/50 transition">
-                    <p class="text-white font-semibold">{{ $main }}</p>
-                    <p class="text-xs text-slate-400">{{ $secondary }}</p>
-                </a>
+                @if($module === 'partidos')
+                    <div class="module-wrap rounded-xl px-4 py-3">
+                        <p class="text-white font-semibold">{{ $main }}</p>
+                        <p class="text-xs text-slate-400">{{ $secondary }}</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <a href="{{ route('admin.partidos.edit', $key) }}" class="inline-flex items-center rounded-lg bg-white/10 hover:bg-white/20 px-3 py-2 text-xs text-white">✏️ Editar partido</a>
+                            <a href="{{ route('admin.partidos.stats', $key) }}" class="inline-flex items-center rounded-lg bg-lime-500/20 hover:bg-lime-500/30 border border-lime-400/40 px-3 py-2 text-xs text-lime-200">📊 Agregar estadísticas</a>
+                        </div>
+                    </div>
+                @else
+                    <a href="{{ route('admin.'.$module.'.edit', $key) }}" class="block module-wrap rounded-xl px-4 py-3 hover:border-emerald-400/50 transition">
+                        <p class="text-white font-semibold">{{ $main }}</p>
+                        <p class="text-xs text-slate-400">{{ $secondary }}</p>
+                    </a>
+                @endif
             @empty
                 <div class="module-wrap rounded-xl px-4 py-4 text-slate-300">No hay resultados con ese filtro.</div>
             @endforelse
