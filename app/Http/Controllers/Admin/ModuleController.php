@@ -351,8 +351,30 @@ class ModuleController extends Controller
                 ]);
 
                 $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
+                $storedPaths = [];
+
                 foreach ($request->file('fotos', []) as $file) {
                     $path = $this->storeUploadedWebp($file, 'fotos');
+
+                    if ($path === '' || ! Storage::disk('public')->exists($path)) {
+                        foreach ($storedPaths as $storedPath) {
+                            Storage::disk('public')->delete($storedPath);
+                        }
+
+                        $message = 'No se pudo guardar una o más fotos en storage/app/public/fotos. Revisa permisos y enlace storage:link.';
+                        logger()->error('Falló guardado de foto en álbum', [
+                            'disk' => 'public',
+                            'path' => $path,
+                            'root' => config('filesystems.disks.public.root'),
+                            'file' => $file->getClientOriginalName(),
+                        ]);
+
+                        return $request->expectsJson()
+                            ? response()->json(['ok' => false, 'message' => $message], 500)
+                            : redirect()->back()->withErrors(['fotos' => $message])->withInput();
+                    }
+
+                    $storedPaths[] = $path;
                     $this->persistPhotoItem($path, $albumId);
                 }
 
@@ -378,6 +400,21 @@ class ModuleController extends Controller
 
                 $albumId = $this->resolveAlbumId($data['album_id'] ?? null, $data['single_album_nombre'] ?? null);
                 $path = $this->storeUploadedWebp($request->file('foto'), 'fotos');
+
+                if ($path === '' || ! Storage::disk('public')->exists($path)) {
+                    $message = 'No se pudo guardar la foto en storage/app/public/fotos. Revisa permisos y enlace storage:link.';
+                    logger()->error('Falló guardado de foto individual', [
+                        'disk' => 'public',
+                        'path' => $path,
+                        'root' => config('filesystems.disks.public.root'),
+                        'file' => $request->file('foto')?->getClientOriginalName(),
+                    ]);
+
+                    return $request->expectsJson()
+                        ? response()->json(['ok' => false, 'message' => $message], 500)
+                        : redirect()->back()->withErrors(['foto' => $message])->withInput();
+                }
+
                 $this->persistPhotoItem($path, $albumId);
                 $this->logModification('album', 'añadir', basename($path), basename($path));
 
@@ -784,7 +821,7 @@ class ModuleController extends Controller
     private function storeUploadedWebp(UploadedFile $file, string $directory): string
     {
         if (! function_exists('imagewebp')) {
-            return $file->store($directory, 'public');
+            return $this->storeOriginalFile($file, $directory);
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
@@ -799,7 +836,7 @@ class ModuleController extends Controller
             $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-');
             if ($tmpFile === false) {
                 imagedestroy($image);
-                return $file->store($directory, 'public');
+                return $this->storeOriginalFile($file, $directory);
             }
 
             $saved = @imagewebp($image, $tmpFile, 80);
@@ -807,20 +844,24 @@ class ModuleController extends Controller
 
             if (! $saved || ! is_file($tmpFile)) {
                 @unlink($tmpFile);
-                return $file->store($directory, 'public');
+                return $this->storeOriginalFile($file, $directory);
             }
 
             $stream = @fopen($tmpFile, 'rb');
             if ($stream === false) {
                 @unlink($tmpFile);
-                return $file->store($directory, 'public');
+                return $this->storeOriginalFile($file, $directory);
             }
 
-            Storage::disk('public')->put($path, $stream);
+            $written = Storage::disk('public')->put($path, $stream);
             fclose($stream);
             @unlink($tmpFile);
 
-            return $path;
+            if ($written && Storage::disk('public')->exists($path)) {
+                return $path;
+            }
+
+            return $this->storeOriginalFile($file, $directory);
         }
 
         if (class_exists('Imagick')) {
@@ -832,7 +873,7 @@ class ModuleController extends Controller
 
                 $tmpFile = tempnam(sys_get_temp_dir(), 'fccs-webp-im-');
                 if ($tmpFile === false) {
-                    return $file->store($directory, 'public');
+                    return $this->storeOriginalFile($file, $directory);
                 }
 
                 $imagick = new \Imagick();
@@ -846,14 +887,16 @@ class ModuleController extends Controller
                 $stream = @fopen($tmpFile, 'rb');
                 if ($stream === false) {
                     @unlink($tmpFile);
-                    return $file->store($directory, 'public');
+                    return $this->storeOriginalFile($file, $directory);
                 }
 
-                Storage::disk('public')->put($path, $stream);
+                $written = Storage::disk('public')->put($path, $stream);
                 fclose($stream);
                 @unlink($tmpFile);
 
-                return $path;
+                if ($written && Storage::disk('public')->exists($path)) {
+                    return $path;
+                }
             } catch (\Throwable $e) {
                 logger()->warning('No se pudo convertir imagen con Imagick a webp', [
                     'filename' => $file->getClientOriginalName(),
@@ -862,7 +905,25 @@ class ModuleController extends Controller
             }
         }
 
-        return $file->store($directory, 'public');
+        return $this->storeOriginalFile($file, $directory);
+    }
+
+    private function storeOriginalFile(UploadedFile $file, string $directory): string
+    {
+        $stored = $file->store($directory, 'public');
+
+        if (! is_string($stored) || $stored === '' || ! Storage::disk('public')->exists($stored)) {
+            logger()->error('No se pudo guardar archivo original en disco public', [
+                'disk' => 'public',
+                'root' => config('filesystems.disks.public.root'),
+                'directory' => $directory,
+                'file' => $file->getClientOriginalName(),
+            ]);
+
+            return '';
+        }
+
+        return $stored;
     }
 
     private function createImageResource(string $path, string $extension)
