@@ -12,6 +12,7 @@ use App\Http\Controllers\NoticiasController;
 use App\Http\Controllers\DirectivaController;
 use App\Http\Controllers\PlantelController;
 use App\Http\Controllers\CalendarioController;
+use App\Http\Controllers\PartidoAsistenciaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -83,5 +84,11 @@ Route::get('/fccogotesalado/noticias/{id}', [NoticiasController::class, 'show'])
 Route::get('/fccogotesalado/fotos', [FotosController::class, 'index'])
     ->middleware(TrackPageVisit::class)
     ->name('fccs.fotos');
+
+Route::prefix('/fccogotesalado/partidos/asistencia')->name('fccs.partidos.asistencia.')->group(function () {
+    Route::get('/{token}', [PartidoAsistenciaController::class, 'show'])->name('show');
+    Route::get('/{token}/buscar', [PartidoAsistenciaController::class, 'search'])->name('search');
+    Route::post('/{token}', [PartidoAsistenciaController::class, 'confirm'])->name('confirm');
+});
 
 require __DIR__.'/auth.php';

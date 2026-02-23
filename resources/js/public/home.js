@@ -172,6 +172,16 @@ const destacadosCarouselCtl = createCarousel({
   nextId: 'destacado-next',
 });
 
+const directivaCarouselCtl = createCarousel({
+  carouselId: 'directiva-carousel',
+  containerId: 'directiva-container',
+  cardSelector: '.directiva-card',
+  dotSelector: '[data-directiva]',
+  dotDataKey: 'directiva',
+  prevId: 'directiva-prev',
+  nextId: 'directiva-next',
+});
+
 
 function initAvisosTextOverflow() {
   const elements = Array.from(document.querySelectorAll('.js-aviso-desc'));
@@ -211,6 +221,7 @@ window.addEventListener('resize', () => {
   avisosCarouselCtl.refresh();
   noticiasCarouselCtl.refresh();
   destacadosCarouselCtl.refresh();
+  directivaCarouselCtl.refresh();
   initAvisosTextOverflow();
 });
 
@@ -299,19 +310,21 @@ const mobileMenu = document.getElementById('mobile-menu');
 const menuIcon = document.getElementById('menu-icon');
 const closeIcon = document.getElementById('close-icon');
 
-mobileMenuBtn?.addEventListener('click', () => {
-  mobileMenu?.classList.toggle('hidden');
-  menuIcon?.classList.toggle('hidden');
-  closeIcon?.classList.toggle('hidden');
-});
-
-document.querySelectorAll('#mobile-menu a').forEach(link => {
-  link.addEventListener('click', () => {
-    mobileMenu?.classList.add('hidden');
-    menuIcon?.classList.remove('hidden');
-    closeIcon?.classList.add('hidden');
+if (mobileMenuBtn && mobileMenuBtn.dataset.mobileMenuBound !== '1') {
+  mobileMenuBtn.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    menuIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
   });
-});
+
+  document.querySelectorAll('#mobile-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu?.classList.add('hidden');
+      menuIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+    });
+  });
+}
 
 /* =========================================================
    ✅ NAV ACTIVE STATE (SCROLL)
