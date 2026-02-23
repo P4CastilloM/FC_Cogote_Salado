@@ -405,53 +405,56 @@
 
 
     {{-- =========================================================
-       ✅ CALENDARIO
+       ✅ DIRECTIVA (CARRUSEL)
     ========================================================== --}}
     <section id="directiva" class="py-8 md:py-10 bg-club-gray">
       <div class="max-w-7xl mx-auto px-4">
-        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
+        <div class="flex items-center justify-between gap-4 mb-6">
+          <h2 class="font-bebas text-3xl md:text-4xl tracking-wider"><span class="text-club-gold">🏛️</span> DIRECTIVA</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-          @forelse(($directivaTop ?? collect())->take(4) as $dir)
-            <article class="bg-club-dark rounded-2xl p-4 md:p-5 border border-club-gold/20">
-              <div class="flex items-center gap-4">
-                <div class="w-20 h-20 md:w-24 md:h-24 rounded-xl bg-club-gold/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-club-gold/35 shadow-lg shadow-black/20">
-                  @if(!empty($dir->foto_url))
-                    <img src="{{ $dir->foto_url }}" alt="{{ $dir->nombre }}" class="w-full h-full object-cover object-top" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                  @endif
-                  <span class="text-3xl {{ !empty($dir->foto_url) ? 'hidden' : 'flex' }}">🏛️</span>
-                </div>
-                <div class="min-w-0">
-                  <h3 class="font-bebas text-xl md:text-2xl leading-tight uppercase text-white">{{ $dir->nombre }}</h3>
-                  <p class="text-gray-300 text-sm mt-1">{{ $dir->rol }}</p>
-                </div>
-              </div>
-            </article>
-          @empty
-            <div class="md:col-span-2 xl:col-span-4 rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay directiva activa.</div>
-          @endforelse
+          <div class="hidden md:flex gap-2">
+            <button id="directiva-prev" class="w-10 h-10 rounded-full border border-club-gold/35 bg-club-gold/10 text-club-gold hover:bg-club-gold/20 flex items-center justify-center transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button id="directiva-next" class="w-10 h-10 rounded-full border border-club-gold/35 bg-club-gold/10 text-club-gold hover:bg-club-gold/20 flex items-center justify-center transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
-    </section>
 
-    {{-- =========================================================
-       ✅ GALERÍA
-    ========================================================== --}}
-    <section id="fotos" class="py-8 md:py-10 bg-club-gray">
-      <div class="max-w-7xl mx-auto px-4">
-        <h2 class="font-bebas text-3xl md:text-4xl tracking-wider mb-8"><span class="text-club-gold">📸</span> GALERÍA DE FOTOS</h2>
+        <div class="overflow-hidden" id="directiva-container">
+          <div id="directiva-carousel" class="directiva-carousel">
+            @forelse(($directivaTop ?? collect()) as $dir)
+              <div class="directiva-card">
+                <article class="h-full rounded-2xl p-4 border border-club-gold/20 bg-club-dark/70">
+                  <div class="flex items-center gap-3 h-full">
+                    <div class="w-20 h-20 rounded-xl bg-black/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-club-gold/35 shadow-lg shadow-black/20">
+                      @if(!empty($dir->foto_url))
+                        <img src="{{ $dir->foto_url }}" alt="{{ $dir->nombre }}" class="w-full h-full object-cover object-top" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      @endif
+                      <span class="text-3xl {{ !empty($dir->foto_url) ? 'hidden' : 'flex' }}">🏛️</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <h3 class="font-bebas text-2xl leading-tight uppercase text-white truncate">{{ $dir->nombre }}</h3>
+                      <p class="text-gray-300 text-sm mt-1 truncate">{{ $dir->rol }}</p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            @empty
+              <div class="directiva-card"><div class="rounded-2xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay directiva activa.</div></div>
+            @endforelse
+          </div>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          @forelse(($fotos ?? collect())->take(3) as $foto)
-            <a href="{{ route('fccs.fotos') }}" class="aspect-square rounded-xl overflow-hidden border border-club-gold/20 relative group block">
-              <img src="{{ $foto['src'] }}" alt="{{ $foto['alt'] }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent opacity-90"></div>
-              <span class="absolute bottom-2 left-2 right-2 text-xs text-white truncate">{{ $foto['alt'] }}</span>
-            </a>
-          @empty
-            <div class="col-span-2 md:col-span-4 rounded-xl border border-club-gold/20 bg-club-dark/60 p-6 text-center text-gray-300">No hay fotos cargadas todavía.</div>
-          @endforelse
-
+        <div id="directiva-dots" class="flex justify-center gap-2 mt-6 md:hidden">
+          @for($i = 0; $i < max(1, min(8, count($directivaTop ?? []))); $i++)
+            <button class="carousel-dot {{ $i === 0 ? 'active bg-club-gold' : 'bg-white/40' }} w-2 h-2 rounded-full" data-directiva="{{ $i }}"></button>
+          @endfor
         </div>
       </div>
     </section>
