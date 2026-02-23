@@ -74,6 +74,7 @@
             <a class="quick-link" href="{{ route('admin.album.index') }}">🗂️ Gestionar fotos</a>
             <a class="quick-link" href="{{ route('admin.plantel.index') }}">👥 Gestionar plantel</a>
             <a class="quick-link" href="{{ route('admin.partidos.index') }}">📅 Gestionar partidos</a>
+            <a class="quick-link" href="{{ route('admin.partidos.activos') }}">🔗 Partidos activos</a>
             @if($isAdmin)
                 <a class="quick-link" href="{{ route('admin.temporadas.index') }}">⏳ Gestionar temporadas</a>
                 <a class="quick-link" href="{{ route('admin.staff.index') }}">🤝 Gestionar ayudantes</a>
@@ -121,7 +122,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse(($attendanceLogs ?? collect()) as $log)
+                    @if(($attendanceLogs ?? collect())->isNotEmpty())
+                        @foreach(($attendanceLogs ?? collect()) as $log)
                         @php
                             $actor = trim((string) ($log->actor_sobrenombre ?? $log->actor_nombre ?? 'Jugador'));
                             $target = trim((string) ($log->target_sobrenombre ?? $log->target_nombre ?? 'Jugador'));
@@ -131,9 +133,10 @@
                             <td class="px-3 py-2">{{ $actor }} hizo check por {{ $target }}</td>
                             <td class="px-3 py-2">{{ \Carbon\Carbon::parse($log->fecha)->translatedFormat('d M') }} · {{ $log->rival ?? 'Rival' }}</td>
                         </tr>
-                    @empty
+                        @endforeach
+                    @else
                         <tr><td class="px-3 py-3 text-slate-400" colspan="3">Sin historial de checks por ahora.</td></tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>

@@ -110,70 +110,8 @@ class DashboardController extends Controller
                 ->all();
         }
 
-        if (Schema::hasTable('partidos') && Schema::hasColumn('partidos', 'attendance_token')) {
-            $matchesQuery = DB::table('partidos')
-                ->select(
-                    'partidos.id',
-                    'partidos.fecha',
-                    'partidos.rival',
-                    'partidos.nombre_lugar',
-                    'partidos.attendance_token',
-                    'partidos.attendance_starts_at',
-                    'partidos.attendance_ends_at'
-                );
-
-            if (Schema::hasTable('partido_asistencias')) {
-                $matchesQuery->leftJoin('partido_asistencias as pa', 'pa.partido_id', '=', 'partidos.id')
-                    ->addSelect(DB::raw('COUNT(pa.id) as confirmed_count'))
-                    ->groupBy(
-                        'partidos.id',
-                        'partidos.fecha',
-                        'partidos.rival',
-                        'partidos.nombre_lugar',
-                        'partidos.attendance_token',
-                        'partidos.attendance_starts_at',
-                        'partidos.attendance_ends_at'
-                    );
-            } else {
-                $matchesQuery->addSelect(DB::raw('0 as confirmed_count'));
-            }
-
-            $attendanceMatches = $matchesQuery
-                ->orderBy('partidos.fecha')
-                ->limit(6)
-                ->get()
-                ->map(function ($row) {
-                    $row->attendance_url = $row->attendance_token
-                        ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
-                        : null;
-                    $row->is_active = $row->attendance_starts_at && $row->attendance_ends_at
-                        ? now()->between($row->attendance_starts_at, $row->attendance_ends_at)
-                        : false;
-
-                    return $row;
-                });
-
-            if (Schema::hasTable('partido_asistencia_logs')) {
-                $attendanceLogs = DB::table('partido_asistencia_logs as l')
-                    ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
-                    ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
-                    ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
-                    ->select(
-                        'l.id',
-                        'l.checked_at',
-                        'l.partido_id',
-                        'p.rival',
-                        'p.fecha',
-                        'actor.nombre as actor_nombre',
-                        'actor.sobrenombre as actor_sobrenombre',
-                        'target.nombre as target_nombre',
-                        'target.sobrenombre as target_sobrenombre'
-                    )
-                    ->orderByDesc('l.checked_at')
-                    ->limit(20)
-                    ->get();
-            }
-        }
+        $attendanceMatches = $this->attendanceMatches(6);
+        $attendanceLogs = $this->attendanceLogs(20);
 
         return view('admin.dashboard', [
             'stats' => $stats,
@@ -184,6 +122,89 @@ class DashboardController extends Controller
             'attendanceMatches' => $attendanceMatches,
             'attendanceLogs' => $attendanceLogs,
         ]);
+    }
+
+    public function activeMatches(): View
+    {
+        return view('admin.partidos-activos', [
+            'attendanceMatches' => $this->attendanceMatches(50),
+            'attendanceLogs' => $this->attendanceLogs(100),
+        ]);
+    }
+
+    private function attendanceMatches(int $limit)
+    {
+        if (! Schema::hasTable('partidos') || ! Schema::hasColumn('partidos', 'attendance_token')) {
+            return collect();
+        }
+
+        $matchesQuery = DB::table('partidos')
+            ->select(
+                'partidos.id',
+                'partidos.fecha',
+                'partidos.rival',
+                'partidos.nombre_lugar',
+                'partidos.attendance_token',
+                'partidos.attendance_starts_at',
+                'partidos.attendance_ends_at'
+            );
+
+        if (Schema::hasTable('partido_asistencias')) {
+            $matchesQuery->leftJoin('partido_asistencias as pa', 'pa.partido_id', '=', 'partidos.id')
+                ->addSelect(DB::raw('COUNT(pa.id) as confirmed_count'))
+                ->groupBy(
+                    'partidos.id',
+                    'partidos.fecha',
+                    'partidos.rival',
+                    'partidos.nombre_lugar',
+                    'partidos.attendance_token',
+                    'partidos.attendance_starts_at',
+                    'partidos.attendance_ends_at'
+                );
+        } else {
+            $matchesQuery->addSelect(DB::raw('0 as confirmed_count'));
+        }
+
+        return $matchesQuery
+            ->orderBy('partidos.fecha')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $row->attendance_url = $row->attendance_token
+                    ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
+                    : null;
+                $row->is_active = $row->attendance_starts_at && $row->attendance_ends_at
+                    ? now()->between($row->attendance_starts_at, $row->attendance_ends_at)
+                    : false;
+
+                return $row;
+            });
+    }
+
+    private function attendanceLogs(int $limit)
+    {
+        if (! Schema::hasTable('partido_asistencia_logs')) {
+            return collect();
+        }
+
+        return DB::table('partido_asistencia_logs as l')
+            ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
+            ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
+            ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
+            ->select(
+                'l.id',
+                'l.checked_at',
+                'l.partido_id',
+                'p.rival',
+                'p.fecha',
+                'actor.nombre as actor_nombre',
+                'actor.sobrenombre as actor_sobrenombre',
+                'target.nombre as target_nombre',
+                'target.sobrenombre as target_sobrenombre'
+            )
+            ->orderByDesc('l.checked_at')
+            ->limit($limit)
+            ->get();
     }
 
     public function convertImagesToWebp(Request $request): RedirectResponse

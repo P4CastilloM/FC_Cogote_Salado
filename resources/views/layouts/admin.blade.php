@@ -36,7 +36,7 @@
                     'avisos' => ['title' => '📢 Avisos', 'routes' => ['create' => '➕ Crear Aviso', 'index' => '✏️ Editar / Eliminar Avisos'], 'admin_only' => false],
                     'album' => ['title' => '📸 Álbum / Fotos', 'routes' => ['create' => '⬆️ Subir Fotos', 'index' => '🗑️ Eliminar Fotos'], 'admin_only' => false],
                     'directiva' => ['title' => '🏛️ Directiva', 'routes' => ['create' => '➕ Añadir Miembro', 'index' => '✏️ Editar / Eliminar Miembro'], 'admin_only' => true],
-                    'partidos' => ['title' => '📅 Partidos', 'routes' => ['create' => '➕ Añadir Partido', 'index' => '✏️ Editar / Eliminar Partidos'], 'admin_only' => false],
+                    'partidos' => ['title' => '📅 Partidos', 'routes' => ['create' => '➕ Añadir Partido', 'index' => '✏️ Editar / Eliminar Partidos', 'activos' => '🔗 Partidos Activos'], 'admin_only' => false],
                     'premios' => ['title' => '🏆 Premios', 'routes' => ['create' => '➕ Añadir Premio', 'index' => '✏️ Editar / Eliminar Premios'], 'admin_only' => false],
                     'temporadas' => ['title' => '⏳ Temporadas', 'routes' => ['create' => '➕ Crear Temporada', 'index' => '✏️ Editar / Eliminar Temporadas'], 'admin_only' => true],
                     'staff' => ['title' => '🤝 Ayudantes / Staff', 'routes' => ['create' => '➕ Añadir Staff', 'index' => '✏️ Editar / Eliminar Staff'], 'admin_only' => true],

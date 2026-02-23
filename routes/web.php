@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/partidos-activos', [AdminDashboardController::class, 'activeMatches'])->name('partidos.activos');
         Route::post('/dashboard/convert-images-webp', [AdminDashboardController::class, 'convertImagesToWebp'])->name('dashboard.convert-images-webp');
         Route::get('/plantilla', [LineupController::class, 'index'])->name('lineup.index');
 
