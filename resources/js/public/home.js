@@ -172,6 +172,16 @@ const destacadosCarouselCtl = createCarousel({
   nextId: 'destacado-next',
 });
 
+const directivaCarouselCtl = createCarousel({
+  carouselId: 'directiva-carousel',
+  containerId: 'directiva-container',
+  cardSelector: '.directiva-card',
+  dotSelector: '[data-directiva]',
+  dotDataKey: 'directiva',
+  prevId: 'directiva-prev',
+  nextId: 'directiva-next',
+});
+
 
 function initAvisosTextOverflow() {
   const elements = Array.from(document.querySelectorAll('.js-aviso-desc'));
@@ -211,6 +221,7 @@ window.addEventListener('resize', () => {
   avisosCarouselCtl.refresh();
   noticiasCarouselCtl.refresh();
   destacadosCarouselCtl.refresh();
+  directivaCarouselCtl.refresh();
   initAvisosTextOverflow();
 });
 
