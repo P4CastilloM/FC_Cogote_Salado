@@ -63,6 +63,29 @@
                     <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre_lugar" maxlength="100" required value="{{ old('nombre_lugar', $item->nombre_lugar) }}" placeholder="📍 Lugar">
                 </div>
                 <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="direccion" maxlength="180" value="{{ old('direccion', $item->direccion) }}" placeholder="🗺️ Dirección">
+
+                <section id="live-match-stats" class="rounded-xl border border-white/15 bg-slate-950/40 p-4 space-y-3" data-match-id="{{ $item->id }}" data-fetch-url="{{ route('admin.partidos.stats', $item->id) }}" data-sync-url="{{ route('admin.partidos.stats.sync', $item->id) }}" data-finalize-url="{{ route('admin.partidos.finalize', $item->id) }}" data-csrf="{{ csrf_token() }}">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h3 class="text-white font-semibold">📊 Estadísticas en vivo del partido</h3>
+                            <p class="text-xs text-slate-300">Se guarda en tiempo real para todos los usuarios conectados. Solo se aplica al plantel cuando finalizas el partido.</p>
+                        </div>
+                        <button type="button" id="finalize-match-btn" class="px-3 py-2 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-200 text-sm">🏁 Finalizar partido</button>
+                    </div>
+                    <div id="stats-status" class="text-xs text-slate-300">Cargando confirmados...</div>
+                    <div class="overflow-auto rounded-lg border border-white/10">
+                        <table class="w-full text-sm">
+                            <thead class="bg-black/30 text-slate-300">
+                                <tr>
+                                    <th class="text-left px-3 py-2">Jugador confirmado</th>
+                                    <th class="text-center px-3 py-2">⚽ Goles</th>
+                                    <th class="text-center px-3 py-2">🎯 Asistencias</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-table-body" class="text-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
             @endif
 
             @if($module === 'premios')
@@ -100,4 +123,158 @@
             <button class="w-full px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-lg">🗑️ ELIMINAR REGISTRO</button>
         </form>
     </div>
+
+@if($module === 'partidos')
+    <script>
+        (() => {
+            const root = document.getElementById('live-match-stats');
+            if (!root) return;
+
+            const statusEl = document.getElementById('stats-status');
+            const bodyEl = document.getElementById('stats-table-body');
+            const finalizeBtn = document.getElementById('finalize-match-btn');
+            const fetchUrl = root.dataset.fetchUrl;
+            const syncUrl = root.dataset.syncUrl;
+            const finalizeUrl = root.dataset.finalizeUrl;
+            const csrf = root.dataset.csrf;
+            const entries = new Map();
+            let finalized = false;
+            let editingActive = false;
+            let syncing = false;
+
+            const setStatus = (message, tone = 'text-slate-300') => {
+                statusEl.className = `text-xs ${tone}`;
+                statusEl.textContent = message;
+            };
+
+            const renderRows = (players) => {
+                if (!players.length) {
+                    bodyEl.innerHTML = '<tr><td colspan="3" class="px-3 py-3 text-slate-400">Aún no hay confirmados para este partido.</td></tr>';
+                    return;
+                }
+
+                bodyEl.innerHTML = players.map((player) => `
+                    <tr class="border-t border-white/10">
+                        <td class="px-3 py-2">${player.nombre}</td>
+                        <td class="px-3 py-2">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" data-rut="${player.rut}" data-field="goles" data-step="-1" class="px-2 py-1 rounded bg-white/10" ${(finalized || !editingActive) ? 'disabled' : ''}>−</button>
+                                <span id="goles-${player.rut}" class="min-w-8 text-center font-semibold">${player.goles}</span>
+                                <button type="button" data-rut="${player.rut}" data-field="goles" data-step="1" class="px-2 py-1 rounded bg-white/10" ${(finalized || !editingActive) ? 'disabled' : ''}>+</button>
+                            </div>
+                        </td>
+                        <td class="px-3 py-2">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" data-rut="${player.rut}" data-field="asistencias" data-step="-1" class="px-2 py-1 rounded bg-white/10" ${(finalized || !editingActive) ? 'disabled' : ''}>−</button>
+                                <span id="asistencias-${player.rut}" class="min-w-8 text-center font-semibold">${player.asistencias}</span>
+                                <button type="button" data-rut="${player.rut}" data-field="asistencias" data-step="1" class="px-2 py-1 rounded bg-white/10" ${(finalized || !editingActive) ? 'disabled' : ''}>+</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            const load = async () => {
+                const response = await fetch(fetchUrl, { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error('No se pudo cargar el estado del partido.');
+
+                const data = await response.json();
+                finalized = Boolean(data?.match?.finalized_at);
+                editingActive = Boolean(data?.match?.is_active);
+                finalizeBtn.disabled = finalized;
+
+                entries.clear();
+                (data.players || []).forEach((player) => {
+                    entries.set(player.rut, {
+                        jugador_rut: player.rut,
+                        goles: Number(player.goles || 0),
+                        asistencias: Number(player.asistencias || 0),
+                    });
+                });
+
+                renderRows(data.players || []);
+                if (finalized) {
+                    setStatus('✅ Partido finalizado: estadísticas aplicadas y edición bloqueada.', 'text-lime-300');
+                } else if (!editingActive) {
+                    setStatus('⏳ Fuera de la ventana activa (4 horas desde el inicio del partido).', 'text-amber-300');
+                } else if ((data.players || []).length > 0) {
+                    setStatus('Edición compartida en vivo activa.', 'text-sky-300');
+                }
+            };
+
+            const sync = async () => {
+                if (syncing || finalized || !editingActive || entries.size === 0) return;
+                syncing = true;
+
+                try {
+                    const response = await fetch(syncUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                        },
+                        body: JSON.stringify({ entries: Array.from(entries.values()) }),
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.ok === false) {
+                        throw new Error(data.message || 'No se pudo guardar la actualización.');
+                    }
+                } catch (error) {
+                    setStatus(`⚠️ ${error.message}`, 'text-amber-300');
+                } finally {
+                    syncing = false;
+                }
+            };
+
+            bodyEl.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-rut]');
+                if (!button || finalized || !editingActive) return;
+
+                const rut = Number(button.dataset.rut);
+                const field = button.dataset.field;
+                const step = Number(button.dataset.step);
+                const entry = entries.get(rut);
+                if (!entry) return;
+
+                const next = Math.max(0, Number(entry[field]) + step);
+                entry[field] = next;
+                document.getElementById(`${field}-${rut}`).textContent = String(next);
+                setStatus('Guardando cambios...', 'text-sky-300');
+                sync();
+            });
+
+            finalizeBtn.addEventListener('click', async () => {
+                if (finalized) return;
+                if (!confirm('¿Finalizar partido? Esta acción aplica estadísticas a confirmados y bloquea edición.')) return;
+
+                try {
+                    await sync();
+                    const response = await fetch(finalizeUrl, {
+                        method: 'POST',
+                        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.ok === false) {
+                        throw new Error(data.message || 'No se pudo finalizar el partido.');
+                    }
+
+                    finalized = true;
+                    finalizeBtn.disabled = true;
+                    setStatus('✅ Partido finalizado y estadísticas aplicadas.', 'text-lime-300');
+                    await load();
+                } catch (error) {
+                    setStatus(`⚠️ ${error.message}`, 'text-amber-300');
+                }
+            });
+
+            load().catch((error) => setStatus(`⚠️ ${error.message}`, 'text-amber-300'));
+            setInterval(() => {
+                if (!document.hidden) {
+                    load().catch(() => {});
+                }
+            }, 5000);
+        })();
+    </script>
+@endif
 @endsection

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ModuleController extends Controller
@@ -658,6 +659,150 @@ class ModuleController extends Controller
         return response()->json(['ok' => false, 'message' => 'Módulo no soportado.'], 422);
     }
 
+
+    public function matchStats(string $id): JsonResponse
+    {
+        $this->authorizeModuleAccess('partidos');
+
+        $match = DB::table('partidos')
+            ->select('id', 'fecha', 'hora', 'stats_finalized_at')
+            ->where('id', $id)
+            ->first();
+
+        abort_unless($match, 404);
+
+        return response()->json([
+            'ok' => true,
+            'match' => [
+                'id' => (int) $match->id,
+                'is_active' => $this->isWithinLiveStatsWindow($match),
+                'finalized_at' => $match->stats_finalized_at,
+            ],
+            'players' => $this->confirmedPlayersWithStats((int) $id),
+        ]);
+    }
+
+    public function syncMatchStats(Request $request, string $id): JsonResponse
+    {
+        $this->authorizeModuleAccess('partidos');
+
+        $partido = DB::table('partidos')->where('id', $id)->first();
+        abort_unless($partido, 404);
+
+        if ($partido->stats_finalized_at) {
+            return response()->json(['ok' => false, 'message' => 'Este partido ya fue finalizado.'], 422);
+        }
+
+        if (! $this->isWithinLiveStatsWindow($partido)) {
+            return response()->json(['ok' => false, 'message' => 'Fuera de la ventana activa (4 horas) para editar estadísticas.'], 422);
+        }
+
+        $payload = $request->validate([
+            'entries' => ['required', 'array', 'min:1'],
+            'entries.*.jugador_rut' => ['required', 'integer'],
+            'entries.*.goles' => ['required', 'integer', 'min:0', 'max:99'],
+            'entries.*.asistencias' => ['required', 'integer', 'min:0', 'max:99'],
+        ]);
+
+        $confirmedRuts = DB::table('partido_asistencias')
+            ->where('partido_id', $id)
+            ->pluck('jugador_rut')
+            ->map(fn ($rut) => (int) $rut)
+            ->all();
+
+        $confirmedLookup = array_flip($confirmedRuts);
+        $entries = collect($payload['entries'])
+            ->map(fn ($entry) => [
+                'jugador_rut' => (int) $entry['jugador_rut'],
+                'goles' => (int) $entry['goles'],
+                'asistencias' => (int) $entry['asistencias'],
+            ]);
+
+        foreach ($entries as $entry) {
+            if (! isset($confirmedLookup[$entry['jugador_rut']])) {
+                throw ValidationException::withMessages([
+                    'entries' => ['Solo se pueden editar estadísticas de jugadores confirmados.'],
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($id, $entries): void {
+            foreach ($entries as $entry) {
+                DB::table('jugador_partido')->updateOrInsert(
+                    [
+                        'partido_id' => (int) $id,
+                        'jugador_rut' => $entry['jugador_rut'],
+                    ],
+                    [
+                        'goles' => $entry['goles'],
+                        'asistencias' => $entry['asistencias'],
+                    ]
+                );
+            }
+        });
+
+        return response()->json([
+            'ok' => true,
+            'players' => $this->confirmedPlayersWithStats((int) $id),
+        ]);
+    }
+
+    public function finalizeMatchStats(string $id): JsonResponse
+    {
+        $this->authorizeModuleAccess('partidos');
+
+        $result = DB::transaction(function () use ($id) {
+            $partido = DB::table('partidos')->where('id', $id)->lockForUpdate()->first();
+            abort_unless($partido, 404);
+
+            if ($partido->stats_finalized_at) {
+                return ['already_finalized' => true];
+            }
+
+            $confirmedRuts = DB::table('partido_asistencias')
+                ->where('partido_id', $id)
+                ->pluck('jugador_rut')
+                ->map(fn ($rut) => (int) $rut)
+                ->all();
+
+            $stats = DB::table('jugador_partido')
+                ->where('partido_id', $id)
+                ->whereIn('jugador_rut', $confirmedRuts)
+                ->get();
+
+            foreach ($stats as $row) {
+                DB::table('jugadores')
+                    ->where('rut', $row->jugador_rut)
+                    ->update([
+                        'goles' => DB::raw('goles + '.(int) $row->goles),
+                        'asistencia' => DB::raw('asistencia + '.(int) $row->asistencias),
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            DB::table('partidos')
+                ->where('id', $id)
+                ->update(['stats_finalized_at' => now()]);
+
+            $this->logModification('partidos', 'actualizar', (string) $id, 'Finalizar estadísticas');
+
+            return [
+                'already_finalized' => false,
+                'applied_players' => $stats->count(),
+            ];
+        });
+
+        if ($result['already_finalized']) {
+            return response()->json(['ok' => false, 'message' => 'Este partido ya fue finalizado previamente.'], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Partido finalizado. Se aplicaron estadísticas a jugadores confirmados.',
+            'applied_players' => $result['applied_players'],
+        ]);
+    }
+
     public function destroy(string $module, string $id): JsonResponse|RedirectResponse
     {
         $this->authorizeModuleAccess($module);
@@ -1060,6 +1205,52 @@ class ModuleController extends Controller
         return $rotated;
     }
 
+
+
+    private function isWithinLiveStatsWindow(object $match): bool
+    {
+        if (empty($match->fecha)) {
+            return false;
+        }
+
+        $start = Carbon::parse($match->fecha.' '.($match->hora ?: '00:00:00'));
+        $end = (clone $start)->addHours(4);
+
+        return now()->between($start, $end);
+    }
+
+
+    /** @return array<int, array<string, mixed>> */
+    private function confirmedPlayersWithStats(int $matchId): array
+    {
+        if (! Schema::hasTable('partido_asistencias')) {
+            return [];
+        }
+
+        return DB::table('partido_asistencias as pa')
+            ->join('jugadores as j', 'j.rut', '=', 'pa.jugador_rut')
+            ->leftJoin('jugador_partido as jp', function ($join) use ($matchId): void {
+                $join->on('jp.jugador_rut', '=', 'pa.jugador_rut')
+                    ->where('jp.partido_id', '=', $matchId);
+            })
+            ->where('pa.partido_id', $matchId)
+            ->orderBy('j.nombre')
+            ->get([
+                'j.rut',
+                'j.nombre',
+                'j.sobrenombre',
+                DB::raw('COALESCE(jp.goles, 0) as goles'),
+                DB::raw('COALESCE(jp.asistencias, 0) as asistencias'),
+            ])
+            ->map(fn ($row) => [
+                'rut' => (int) $row->rut,
+                'nombre' => trim((string) ($row->sobrenombre ?: $row->nombre)),
+                'goles' => (int) $row->goles,
+                'asistencias' => (int) $row->asistencias,
+            ])
+            ->values()
+            ->all();
+    }
 
     private function logModification(string $module, string $action, ?string $itemKey = null, ?string $summary = null): void
     {

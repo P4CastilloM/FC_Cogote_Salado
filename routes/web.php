@@ -34,6 +34,9 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/partidos-activos', [AdminDashboardController::class, 'activeMatches'])->name('partidos.activos');
+        Route::get('/partidos/{id}/stats', [AdminModuleController::class, 'matchStats'])->name('partidos.stats');
+        Route::post('/partidos/{id}/stats', [AdminModuleController::class, 'syncMatchStats'])->name('partidos.stats.sync');
+        Route::post('/partidos/{id}/finalize', [AdminModuleController::class, 'finalizeMatchStats'])->name('partidos.finalize');
         Route::post('/dashboard/convert-images-webp', [AdminDashboardController::class, 'convertImagesToWebp'])->name('dashboard.convert-images-webp');
         Route::get('/plantilla', [LineupController::class, 'index'])->name('lineup.index');
 
