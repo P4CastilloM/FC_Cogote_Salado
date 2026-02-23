@@ -110,7 +110,7 @@
         <div class="bench-player lineup-glass rounded-lg p-2 flex flex-col items-center gap-1" draggable="true" data-player-id="${player.id}">
           <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-xs font-bold">${getInitials(player.name)}</span>`
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover object-top" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-xs font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-xs font-bold">${getInitials(player.name)}</span>`}
           </div>
           <span class="text-[11px] text-center text-white truncate w-full">${player.name}</span>
@@ -127,7 +127,7 @@
           <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
           <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border border-white/25 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover object-top" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-sm font-bold">${getInitials(player.name)}</span>`}
           </div>
           <div class="mt-1 text-[9px] md:text-[10px] text-white text-center font-semibold leading-tight whitespace-normal break-words min-h-[1.35rem]">${player.name}</div>
@@ -231,11 +231,24 @@
         const response = await fetch(src, { mode: 'cors' });
         const blob = await response.blob();
         const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+
+        const shouldRotateToPortrait = bitmap.width > bitmap.height;
         const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(bitmap, 0, 0);
+        if (!ctx) return null;
+
+        if (shouldRotateToPortrait) {
+          canvas.width = bitmap.height;
+          canvas.height = bitmap.width;
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(Math.PI / 2);
+          ctx.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+        } else {
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          ctx.drawImage(bitmap, 0, 0);
+        }
+
         bitmap.close();
         return canvas.toDataURL('image/png');
       } catch (error) {
