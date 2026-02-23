@@ -122,24 +122,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php($logs = $attendanceLogs ?? collect())
-                    @php
-                        if ($logs->isNotEmpty()) {
-                            foreach ($logs as $log) {
-                                $actor = trim((string) ($log->actor_sobrenombre ?? $log->actor_nombre ?? 'Jugador'));
-                                $target = trim((string) ($log->target_sobrenombre ?? $log->target_nombre ?? 'Jugador'));
-                                echo '<tr class="border-t border-white/5 text-slate-200">';
-                                echo '<td class="px-3 py-2">'.e(\Carbon\Carbon::parse($log->checked_at)->translatedFormat('d M Y H:i')).'</td>';
-                                echo '<td class="px-3 py-2">'.e($actor.' hizo check por '.$target).'</td>';
-                                echo '<td class="px-3 py-2">'.e(\Carbon\Carbon::parse($log->fecha)->translatedFormat('d M').' · '.($log->rival ?? 'Rival')).'</td>';
-                                echo '</tr>';
-                            }
-                        } else {
-                    @endphp
+                    @forelse(($attendanceLogs ?? collect()) as $log)
+                        @php
+                            $actor = trim((string) ($log->actor_sobrenombre ?? $log->actor_nombre ?? 'Jugador'));
+                            $target = trim((string) ($log->target_sobrenombre ?? $log->target_nombre ?? 'Jugador'));
+                        @endphp
+                        <tr class="border-t border-white/5 text-slate-200">
+                            <td class="px-3 py-2">{{ \Carbon\Carbon::parse($log->checked_at)->translatedFormat('d M Y H:i') }}</td>
+                            <td class="px-3 py-2">{{ $actor }} hizo check por {{ $target }}</td>
+                            <td class="px-3 py-2">{{ \Carbon\Carbon::parse($log->fecha)->translatedFormat('d M') }} · {{ $log->rival ?? 'Rival' }}</td>
+                        </tr>
+                    @empty
                         <tr><td class="px-3 py-3 text-slate-400" colspan="3">Sin historial de checks por ahora.</td></tr>
-                    @php
-                        }
-                    @endphp
+                    @endforelse
                 </tbody>
             </table>
         </div>

@@ -33,32 +33,42 @@
       </div>
     @endif
 
-    <form method="POST" action="{{ route('fccs.partidos.asistencia.confirm', $partido->attendance_token) }}" id="attendanceForm" class="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+    <form method="POST" action="{{ route('fccs.partidos.asistencia.confirm', $partido->attendance_token) }}" id="attendanceForm" class="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-5">
       @csrf
 
-      <div>
-        <label class="text-sm text-slate-300">Busca tu RUT (sin guión ni dígito)</label>
-        <input type="text" id="rutSearch" class="mt-1 w-full rounded-xl bg-black/20 border border-white/15 px-4 py-3" placeholder="Ej: 12345678">
-        <div id="searchResults" class="mt-2 space-y-2"></div>
+      <div class="space-y-3">
+        <h2 class="text-lg font-semibold text-white">Buscar jugador</h2>
+        <p class="text-sm text-slate-300">Recuerda: buscar por <strong>RUT sin guión ni dígito verificador</strong>.</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="text" id="rutSearch" class="w-full rounded-xl bg-black/20 border border-white/15 px-4 py-3" placeholder="Ej: 12345678">
+          <button type="button" id="searchMainBtn" class="px-4 py-3 rounded-xl border border-sky-400/40 bg-sky-500/10 text-sky-200 font-medium">Buscar</button>
+        </div>
+        <div id="searchResults" class="space-y-2"></div>
       </div>
 
       <input type="hidden" name="actor_rut" id="actorRut" value="{{ old('actor_rut') }}">
 
       <div id="attendanceFields" class="hidden space-y-4">
-        <div class="rounded-xl border border-lime-400/30 bg-lime-500/10 p-3 text-lime-200 text-sm" id="selectedPlayer"></div>
-
-        <label class="inline-flex items-center gap-2">
-          <input type="checkbox" name="will_attend" value="1" checked required>
-          <span>Confirmo que asistiré al partido</span>
-        </label>
-
-        <div>
-          <label class="text-sm text-slate-300">¿Deseas agregar a alguien más? (máx. 6)</label>
-          <div id="guestsList" class="space-y-2 mt-2"></div>
-          <button type="button" id="addGuest" class="mt-2 px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm">+ Agregar RUT de familiar/amigo</button>
+        <div class="rounded-xl border border-lime-400/30 bg-lime-500/10 p-3 text-lime-200 text-sm" id="selectedPlayer">
+          Rut | Nombre:
         </div>
 
-        <button type="submit" class="px-4 py-3 rounded-xl bg-lime-500 text-slate-900 font-semibold">Confirmar asistencia</button>
+        <div class="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+          <h3 class="font-semibold text-white">Confirmación Check</h3>
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" name="will_attend" value="1" checked required>
+            <span>Confirmo que asistiré al partido</span>
+          </label>
+        </div>
+
+        <div class="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+          <h3 class="font-semibold text-white">¿Desea ingresar a alguien más?</h3>
+          <p class="text-sm text-slate-300">Puedes agregar hasta 6 personas. Para cada una, ingresa su RUT y presiona Buscar para mostrar su nombre.</p>
+          <div id="guestsList" class="space-y-3"></div>
+          <button type="button" id="addGuest" class="px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm">+ Agregar persona</button>
+        </div>
+
+        <button type="submit" class="px-4 py-3 rounded-xl bg-lime-500 text-slate-900 font-semibold">Confirmar check</button>
       </div>
     </form>
   </main>
@@ -66,62 +76,136 @@
   <script>
     (() => {
       const searchInput = document.getElementById('rutSearch');
+      const searchMainBtn = document.getElementById('searchMainBtn');
       const results = document.getElementById('searchResults');
       const actorRut = document.getElementById('actorRut');
       const fields = document.getElementById('attendanceFields');
       const selectedPlayer = document.getElementById('selectedPlayer');
       const guestsList = document.getElementById('guestsList');
       const addGuestBtn = document.getElementById('addGuest');
-      let guestCount = 0;
 
+      let guestCount = 0;
       const token = @json($partido->attendance_token);
       const searchUrl = `{{ route('fccs.partidos.asistencia.search', ['token' => '__TOKEN__']) }}`.replace('__TOKEN__', token);
+
+      function sanitizeRut(value) {
+        return String(value || '').replace(/\D+/g, '');
+      }
+
+      async function fetchPlayersByRut(rut) {
+        const cleanRut = sanitizeRut(rut);
+        if (cleanRut.length < 5) return [];
+
+        const response = await fetch(`${searchUrl}?rut=${encodeURIComponent(cleanRut)}`);
+        const data = await response.json().catch(() => ({ players: [] }));
+        return data.players || [];
+      }
+
+      function renderPlayerButtons(container, players, onSelect) {
+        if (!players.length) {
+          container.innerHTML = '<p class="text-sm text-slate-400">No se encontraron jugadores para ese RUT.</p>';
+          return;
+        }
+
+        container.innerHTML = players.map((p) => `
+          <button type="button" class="w-full text-left px-3 py-2 rounded-lg border border-white/15 bg-black/20 hover:bg-white/10" data-rut="${p.rut}" data-name="${p.name}">
+            ${p.rut} | ${p.name}
+          </button>
+        `).join('');
+
+        container.querySelectorAll('button[data-rut]').forEach((btn) => {
+          btn.addEventListener('click', () => onSelect(btn.dataset.rut, btn.dataset.name));
+        });
+      }
+
+      async function searchMainPlayer() {
+        const rut = sanitizeRut(searchInput.value);
+        if (rut.length < 5) {
+          results.innerHTML = '<p class="text-sm text-amber-300">Ingresa al menos 5 dígitos.</p>';
+          return;
+        }
+
+        results.innerHTML = '<p class="text-sm text-slate-400">Buscando...</p>';
+        const players = await fetchPlayersByRut(rut);
+        renderPlayerButtons(results, players, (selectedRut, selectedName) => {
+          actorRut.value = selectedRut;
+          selectedPlayer.textContent = `Rut | Nombre: ${selectedRut} | ${selectedName}`;
+          fields.classList.remove('hidden');
+          results.innerHTML = '';
+        });
+      }
 
       function addGuestInput(value = '') {
         if (guestCount >= 6) return;
         guestCount += 1;
+
         const row = document.createElement('div');
-        row.className = 'flex items-center gap-2';
-        row.innerHTML = `<input type="text" name="guests[]" value="${value}" class="w-full rounded-lg bg-black/20 border border-white/15 px-3 py-2" placeholder="RUT adicional"> <button type="button" class="px-2 py-2 rounded bg-red-500/20 text-red-200">X</button>`;
-        row.querySelector('button').addEventListener('click', () => {
+        row.className = 'rounded-lg border border-white/10 bg-black/20 p-3 space-y-2';
+
+        row.innerHTML = `
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="text" class="guest-rut w-full rounded-lg bg-black/20 border border-white/15 px-3 py-2" placeholder="RUT adicional" value="${value}">
+            <button type="button" class="guest-search px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm">Buscar</button>
+            <button type="button" class="guest-remove px-3 py-2 rounded-lg bg-red-500/20 text-red-200 text-sm">Quitar</button>
+          </div>
+          <div class="guest-name text-sm text-slate-300"></div>
+          <div class="guest-results space-y-2"></div>
+          <input type="hidden" name="guests[]" class="guest-hidden-rut" value="${sanitizeRut(value)}">
+        `;
+
+        const rutInput = row.querySelector('.guest-rut');
+        const searchBtn = row.querySelector('.guest-search');
+        const removeBtn = row.querySelector('.guest-remove');
+        const guestName = row.querySelector('.guest-name');
+        const guestResults = row.querySelector('.guest-results');
+        const hiddenRut = row.querySelector('.guest-hidden-rut');
+
+        async function searchGuest() {
+          const rut = sanitizeRut(rutInput.value);
+          if (rut.length < 5) {
+            guestResults.innerHTML = '<p class="text-sm text-amber-300">Ingresa al menos 5 dígitos.</p>';
+            return;
+          }
+
+          guestResults.innerHTML = '<p class="text-sm text-slate-400">Buscando...</p>';
+          const players = await fetchPlayersByRut(rut);
+          renderPlayerButtons(guestResults, players, (selectedRut, selectedName) => {
+            rutInput.value = selectedRut;
+            hiddenRut.value = selectedRut;
+            guestName.textContent = `Rut | Nombre: ${selectedRut} | ${selectedName}`;
+            guestResults.innerHTML = '';
+          });
+        }
+
+        searchBtn.addEventListener('click', searchGuest);
+        rutInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            searchGuest();
+          }
+        });
+
+        removeBtn.addEventListener('click', () => {
           row.remove();
           guestCount -= 1;
         });
+
         guestsList.appendChild(row);
       }
 
-      addGuestBtn?.addEventListener('click', () => addGuestInput());
-
-      let timer = null;
-      searchInput?.addEventListener('input', () => {
-        clearTimeout(timer);
-        const q = (searchInput.value || '').replace(/\D+/g, '');
-        if (q.length < 5) {
-          results.innerHTML = '';
-          return;
+      searchMainBtn?.addEventListener('click', searchMainPlayer);
+      searchInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          searchMainPlayer();
         }
-
-        timer = setTimeout(async () => {
-          const response = await fetch(`${searchUrl}?rut=${encodeURIComponent(q)}`);
-          const data = await response.json().catch(() => ({ players: [] }));
-          const players = data.players || [];
-
-          results.innerHTML = players.map((p) => `<button type="button" class="w-full text-left px-3 py-2 rounded-lg border border-white/15 bg-black/20 hover:bg-white/10" data-rut="${p.rut}" data-name="${p.name}">${p.name} · ${p.rut}</button>`).join('');
-
-          results.querySelectorAll('button[data-rut]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-              actorRut.value = btn.dataset.rut;
-              selectedPlayer.textContent = `Jugador seleccionado: ${btn.dataset.name} (${btn.dataset.rut})`;
-              fields.classList.remove('hidden');
-              results.innerHTML = '';
-            });
-          });
-        }, 250);
       });
+
+      addGuestBtn?.addEventListener('click', () => addGuestInput());
 
       @if(old('actor_rut'))
         fields.classList.remove('hidden');
-        selectedPlayer.textContent = `Jugador seleccionado: RUT {{ old('actor_rut') }}`;
+        selectedPlayer.textContent = 'Rut | Nombre: {{ old('actor_rut') }} | (seleccionado anteriormente)';
       @endif
 
       @foreach(old('guests', []) as $guest)
