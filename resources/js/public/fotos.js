@@ -6,31 +6,44 @@ let observer = null;
 
 function qs(id) { return document.getElementById(id); }
 
-const resolveSrc = (s) => {
-  if (!s) return '';
-  if (s.startsWith('http') || s.startsWith('/')) return s;
-  return `/fccogotesalado/storage/fotos/${s}`;
-};
+function resolveSrc(src) {
+  if (!src) return '';
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/')) return src;
+  return `/fccogotesalado/storage/${src}`;
+}
+
+function formatDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 function photoCard(photo, index) {
+  const date = formatDate(photo.created_at);
+  const meta = [photo.album, date].filter(Boolean).join(' • ');
+
   return `
-    <div class="gallery-item loading" data-index="${index}">
+    <article class="gallery-item loading" data-index="${index}">
       <img
         src="${resolveSrc(photo.src)}"
         alt="${photo.alt ?? 'Foto'}"
         loading="lazy"
         onload="this.parentElement.classList.remove('loading')"
-        onerror="this.parentElement.style.display='none'"
+        onerror="this.closest('.gallery-item').remove()"
       >
       <div class="gallery-overlay">
-        <span class="text-club-gold text-xs sm:text-sm font-medium truncate">${photo.alt ?? ''}</span>
+        <div>
+          <p class="text-white text-sm font-semibold truncate">${photo.alt ?? ''}</p>
+          ${meta ? `<p class="text-gray-300 text-xs truncate">${meta}</p>` : ''}
+        </div>
       </div>
       <div class="zoom-icon">
-        <svg class="w-6 h-6 text-club-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
         </svg>
       </div>
-    </div>
+    </article>
   `;
 }
 
@@ -54,8 +67,7 @@ function appendBatch() {
   renderedCount += next.length;
 
   if (renderedCount >= photos.length) {
-    const sentinel = qs('gallerySentinel');
-    if (sentinel) sentinel.remove();
+    qs('gallerySentinel')?.remove();
     observer?.disconnect();
   }
 }
@@ -77,7 +89,7 @@ function setupInfiniteLoading() {
     entries.forEach((entry) => {
       if (entry.isIntersecting) appendBatch();
     });
-  }, { rootMargin: '300px 0px' });
+  }, { rootMargin: '280px 0px' });
 
   observer.observe(sentinel);
 }
@@ -128,7 +140,6 @@ function updateModalImage() {
 
   modalImage.src = resolveSrc(photo.src);
   modalImage.alt = photo.alt ?? 'Foto';
-
   if (photoCounter) {
     photoCounter.textContent = `${currentPhotoIndex + 1} / ${photos.length}`;
   }
@@ -146,29 +157,7 @@ function prevPhoto() {
   updateModalImage();
 }
 
-function initMobileMenu() {
-  const mobileMenuBtn = qs('mobile-menu-btn');
-  const mobileMenu = qs('mobile-menu');
-  const menuIcon = qs('menu-icon');
-  const closeIcon = qs('close-icon');
-
-  mobileMenuBtn?.addEventListener('click', () => {
-    mobileMenu?.classList.toggle('hidden');
-    menuIcon?.classList.toggle('hidden');
-    closeIcon?.classList.toggle('hidden');
-  });
-
-  document.querySelectorAll('#mobile-menu a').forEach((link) => {
-    link.addEventListener('click', () => {
-      mobileMenu?.classList.add('hidden');
-      menuIcon?.classList.remove('hidden');
-      closeIcon?.classList.add('hidden');
-    });
-  });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  initMobileMenu();
   renderGallery(window.__PHOTOS__ || []);
 
   qs('closeModal')?.addEventListener('click', closeModal);
@@ -198,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     touchEndX = e.changedTouches[0].screenX;
     const diff = touchStartX - touchEndX;
     if (Math.abs(diff) > 50) {
-      diff > 0 ? nextPhoto() : prevPhoto();
+      if (diff > 0) nextPhoto(); else prevPhoto();
     }
   }, { passive: true });
 });

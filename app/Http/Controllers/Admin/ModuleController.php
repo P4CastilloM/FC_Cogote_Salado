@@ -332,7 +332,7 @@ class ModuleController extends Controller
         }
 
         if ($module === 'album') {
-            @set_time_limit(300);
+            @set_time_limit(600);
             $mode = $request->input('upload_mode', 'single');
 
             if ($mode === 'album') {
@@ -354,7 +354,7 @@ class ModuleController extends Controller
                 $storedPaths = [];
 
                 foreach ($request->file('fotos', []) as $file) {
-                    $path = $this->storeUploadedWebp($file, 'fotos');
+                    $path = $this->storeUploadedWebp($file, 'fotos', false);
 
                     if ($path === '' || ! Storage::disk('public')->exists($path)) {
                         foreach ($storedPaths as $storedPath) {
@@ -399,7 +399,7 @@ class ModuleController extends Controller
                 ]);
 
                 $albumId = $this->resolveAlbumId($data['album_id'] ?? null, $data['single_album_nombre'] ?? null);
-                $path = $this->storeUploadedWebp($request->file('foto'), 'fotos');
+                $path = $this->storeUploadedWebp($request->file('foto'), 'fotos', true);
 
                 if ($path === '' || ! Storage::disk('public')->exists($path)) {
                     $message = 'No se pudo guardar la foto en storage/app/public/fotos. Revisa permisos y enlace storage:link.';
@@ -818,16 +818,23 @@ class ModuleController extends Controller
     }
 
 
-    private function storeUploadedWebp(UploadedFile $file, string $directory): string
+    private function storeUploadedWebp(UploadedFile $file, string $directory, bool $convertToWebp = true): string
     {
-        if (! function_exists('imagewebp')) {
+        if (! $convertToWebp || ! function_exists('imagewebp')) {
             return $this->storeOriginalFile($file, $directory);
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
         $image = $this->createImageResource($file->getRealPath(), $extension);
 
+        if ($this->shouldStoreOriginalForExif($file, $extension)) {
+            return $this->storeOriginalFile($file, $directory);
+        }
+
+
         if ($image) {
+            $image = $this->normalizeImageOrientation($image, $file->getRealPath(), $extension);
+
             $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $filename = Str::slug($filename) ?: 'img';
             $filename .= '-'.Str::random(8).'.webp';
@@ -878,6 +885,12 @@ class ModuleController extends Controller
 
                 $imagick = new \Imagick();
                 $imagick->readImage($file->getRealPath());
+                if (method_exists($imagick, 'autoOrient')) {
+                    $imagick->autoOrient();
+                } elseif (method_exists($imagick, 'autoOrientImage')) {
+                    $imagick->autoOrientImage();
+                }
+
                 $imagick->setImageFormat('webp');
                 $imagick->setImageCompressionQuality(80);
                 $imagick->writeImage($tmpFile);
@@ -937,6 +950,53 @@ class ModuleController extends Controller
             'avif' => function_exists('imagecreatefromavif') ? @imagecreatefromavif($path) : null,
             default => null,
         };
+    }
+
+
+    private function shouldStoreOriginalForExif(UploadedFile $file, string $extension): bool
+    {
+        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
+            return false;
+        }
+
+        $exif = @exif_read_data($file->getRealPath());
+        $orientation = (int) ($exif['Orientation'] ?? 1);
+
+        return $orientation !== 1;
+    }
+
+    private function normalizeImageOrientation($image, string $path, string $extension)
+    {
+        if (! is_resource($image) && ! ($image instanceof \GdImage)) {
+            return $image;
+        }
+
+        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
+            return $image;
+        }
+
+        $exif = @exif_read_data($path);
+        $orientation = (int) ($exif['Orientation'] ?? 1);
+
+        $angle = match ($orientation) {
+            3 => 180,
+            6 => -90,
+            8 => 90,
+            default => null,
+        };
+
+        if ($angle === null) {
+            return $image;
+        }
+
+        $rotated = imagerotate($image, $angle, 0);
+        if (! $rotated) {
+            return $image;
+        }
+
+        imagedestroy($image);
+
+        return $rotated;
     }
 
 
