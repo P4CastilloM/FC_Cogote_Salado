@@ -299,19 +299,21 @@ const mobileMenu = document.getElementById('mobile-menu');
 const menuIcon = document.getElementById('menu-icon');
 const closeIcon = document.getElementById('close-icon');
 
-mobileMenuBtn?.addEventListener('click', () => {
-  mobileMenu?.classList.toggle('hidden');
-  menuIcon?.classList.toggle('hidden');
-  closeIcon?.classList.toggle('hidden');
-});
-
-document.querySelectorAll('#mobile-menu a').forEach(link => {
-  link.addEventListener('click', () => {
-    mobileMenu?.classList.add('hidden');
-    menuIcon?.classList.remove('hidden');
-    closeIcon?.classList.add('hidden');
+if (mobileMenuBtn && mobileMenuBtn.dataset.mobileMenuBound !== '1') {
+  mobileMenuBtn.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    menuIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
   });
-});
+
+  document.querySelectorAll('#mobile-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu?.classList.add('hidden');
+      menuIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+    });
+  });
+}
 
 /* =========================================================
    ✅ NAV ACTIVE STATE (SCROLL)

@@ -110,7 +110,7 @@
         <div class="bench-player lineup-glass rounded-lg p-2 flex flex-col items-center gap-1" draggable="true" data-player-id="${player.id}">
           <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-xs font-bold">${getInitials(player.name)}</span>`
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-xs font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-xs font-bold">${getInitials(player.name)}</span>`}
           </div>
           <span class="text-[11px] text-center text-white truncate w-full">${player.name}</span>
@@ -127,7 +127,7 @@
           <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none no-export" data-remove-player="${item.playerId}">×</button>
           <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border border-white/25 bg-white/10 flex items-center justify-center">
             ${player.photo
-              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
+              ? `<img src="${player.photo}" alt="${player.name}" class="w-full h-full object-cover" style="image-orientation: from-image;" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="hidden text-white text-sm font-bold">${getInitials(player.name)}</span>`
               : `<span class="text-white text-sm font-bold">${getInitials(player.name)}</span>`}
           </div>
           <div class="mt-1 text-[9px] md:text-[10px] text-white text-center font-semibold leading-tight whitespace-normal break-words min-h-[1.35rem]">${player.name}</div>
@@ -225,19 +225,71 @@
       }, { passive: true });
     }
 
+
+    async function normalizeImageSrcForCanvas(src) {
+      try {
+        const response = await fetch(src, { mode: 'cors' });
+        const blob = await response.blob();
+        const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function prepareFieldImagesForExport(container) {
+      const fieldImages = Array.from(container.querySelectorAll('#field-players img'));
+      const restorers = [];
+
+      for (const img of fieldImages) {
+        const originalSrc = img.getAttribute('src') || '';
+        if (!originalSrc) continue;
+
+        const normalizedSrc = await normalizeImageSrcForCanvas(originalSrc);
+        if (!normalizedSrc) continue;
+
+        restorers.push(() => {
+          img.setAttribute('src', originalSrc);
+        });
+
+        img.setAttribute('src', normalizedSrc);
+      }
+
+      await Promise.all(
+        fieldImages.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        })
+      );
+
+      return () => restorers.forEach((restore) => restore());
+    }
+
     async function downloadPng() {
       const btn = document.getElementById('btn-download');
       const wrapper = document.getElementById('field-wrapper');
       btn.disabled = true;
       btn.textContent = 'Generando...';
       wrapper.classList.add('lineup-exporting');
+      let restoreImages = () => {};
       try {
+        restoreImages = await prepareFieldImagesForExport(wrapper);
         const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: null });
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
         link.download = `plantilla-fccs-${Date.now()}.png`;
         link.click();
       } finally {
+        restoreImages();
         wrapper.classList.remove('lineup-exporting');
         btn.disabled = false;
         btn.textContent = 'Descargar PNG';
