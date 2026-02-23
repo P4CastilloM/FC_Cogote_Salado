@@ -347,7 +347,7 @@ class ModuleController extends Controller
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_nombre' => ['required', 'string', 'max:90'],
                     'fotos' => ['required', 'array', 'min:1', 'max:80'],
-                    'fotos.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:10240'],
+                    'fotos.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:20480'],
                 ]);
 
                 $albumId = $this->resolveAlbumId(null, $data['album_nombre']);
@@ -395,7 +395,7 @@ class ModuleController extends Controller
                     'upload_mode' => ['required', Rule::in(['single', 'album'])],
                     'album_id' => ['nullable', 'integer', 'exists:foto_albums,id'],
                     'single_album_nombre' => ['nullable', 'string', 'max:90'],
-                    'foto' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:10240'],
+                    'foto' => ['required', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,image/tiff', 'max:20480'],
                 ]);
 
                 $albumId = $this->resolveAlbumId($data['album_id'] ?? null, $data['single_album_nombre'] ?? null);
