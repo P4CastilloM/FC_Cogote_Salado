@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -173,9 +174,14 @@ class DashboardController extends Controller
                 $row->attendance_url = $row->attendance_token
                     ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
                     : null;
-                $row->is_active = $row->attendance_starts_at && $row->attendance_ends_at
-                    ? now()->between($row->attendance_starts_at, $row->attendance_ends_at)
-                    : false;
+                if ($row->attendance_starts_at && $row->attendance_ends_at) {
+                    $now = now($this->clubTimezone());
+                    $start = Carbon::parse((string) $row->attendance_starts_at, $this->clubTimezone());
+                    $end = Carbon::parse((string) $row->attendance_ends_at, $this->clubTimezone());
+                    $row->is_active = $now->betweenIncluded($start, $end);
+                } else {
+                    $row->is_active = false;
+                }
 
                 return $row;
             });
@@ -267,6 +273,11 @@ class DashboardController extends Controller
         }
 
         return redirect()->route('admin.dashboard')->with('status', "Conversión WebP lista. Convertidas: {$converted}, omitidas: {$skipped}, errores: {$errors}.");
+    }
+
+    private function clubTimezone(): string
+    {
+        return 'America/Santiago';
     }
 
     private function convertStoragePathToWebp(string $relativePath): array
