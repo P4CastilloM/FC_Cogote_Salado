@@ -75,6 +75,63 @@ class PartidoStatsControllerTest extends TestCase
         ]);
     }
 
+
+    public function test_update_works_without_operation_id_for_backward_compatibility(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        DB::table('temporadas')->insert([
+            'id' => 1,
+            'fecha_inicio' => now()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('jugadores')->insert([
+            'rut' => 11111111,
+            'nombre' => 'Pablo',
+            'goles' => 0,
+            'asistencia' => 0,
+            'atajadas' => 0,
+            'partidos_jugados' => 0,
+            'numero_camiseta' => 9,
+            'posicion' => 'DELANTERO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('partidos')->insert([
+            'id' => 1,
+            'fecha' => now('America/Santiago')->toDateString(),
+            'hora' => now('America/Santiago')->format('H:i:s'),
+            'nombre_lugar' => 'Cancha',
+            'temporada_id' => 1,
+        ]);
+
+        DB::table('partido_asistencias')->insert([
+            'partido_id' => 1,
+            'jugador_rut' => 11111111,
+            'confirmed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('admin.partidos.stats.update', 1), [
+                'jugador_rut' => 11111111,
+                'field' => 'asistencias',
+                'delta' => 1,
+            ])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'applied_delta' => 1, 'value' => 1]);
+
+        $this->assertDatabaseHas('jugador_partido', [
+            'partido_id' => 1,
+            'jugador_rut' => 11111111,
+            'asistencias' => 1,
+        ]);
+    }
+
     public function test_finish_accumulates_stats_and_matches_only_for_confirmed_players(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
