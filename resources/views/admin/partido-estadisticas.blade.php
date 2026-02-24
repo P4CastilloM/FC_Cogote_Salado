@@ -86,6 +86,9 @@ function statsApp() {
     return {
         endpoint: @json(route('admin.partidos.stats.update', $partido->id)),
         dataEndpoint: @json(route('admin.partidos.stats.data', $partido->id)),
+        channelName: @json('partido-stats-'.$partido->id),
+        csrfToken: @json(csrf_token()),
+        supportsOperationId: @json($supportsOperationId),
         storageKey: @json('partido-stats-queue-'.$partido->id),
         online: navigator.onLine,
         search: '',
@@ -100,6 +103,7 @@ function statsApp() {
         players: @json($players),
         queue: [],
         pollTimer: null,
+        channel: null,
 
         init() {
             this.queue = this.readQueue();
@@ -107,6 +111,7 @@ function statsApp() {
             this.flushQueue();
             this.refreshFromServer();
             this.startPolling();
+            this.bindCrossTabSync();
         },
 
         bindConnectivity() {
@@ -117,6 +122,12 @@ function statsApp() {
             });
             window.addEventListener('offline', () => {
                 this.online = false;
+            });
+
+            window.addEventListener('storage', (event) => {
+                if (event.key !== this.storageKey) return;
+                this.queue = this.readQueue();
+                this.flushQueue();
             });
         },
 
@@ -157,10 +168,19 @@ function statsApp() {
             this.errorMessage = '';
             player[field] = next;
 
-            const payload = { jugador_rut: Number(rut), field, delta: effectiveDelta };
+            const payload = {
+                jugador_rut: Number(rut),
+                field,
+                delta: effectiveDelta,
+            };
+
+            if (this.supportsOperationId) {
+                payload.operation_id = this.newOperationId();
+            }
             this.queue.push(payload);
             this.saveQueue();
             this.flushQueue();
+            this.publishCrossTab(payload);
         },
 
         readQueue() {
@@ -178,11 +198,36 @@ function statsApp() {
         },
 
 
+
+        bindCrossTabSync() {
+            if (!('BroadcastChannel' in window)) return;
+
+            this.channel = new BroadcastChannel(this.channelName);
+            this.channel.onmessage = () => {
+                this.queue = this.readQueue();
+                this.flushQueue();
+                this.refreshFromServer();
+            };
+        },
+
+        publishCrossTab(payload) {
+            if (!this.channel) return;
+            this.channel.postMessage({ type: 'queued', payload });
+        },
+
+        newOperationId() {
+            if (window.crypto && window.crypto.randomUUID) {
+                return window.crypto.randomUUID();
+            }
+
+            return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        },
+
         startPolling() {
             if (this.pollTimer) return;
             this.pollTimer = setInterval(() => {
                 this.refreshFromServer();
-            }, 6000);
+            }, 2500);
         },
 
         async refreshFromServer() {
@@ -201,6 +246,10 @@ function statsApp() {
                 if (Array.isArray(data.players)) {
                     this.players = data.players;
                 }
+
+                if (this.queue.length === 0) {
+                    this.errorMessage = '';
+                }
             } catch (_) {}
         },
 
@@ -216,7 +265,7 @@ function statsApp() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-CSRF-TOKEN': this.csrfToken,
                             'Accept': 'application/json',
                         },
                         body: JSON.stringify(payload),
@@ -233,10 +282,11 @@ function statsApp() {
                     }
 
                     this.queue.shift();
+                    this.errorMessage = '';
                     this.saveQueue();
                     await this.refreshFromServer();
                 } catch (error) {
-                    this.errorMessage = 'Sin conexión o error de red';
+                    this.errorMessage = 'No se pudo enviar el cambio. Revisa sesión/permisos y vuelve a intentar.';
                     this.online = navigator.onLine;
                     break;
                 }
