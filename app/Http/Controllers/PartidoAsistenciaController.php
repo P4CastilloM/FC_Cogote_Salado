@@ -90,9 +90,9 @@ class PartidoAsistenciaController extends Controller
                     ['partido_id' => $partido->id, 'jugador_rut' => $targetRut],
                     [
                         'checked_by_rut' => $actorRut,
-                        'confirmed_at' => now(),
-                        'updated_at' => now(),
-                        'created_at' => now(),
+                        'confirmed_at' => now($this->clubTimezone()),
+                        'updated_at' => now($this->clubTimezone()),
+                        'created_at' => now($this->clubTimezone()),
                     ]
                 );
 
@@ -100,13 +100,13 @@ class PartidoAsistenciaController extends Controller
                     'partido_id' => $partido->id,
                     'actor_rut' => $actorRut,
                     'target_rut' => $targetRut,
-                    'checked_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'checked_at' => now($this->clubTimezone()),
+                    'created_at' => now($this->clubTimezone()),
+                    'updated_at' => now($this->clubTimezone()),
                 ]);
 
                 if ($this->isInsideStatsWindow($partido)) {
-                    $inserted = DB::table('jugador_partido')->insertOrIgnore([
+                    DB::table('jugador_partido')->insertOrIgnore([
                         'partido_id' => $partido->id,
                         'jugador_rut' => (int) $targetRut,
                         'goles' => 0,
@@ -114,10 +114,6 @@ class PartidoAsistenciaController extends Controller
                         'atajadas' => 0,
                         'participo' => true,
                     ]);
-
-                    if ($inserted > 0) {
-                        DB::table('jugadores')->where('rut', (int) $targetRut)->increment('partidos_jugados', 1);
-                    }
 
                     DB::table('jugador_partido')
                         ->where('partido_id', $partido->id)
@@ -137,13 +133,13 @@ class PartidoAsistenciaController extends Controller
 
     private function isInsideStatsWindow(object $partido): bool
     {
-        $timezone = 'America/Santiago';
+        $timezone = $this->clubTimezone();
         $hour = trim((string) ($partido->hora ?? '00:00'));
         $time = preg_match('/^\d{2}:\d{2}/', $hour) ? substr($hour, 0, 5) : '00:00';
         $kickoff = Carbon::parse(((string) $partido->fecha).' '.$time, $timezone);
 
         $startsAt = $kickoff->copy()->subHour();
-        $endsAt = $kickoff->copy()->addHours(2);
+        $endsAt = $kickoff->copy()->addHours(4);
 
         return now($timezone)->betweenIncluded($startsAt, $endsAt);
     }
@@ -154,9 +150,14 @@ class PartidoAsistenciaController extends Controller
             ->where('attendance_token', $token)
             ->whereNotNull('attendance_starts_at')
             ->whereNotNull('attendance_ends_at')
-            ->where('attendance_starts_at', '<=', now())
-            ->where('attendance_ends_at', '>=', now())
+            ->where('attendance_starts_at', '<=', now($this->clubTimezone()))
+            ->where('attendance_ends_at', '>=', now($this->clubTimezone()))
             ->first();
+    }
+
+    private function clubTimezone(): string
+    {
+        return 'America/Santiago';
     }
 
     private function attendanceAlert(int $confirmedCount): ?string
