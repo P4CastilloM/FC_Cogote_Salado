@@ -84,8 +84,8 @@
 <script>
 function statsApp() {
     return {
-        endpoint: @json(route('admin.partidos.stats.update', $partido->id)),
-        dataEndpoint: @json(route('admin.partidos.stats.data', $partido->id)),
+        endpoint: @json(route('admin.partidos.stats.update', ['id' => $partido->id], false)),
+        dataEndpoint: @json(route('admin.partidos.stats.data', ['id' => $partido->id], false)),
         channelName: @json('partido-stats-'.$partido->id),
         csrfToken: @json(csrf_token()),
         supportsOperationId: @json($supportsOperationId),
@@ -95,6 +95,7 @@ function statsApp() {
         closed: @json(!empty($statsClosedAt)),
         syncing: false,
         errorMessage: '',
+        lastHttpStatus: null,
         fields: [
             { key: 'goles', label: 'Gol' },
             { key: 'asistencias', label: 'Asistencia' },
@@ -235,7 +236,9 @@ function statsApp() {
 
             try {
                 const response = await fetch(this.dataEndpoint, {
-                    headers: { 'Accept': 'application/json' },
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 });
 
                 if (!response.ok) return;
@@ -263,16 +266,19 @@ function statsApp() {
                 try {
                     const response = await fetch(this.endpoint, {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': this.csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json',
                         },
                         body: JSON.stringify(payload),
                     });
 
                     if (!response.ok) {
-                        let message = 'No se pudo sincronizar el cambio';
+                        this.lastHttpStatus = response.status;
+                        let message = `No se pudo sincronizar el cambio (HTTP ${response.status})`; 
                         try {
                             const data = await response.json();
                             if (data && data.message) message = data.message;
@@ -286,7 +292,7 @@ function statsApp() {
                     this.saveQueue();
                     await this.refreshFromServer();
                 } catch (error) {
-                    this.errorMessage = 'No se pudo enviar el cambio. Revisa sesión/permisos y vuelve a intentar.';
+                    this.errorMessage = 'Error de red al enviar (fetch). Revisa consola del navegador / proxy (Cloudflare).';
                     this.online = navigator.onLine;
                     break;
                 }
