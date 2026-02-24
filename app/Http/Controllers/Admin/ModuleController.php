@@ -1122,13 +1122,21 @@ class ModuleController extends Controller
 
     private function buildAttendanceWindow(string $fecha): array
     {
-        $matchDate = Carbon::parse($fecha)->endOfDay();
-        $twoWeeksBefore = Carbon::parse($fecha)->subDays(14)->startOfDay();
-        $startAt = now()->greaterThan($twoWeeksBefore) ? now() : $twoWeeksBefore;
+        $timezone = $this->clubTimezone();
+        $matchDate = Carbon::parse($fecha, $timezone)->endOfDay();
+        $twoWeeksBefore = Carbon::parse($fecha, $timezone)->subDays(14)->startOfDay();
+        $now = now($timezone);
+        $startAt = $now->greaterThan($twoWeeksBefore) ? $now : $twoWeeksBefore;
 
         return [
             'starts_at' => $startAt,
             'ends_at' => $matchDate,
         ];
     }
+
+    private function clubTimezone(): string
+    {
+        return 'America/Santiago';
+    }
 }
+
