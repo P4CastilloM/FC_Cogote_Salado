@@ -112,7 +112,7 @@ class DashboardController extends Controller
         }
 
         $attendanceMatches = $this->attendanceMatches(6);
-        $attendanceLogs = $this->attendanceLogs(20);
+        $attendanceLogs = $this->attendanceLogs(10, '', 'recent');
 
         return view('admin.dashboard', [
             'stats' => $stats,
@@ -125,11 +125,22 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function activeMatches(): View
+    public function activeMatches(Request $request): View
     {
+        $perPage = (int) $request->query('checks_per_page', 10);
+        if (! in_array($perPage, [10, 25, 50], true)) {
+            $perPage = 10;
+        }
+
+        $search = trim((string) $request->query('checks_q', ''));
+        $order = $request->query('checks_order', 'recent') === 'oldest' ? 'oldest' : 'recent';
+
         return view('admin.partidos-activos', [
             'attendanceMatches' => $this->attendanceMatches(50),
-            'attendanceLogs' => $this->attendanceLogs(100),
+            'attendanceLogs' => $this->attendanceLogs($perPage, $search, $order),
+            'checksPerPage' => $perPage,
+            'checksSearch' => $search,
+            'checksOrder' => $order,
         ]);
     }
 
@@ -229,13 +240,22 @@ class DashboardController extends Controller
         });
     }
 
-    private function attendanceLogs(int $limit)
+    private function attendanceLogs(int $perPage, string $search, string $order)
     {
         if (! Schema::hasTable('partido_asistencia_logs')) {
             return collect();
         }
 
-        return DB::table('partido_asistencia_logs as l')
+        $latestIds = DB::table('partido_asistencia_logs')
+            ->orderByDesc('checked_at')
+            ->limit(500)
+            ->pluck('id');
+
+        if ($latestIds->isEmpty()) {
+            return collect();
+        }
+
+        $query = DB::table('partido_asistencia_logs as l')
             ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
             ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
             ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
