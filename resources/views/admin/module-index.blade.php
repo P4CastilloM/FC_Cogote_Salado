@@ -24,9 +24,10 @@
         <div class="space-y-3">
             @forelse($items as $item)
                 @php
-                    $key = $module === 'plantel' ? $item->rut : $item->id;
+                    $key = in_array($module, ['plantel', 'visitantes'], true) ? $item->rut : $item->id;
                     $main = match($module) {
                         'plantel' => $item->nombre,
+                        'visitantes' => trim(($item->nombre ?? '').' '.($item->apellido ?? '')),
                         'noticias' => $item->titulo,
                         'avisos' => $item->titulo,
                         'partidos' => ($item->rival ?? 'Partido').' · '.$item->nombre_lugar,
@@ -37,6 +38,7 @@
                     };
                     $secondary = match($module) {
                         'plantel' => 'RUT '.$item->rut,
+                        'visitantes' => 'RUT '.$item->rut.' · '.(($item->sobrenombre ?? '') !== '' ? 'Alias '.$item->sobrenombre : 'Sin alias'),
                         'noticias', 'avisos' => $item->fecha,
                         'partidos' => trim(($item->fecha ?? '').' · '.($item->hora ?? '--:--')),
                         'premios' => $item->descripcion ?? 'Sin descripción',

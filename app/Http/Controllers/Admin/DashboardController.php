@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -132,6 +133,29 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function removeConfirmedPlayer(int $partidoId, int $jugadorRut): RedirectResponse
+    {
+        if (! Schema::hasTable('partido_asistencias')) {
+            return back()->with('error', 'La tabla de asistencias no está disponible.');
+        }
+
+        DB::transaction(function () use ($partidoId, $jugadorRut): void {
+            DB::table('partido_asistencias')
+                ->where('partido_id', $partidoId)
+                ->where('jugador_rut', $jugadorRut)
+                ->delete();
+
+            if (Schema::hasTable('jugador_partido')) {
+                DB::table('jugador_partido')
+                    ->where('partido_id', $partidoId)
+                    ->where('jugador_rut', $jugadorRut)
+                    ->update(['participo' => false]);
+            }
+        });
+
+        return back()->with('status', 'Jugador retirado del partido correctamente.');
+    }
+
     private function attendanceMatches(int $limit)
     {
         if (! Schema::hasTable('partidos') || ! Schema::hasColumn('partidos', 'attendance_token')) {
@@ -151,7 +175,7 @@ class DashboardController extends Controller
 
         if (Schema::hasTable('partido_asistencias')) {
             $matchesQuery->leftJoin('partido_asistencias as pa', 'pa.partido_id', '=', 'partidos.id')
-                ->addSelect(DB::raw('COUNT(pa.id) as confirmed_count'))
+                ->addSelect(DB::raw('COUNT(pa.jugador_rut) as confirmed_count'))
                 ->groupBy(
                     'partidos.id',
                     'partidos.fecha',
@@ -165,20 +189,69 @@ class DashboardController extends Controller
             $matchesQuery->addSelect(DB::raw('0 as confirmed_count'));
         }
 
-        return $matchesQuery
+        $matches = $matchesQuery
             ->orderBy('partidos.fecha')
             ->limit($limit)
-            ->get()
-            ->map(function ($row) {
-                $row->attendance_url = $row->attendance_token
-                    ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
-                    : null;
-                $row->is_active = $row->attendance_starts_at && $row->attendance_ends_at
-                    ? now()->between($row->attendance_starts_at, $row->attendance_ends_at)
-                    : false;
+            ->get();
 
-                return $row;
-            });
+        $confirmedByMatch = collect();
+        if (Schema::hasTable('partido_asistencias') && $matches->isNotEmpty() && Schema::hasColumn('partido_asistencias', 'jugador_rut')) {
+            $confirmedPlayersQuery = DB::table('partido_asistencias as pa')
+                ->leftJoin('jugadores as j', 'j.rut', '=', 'pa.jugador_rut')
+                ->whereIn('pa.partido_id', $matches->pluck('id')->all())
+                ->select('pa.partido_id', 'pa.jugador_rut');
+
+            if (Schema::hasColumn('jugadores', 'nombre')) {
+                $confirmedPlayersQuery->addSelect('j.nombre');
+            } else {
+                $confirmedPlayersQuery->addSelect(DB::raw("'' as nombre"));
+            }
+
+            if (Schema::hasColumn('jugadores', 'sobrenombre')) {
+                $confirmedPlayersQuery->addSelect('j.sobrenombre');
+            } else {
+                $confirmedPlayersQuery->addSelect(DB::raw("'' as sobrenombre"));
+            }
+
+            if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                $confirmedPlayersQuery->addSelect('j.es_visitante');
+            } else {
+                $confirmedPlayersQuery->addSelect(DB::raw('0 as es_visitante'));
+            }
+
+            if (Schema::hasColumn('partido_asistencias', 'confirmed_at')) {
+                $confirmedPlayersQuery->orderBy('pa.confirmed_at');
+            } elseif (Schema::hasColumn('partido_asistencias', 'id')) {
+                $confirmedPlayersQuery->orderByDesc('pa.id');
+            }
+
+            $confirmedByMatch = $confirmedPlayersQuery
+                ->get()
+                ->groupBy('partido_id')
+                ->map(fn ($group) => $group->map(fn ($player) => [
+                    'rut' => (int) ($player->jugador_rut ?? 0),
+                    'name' => trim((string) (($player->sobrenombre ?? '') ?: ($player->nombre ?? '') ?: ('#'.(string) ($player->jugador_rut ?? 'Jugador')))),
+                    'is_visitante' => (bool) ($player->es_visitante ?? false),
+                ])->values());
+        }
+
+        return $matches->map(function ($row) use ($confirmedByMatch) {
+            $row->attendance_url = $row->attendance_token
+                ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
+                : null;
+            if ($row->attendance_starts_at && $row->attendance_ends_at) {
+                $now = now($this->clubTimezone());
+                $start = Carbon::parse((string) $row->attendance_starts_at, $this->clubTimezone());
+                $end = Carbon::parse((string) $row->attendance_ends_at, $this->clubTimezone());
+                $row->is_active = $now->betweenIncluded($start, $end);
+            } else {
+                $row->is_active = false;
+            }
+
+            $row->confirmed_players = $confirmedByMatch->get($row->id, collect());
+
+            return $row;
+        });
     }
 
     private function attendanceLogs(int $limit)
@@ -187,86 +260,38 @@ class DashboardController extends Controller
             return collect();
         }
 
-        return DB::table('partido_asistencia_logs as l')
+        $query = DB::table('partido_asistencia_logs as l')
             ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
             ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
             ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
-            ->select(
-                'l.id',
-                'l.checked_at',
-                'l.partido_id',
-                'p.rival',
-                'p.fecha',
-                'actor.nombre as actor_nombre',
-                'actor.sobrenombre as actor_sobrenombre',
-                'target.nombre as target_nombre',
-                'target.sobrenombre as target_sobrenombre'
+            ->select('l.id')
+            ->addSelect(
+                Schema::hasColumn('partido_asistencia_logs', 'checked_at')
+                    ? DB::raw('l.checked_at as checked_at')
+                    : DB::raw('l.created_at as checked_at')
             )
-            ->orderByDesc('l.checked_at')
-            ->limit($limit)
-            ->get();
+            ->addSelect('l.actor_rut', 'l.target_rut')
+            ->addSelect(DB::raw(Schema::hasColumn('partidos', 'fecha') ? 'p.fecha as fecha' : 'NULL as fecha'))
+            ->addSelect(DB::raw(Schema::hasColumn('partidos', 'rival') ? 'p.rival as rival' : "'' as rival"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'nombre') ? 'actor.nombre as actor_nombre' : "'' as actor_nombre"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'sobrenombre') ? 'actor.sobrenombre as actor_sobrenombre' : "'' as actor_sobrenombre"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'nombre') ? 'target.nombre as target_nombre' : "'' as target_nombre"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'sobrenombre') ? 'target.sobrenombre as target_sobrenombre' : "'' as target_sobrenombre"));
+
+        if (Schema::hasColumn('partido_asistencia_logs', 'checked_at')) {
+            $query->orderByDesc('l.checked_at');
+        } elseif (Schema::hasColumn('partido_asistencia_logs', 'created_at')) {
+            $query->orderByDesc('l.created_at');
+        } else {
+            $query->orderByDesc('l.id');
+        }
+
+        return $query->limit($limit)->get();
     }
 
-    public function convertImagesToWebp(Request $request): RedirectResponse
+    private function clubTimezone(): string
     {
-        $user = $request->user();
-        abort_if(! $user || ! $user->isAdmin(), 403);
-
-        if (! function_exists('imagewebp')) {
-            return redirect()->route('admin.dashboard')->with('error', 'El servidor no tiene soporte GD/WebP (imagewebp).');
-        }
-
-        $converted = 0;
-        $skipped = 0;
-        $errors = 0;
-
-        $mappings = [
-            ['table' => 'jugadores', 'key' => 'rut', 'fields' => ['foto']],
-            ['table' => 'noticias', 'key' => 'id', 'fields' => ['foto', 'foto2']],
-            ['table' => 'avisos', 'key' => 'id', 'fields' => ['foto']],
-            ['table' => 'ayudantes', 'key' => 'id', 'fields' => ['foto']],
-        ];
-
-        foreach ($mappings as $mapping) {
-            if (! Schema::hasTable($mapping['table'])) {
-                continue;
-            }
-
-            $rows = DB::table($mapping['table'])->select(array_merge([$mapping['key']], $mapping['fields']))->get();
-            foreach ($rows as $row) {
-                foreach ($mapping['fields'] as $field) {
-                    $current = (string) ($row->{$field} ?? '');
-                    if ($current === '') {
-                        continue;
-                    }
-
-                    $result = $this->convertStoragePathToWebp($current);
-                    if ($result['status'] === 'converted') {
-                        DB::table($mapping['table'])->where($mapping['key'], $row->{$mapping['key']})->update([$field => $result['path'], 'updated_at' => now()]);
-                        $converted++;
-                    } elseif ($result['status'] === 'skipped') {
-                        $skipped++;
-                    } else {
-                        $errors++;
-                    }
-                }
-            }
-        }
-
-        // Fotos del álbum (sin BD, se listan por carpeta)
-        $albumFiles = collect(Storage::disk('public')->files('fotos'));
-        foreach ($albumFiles as $filePath) {
-            $result = $this->convertStoragePathToWebp($filePath);
-            if ($result['status'] === 'converted') {
-                $converted++;
-            } elseif ($result['status'] === 'skipped') {
-                $skipped++;
-            } else {
-                $errors++;
-            }
-        }
-
-        return redirect()->route('admin.dashboard')->with('status', "Conversión WebP lista. Convertidas: {$converted}, omitidas: {$skipped}, errores: {$errors}.");
+        return 'America/Santiago';
     }
 
     private function convertStoragePathToWebp(string $relativePath): array
