@@ -207,10 +207,18 @@ class DashboardController extends Controller
 
         $confirmedByMatch = collect();
         if (Schema::hasTable('partido_asistencias') && $matches->isNotEmpty()) {
-            $confirmedByMatch = DB::table('partido_asistencias as pa')
+            $confirmedPlayersQuery = DB::table('partido_asistencias as pa')
                 ->leftJoin('jugadores as j', 'j.rut', '=', 'pa.jugador_rut')
                 ->whereIn('pa.partido_id', $matches->pluck('id')->all())
-                ->select('pa.partido_id', 'pa.jugador_rut', 'j.nombre', 'j.sobrenombre', 'j.es_visitante')
+                ->select('pa.partido_id', 'pa.jugador_rut', 'j.nombre', 'j.sobrenombre');
+
+            if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                $confirmedPlayersQuery->addSelect('j.es_visitante');
+            } else {
+                $confirmedPlayersQuery->addSelect(DB::raw('0 as es_visitante'));
+            }
+
+            $confirmedByMatch = $confirmedPlayersQuery
                 ->orderBy('pa.confirmed_at')
                 ->get()
                 ->groupBy('partido_id')
