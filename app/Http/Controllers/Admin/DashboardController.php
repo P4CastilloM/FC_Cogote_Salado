@@ -186,7 +186,7 @@ class DashboardController extends Controller
 
         if (Schema::hasTable('partido_asistencias')) {
             $matchesQuery->leftJoin('partido_asistencias as pa', 'pa.partido_id', '=', 'partidos.id')
-                ->addSelect(DB::raw('COUNT(pa.id) as confirmed_count'))
+                ->addSelect(DB::raw('COUNT(pa.jugador_rut) as confirmed_count'))
                 ->groupBy(
                     'partidos.id',
                     'partidos.fecha',
@@ -206,11 +206,23 @@ class DashboardController extends Controller
             ->get();
 
         $confirmedByMatch = collect();
-        if (Schema::hasTable('partido_asistencias') && $matches->isNotEmpty()) {
+        if (Schema::hasTable('partido_asistencias') && $matches->isNotEmpty() && Schema::hasColumn('partido_asistencias', 'jugador_rut')) {
             $confirmedPlayersQuery = DB::table('partido_asistencias as pa')
                 ->leftJoin('jugadores as j', 'j.rut', '=', 'pa.jugador_rut')
                 ->whereIn('pa.partido_id', $matches->pluck('id')->all())
-                ->select('pa.partido_id', 'pa.jugador_rut', 'j.nombre', 'j.sobrenombre');
+                ->select('pa.partido_id', 'pa.jugador_rut');
+
+            if (Schema::hasColumn('jugadores', 'nombre')) {
+                $confirmedPlayersQuery->addSelect('j.nombre');
+            } else {
+                $confirmedPlayersQuery->addSelect(DB::raw("'' as nombre"));
+            }
+
+            if (Schema::hasColumn('jugadores', 'sobrenombre')) {
+                $confirmedPlayersQuery->addSelect('j.sobrenombre');
+            } else {
+                $confirmedPlayersQuery->addSelect(DB::raw("'' as sobrenombre"));
+            }
 
             if (Schema::hasColumn('jugadores', 'es_visitante')) {
                 $confirmedPlayersQuery->addSelect('j.es_visitante');
@@ -218,13 +230,18 @@ class DashboardController extends Controller
                 $confirmedPlayersQuery->addSelect(DB::raw('0 as es_visitante'));
             }
 
+            if (Schema::hasColumn('partido_asistencias', 'confirmed_at')) {
+                $confirmedPlayersQuery->orderBy('pa.confirmed_at');
+            } elseif (Schema::hasColumn('partido_asistencias', 'id')) {
+                $confirmedPlayersQuery->orderByDesc('pa.id');
+            }
+
             $confirmedByMatch = $confirmedPlayersQuery
-                ->orderBy('pa.confirmed_at')
                 ->get()
                 ->groupBy('partido_id')
                 ->map(fn ($group) => $group->map(fn ($player) => [
-                    'rut' => (int) $player->jugador_rut,
-                    'name' => trim((string) ($player->sobrenombre ?: $player->nombre ?: 'Jugador')),
+                    'rut' => (int) ($player->jugador_rut ?? 0),
+                    'name' => trim((string) (($player->sobrenombre ?? '') ?: ($player->nombre ?? '') ?: ('#'.(string) ($player->jugador_rut ?? 'Jugador')))),
                     'is_visitante' => (bool) ($player->es_visitante ?? false),
                 ])->values());
         }
@@ -254,34 +271,33 @@ class DashboardController extends Controller
             return collect();
         }
 
-        $latestIds = DB::table('partido_asistencia_logs')
-            ->orderByDesc('checked_at')
-            ->limit(500)
-            ->pluck('id');
-
-        if ($latestIds->isEmpty()) {
-            return collect();
-        }
-
         $query = DB::table('partido_asistencia_logs as l')
             ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
             ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
             ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
-            ->select(
-                'l.id',
-                'l.checked_at',
-                'l.actor_rut',
-                'l.target_rut',
-                'p.fecha',
-                'p.rival',
-                'actor.nombre as actor_nombre',
-                'actor.sobrenombre as actor_sobrenombre',
-                'target.nombre as target_nombre',
-                'target.sobrenombre as target_sobrenombre'
+            ->select('l.id')
+            ->addSelect(
+                Schema::hasColumn('partido_asistencia_logs', 'checked_at')
+                    ? DB::raw('l.checked_at as checked_at')
+                    : DB::raw('l.created_at as checked_at')
             )
-            ->orderByDesc('l.checked_at')
-            ->limit($limit)
-            ->get();
+            ->addSelect('l.actor_rut', 'l.target_rut')
+            ->addSelect(DB::raw(Schema::hasColumn('partidos', 'fecha') ? 'p.fecha as fecha' : 'NULL as fecha'))
+            ->addSelect(DB::raw(Schema::hasColumn('partidos', 'rival') ? 'p.rival as rival' : "'' as rival"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'nombre') ? 'actor.nombre as actor_nombre' : "'' as actor_nombre"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'sobrenombre') ? 'actor.sobrenombre as actor_sobrenombre' : "'' as actor_sobrenombre"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'nombre') ? 'target.nombre as target_nombre' : "'' as target_nombre"))
+            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'sobrenombre') ? 'target.sobrenombre as target_sobrenombre' : "'' as target_sobrenombre"));
+
+        if (Schema::hasColumn('partido_asistencia_logs', 'checked_at')) {
+            $query->orderByDesc('l.checked_at');
+        } elseif (Schema::hasColumn('partido_asistencia_logs', 'created_at')) {
+            $query->orderByDesc('l.created_at');
+        } else {
+            $query->orderByDesc('l.id');
+        }
+
+        return $query->limit($limit)->get();
     }
 
     private function clubTimezone(): string
