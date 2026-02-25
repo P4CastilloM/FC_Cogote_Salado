@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class PartidoAsistenciaController extends Controller
@@ -39,7 +40,7 @@ class PartidoAsistenciaController extends Controller
         }
 
         $players = DB::table('jugadores')
-            ->select('rut', 'nombre', 'sobrenombre')
+            ->select('rut', 'nombre', 'apellido', 'sobrenombre', 'es_visitante')
             ->where('rut', 'like', $rut.'%')
             ->orderBy('nombre')
             ->limit(8)
@@ -47,6 +48,10 @@ class PartidoAsistenciaController extends Controller
             ->map(fn ($p) => [
                 'rut' => (string) $p->rut,
                 'name' => trim((string) ($p->sobrenombre ?: $p->nombre)),
+                'nombre' => (string) ($p->nombre ?? ''),
+                'apellido' => (string) ($p->apellido ?? ''),
+                'sobrenombre' => (string) ($p->sobrenombre ?? ''),
+                'es_visitante' => (bool) ($p->es_visitante ?? false),
             ])
             ->values();
 
@@ -58,10 +63,18 @@ class PartidoAsistenciaController extends Controller
         $partido = $this->activePartidoByToken($token);
         abort_if(! $partido, 404);
 
+        $request->merge([
+            'visitantes' => $this->normalizeVisitantesInput($request->input('visitantes', [])),
+        ]);
+
         $data = $request->validate([
             'actor_rut' => ['required', 'digits_between:5,8'],
             'guests' => ['nullable', 'array', 'max:6'],
             'guests.*' => ['nullable', 'digits_between:5,8'],
+            'visitantes' => ['nullable', 'array', 'max:4'],
+            'visitantes.*.rut' => ['nullable', 'digits_between:5,8'],
+            'visitantes.*.nombre' => ['nullable', 'string', 'max:25'],
+            'visitantes.*.apellido' => ['nullable', 'string', 'max:50'],
             'will_attend' => ['required', 'accepted'],
         ]);
 
@@ -74,6 +87,72 @@ class PartidoAsistenciaController extends Controller
             ->values();
 
         $allRuts = collect([$actorRut])->merge($guestRuts)->unique()->values();
+
+        $visitantes = collect($data['visitantes'] ?? [])
+            ->map(function ($visitante) {
+                $rut = (int) preg_replace('/\D+/', '', (string) ($visitante['rut'] ?? ''));
+
+                return [
+                    'rut' => $rut,
+                    'nombre' => trim((string) ($visitante['nombre'] ?? '')),
+                    'apellido' => trim((string) ($visitante['apellido'] ?? '')) ?: null,
+                ];
+            })
+            ->filter(fn ($visitante) => $visitante['rut'] > 0 && $visitante['nombre'] !== '')
+            ->unique('rut')
+            ->take(4)
+            ->values();
+
+        if ($visitantes->isNotEmpty()) {
+            foreach ($visitantes as $visitante) {
+                $exists = DB::table('jugadores')->where('rut', $visitante['rut'])->first();
+
+                if (! $exists) {
+                    $insert = [
+                        'rut' => $visitante['rut'],
+                        'nombre' => $visitante['nombre'],
+                        'apellido' => $visitante['apellido'],
+                        'sobrenombre' => null,
+                        'numero_camiseta' => 999,
+                        'posicion' => 'DEFENSA',
+                        'goles' => 0,
+                        'asistencia' => 0,
+                        'created_at' => now($this->clubTimezone()),
+                        'updated_at' => now($this->clubTimezone()),
+                    ];
+
+                    if (Schema::hasColumn('jugadores', 'atajadas')) {
+                        $insert['atajadas'] = 0;
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'partidos_jugados')) {
+                        $insert['partidos_jugados'] = 0;
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                        $insert['es_visitante'] = true;
+                    }
+
+                    DB::table('jugadores')->insert($insert);
+                } else {
+                    $update = [
+                        'updated_at' => now($this->clubTimezone()),
+                    ];
+
+                    if (Schema::hasColumn('jugadores', 'apellido') && empty($exists->apellido) && $visitante['apellido']) {
+                        $update['apellido'] = $visitante['apellido'];
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                        $update['es_visitante'] = (bool) ($exists->es_visitante ?? false);
+                    }
+
+                    DB::table('jugadores')->where('rut', $visitante['rut'])->update($update);
+                }
+            }
+
+            $allRuts = $allRuts->merge($visitantes->pluck('rut'))->unique()->values();
+        }
 
         $found = DB::table('jugadores')->whereIn('rut', $allRuts)->pluck('rut')->map(fn ($rut) => (int) $rut);
         $missing = $allRuts->diff($found)->values();
@@ -90,9 +169,9 @@ class PartidoAsistenciaController extends Controller
                     ['partido_id' => $partido->id, 'jugador_rut' => $targetRut],
                     [
                         'checked_by_rut' => $actorRut,
-                        'confirmed_at' => now(),
-                        'updated_at' => now(),
-                        'created_at' => now(),
+                        'confirmed_at' => now($this->clubTimezone()),
+                        'updated_at' => now($this->clubTimezone()),
+                        'created_at' => now($this->clubTimezone()),
                     ]
                 );
 
@@ -100,13 +179,13 @@ class PartidoAsistenciaController extends Controller
                     'partido_id' => $partido->id,
                     'actor_rut' => $actorRut,
                     'target_rut' => $targetRut,
-                    'checked_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'checked_at' => now($this->clubTimezone()),
+                    'created_at' => now($this->clubTimezone()),
+                    'updated_at' => now($this->clubTimezone()),
                 ]);
 
                 if ($this->isInsideStatsWindow($partido)) {
-                    $inserted = DB::table('jugador_partido')->insertOrIgnore([
+                    DB::table('jugador_partido')->insertOrIgnore([
                         'partido_id' => $partido->id,
                         'jugador_rut' => (int) $targetRut,
                         'goles' => 0,
@@ -114,10 +193,6 @@ class PartidoAsistenciaController extends Controller
                         'atajadas' => 0,
                         'participo' => true,
                     ]);
-
-                    if ($inserted > 0) {
-                        DB::table('jugadores')->where('rut', (int) $targetRut)->increment('partidos_jugados', 1);
-                    }
 
                     DB::table('jugador_partido')
                         ->where('partido_id', $partido->id)
@@ -130,20 +205,20 @@ class PartidoAsistenciaController extends Controller
         $confirmedCount = DB::table('partido_asistencias')->where('partido_id', $partido->id)->count();
 
         return redirect()->route('fccs.partidos.asistencia.show', $token)
-            ->with('status', '✅ Asistencia confirmada para '.count($allRuts).' persona(s).')
+            ->with('status', '✅ Asistencia confirmada para '.count($allRuts).' persona(s).'.($visitantes->isNotEmpty() ? ' Incluye '.count($visitantes).' visita(s).' : ''))
             ->with('attendance_alert', $this->attendanceAlert($confirmedCount));
     }
 
 
     private function isInsideStatsWindow(object $partido): bool
     {
-        $timezone = 'America/Santiago';
+        $timezone = $this->clubTimezone();
         $hour = trim((string) ($partido->hora ?? '00:00'));
         $time = preg_match('/^\d{2}:\d{2}/', $hour) ? substr($hour, 0, 5) : '00:00';
         $kickoff = Carbon::parse(((string) $partido->fecha).' '.$time, $timezone);
 
         $startsAt = $kickoff->copy()->subHour();
-        $endsAt = $kickoff->copy()->addHours(2);
+        $endsAt = $kickoff->copy()->addHours(4);
 
         return now($timezone)->betweenIncluded($startsAt, $endsAt);
     }
@@ -154,9 +229,86 @@ class PartidoAsistenciaController extends Controller
             ->where('attendance_token', $token)
             ->whereNotNull('attendance_starts_at')
             ->whereNotNull('attendance_ends_at')
-            ->where('attendance_starts_at', '<=', now())
-            ->where('attendance_ends_at', '>=', now())
+            ->where('attendance_starts_at', '<=', now($this->clubTimezone()))
+            ->where('attendance_ends_at', '>=', now($this->clubTimezone()))
             ->first();
+    }
+
+    /**
+     * @return array<int, array{rut: string, nombre: string, apellido: string}>
+     */
+    private function normalizeVisitantesInput(mixed $rawVisitantes): array
+    {
+        if (! is_array($rawVisitantes)) {
+            return [];
+        }
+
+        $rows = [];
+
+        // Formato por columnas: visitantes[rut][], visitantes[nombre][], visitantes[apellido][]
+        if (array_key_exists('rut', $rawVisitantes) || array_key_exists('nombre', $rawVisitantes) || array_key_exists('apellido', $rawVisitantes)) {
+            $rutValues = is_array($rawVisitantes['rut'] ?? null) ? array_values($rawVisitantes['rut']) : [($rawVisitantes['rut'] ?? null)];
+            $nombreValues = is_array($rawVisitantes['nombre'] ?? null) ? array_values($rawVisitantes['nombre']) : [($rawVisitantes['nombre'] ?? null)];
+            $apellidoValues = is_array($rawVisitantes['apellido'] ?? null) ? array_values($rawVisitantes['apellido']) : [($rawVisitantes['apellido'] ?? null)];
+            $rowCount = max(count($rutValues), count($nombreValues), count($apellidoValues));
+
+            for ($i = 0; $i < $rowCount; $i++) {
+                $rows[] = [
+                    'rut' => preg_replace('/\D+/', '', (string) ($rutValues[$i] ?? '')),
+                    'nombre' => trim((string) ($nombreValues[$i] ?? '')),
+                    'apellido' => trim((string) ($apellidoValues[$i] ?? '')),
+                ];
+            }
+        } else {
+            // Formato por fila: visitantes[0][rut|nombre|apellido]
+            foreach ($rawVisitantes as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $rows[] = [
+                    'rut' => preg_replace('/\D+/', '', (string) ($item['rut'] ?? '')),
+                    'nombre' => trim((string) ($item['nombre'] ?? '')),
+                    'apellido' => trim((string) ($item['apellido'] ?? '')),
+                ];
+            }
+        }
+
+        // Limpia filas completamente vacías
+        $rows = array_values(array_filter($rows, fn (array $row) => ! ($row['rut'] === '' && $row['nombre'] === '' && $row['apellido'] === '')));
+
+        if ($rows === []) {
+            return [];
+        }
+
+        // Caso normal: al menos una fila ya viene bien formada con rut+nombre
+        $hasStructuredRows = collect($rows)->contains(fn (array $row) => $row['rut'] !== '' && $row['nombre'] !== '');
+        if ($hasStructuredRows) {
+            return array_slice($rows, 0, 4);
+        }
+
+        // Caso fallback: filas "partidas" (rut en una, nombre en otra, apellido en otra)
+        $ruts = array_values(array_filter(array_map(fn (array $row) => $row['rut'], $rows), fn (string $v) => $v !== ''));
+        $nombres = array_values(array_filter(array_map(fn (array $row) => $row['nombre'], $rows), fn (string $v) => $v !== ''));
+        $apellidos = array_values(array_filter(array_map(fn (array $row) => $row['apellido'], $rows), fn (string $v) => $v !== ''));
+
+        $rowCount = max(count($ruts), count($nombres), count($apellidos));
+        $normalized = [];
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $normalized[] = [
+                'rut' => $ruts[$i] ?? '',
+                'nombre' => $nombres[$i] ?? '',
+                'apellido' => $apellidos[$i] ?? '',
+            ];
+        }
+
+        return array_slice($normalized, 0, 4);
+    }
+
+    private function clubTimezone(): string
+    {
+        return 'America/Santiago';
     }
 
     private function attendanceAlert(int $confirmedCount): ?string
