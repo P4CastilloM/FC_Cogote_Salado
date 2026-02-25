@@ -63,13 +63,17 @@ class PartidoAsistenciaController extends Controller
         $partido = $this->activePartidoByToken($token);
         abort_if(! $partido, 404);
 
+        $request->merge([
+            'visitantes' => $this->normalizeVisitantesInput($request->input('visitantes', [])),
+        ]);
+
         $data = $request->validate([
             'actor_rut' => ['required', 'digits_between:5,8'],
             'guests' => ['nullable', 'array', 'max:6'],
             'guests.*' => ['nullable', 'digits_between:5,8'],
             'visitantes' => ['nullable', 'array', 'max:4'],
-            'visitantes.*.rut' => ['required_with:visitantes', 'digits_between:5,8'],
-            'visitantes.*.nombre' => ['required_with:visitantes', 'string', 'max:25'],
+            'visitantes.*.rut' => ['nullable', 'digits_between:5,8'],
+            'visitantes.*.nombre' => ['nullable', 'string', 'max:25'],
             'visitantes.*.apellido' => ['nullable', 'string', 'max:50'],
             'will_attend' => ['required', 'accepted'],
         ]);
@@ -228,6 +232,57 @@ class PartidoAsistenciaController extends Controller
             ->where('attendance_starts_at', '<=', now($this->clubTimezone()))
             ->where('attendance_ends_at', '>=', now($this->clubTimezone()))
             ->first();
+    }
+
+    /**
+     * @return array<int, array{rut: string, nombre: string, apellido: string}>
+     */
+    private function normalizeVisitantesInput(mixed $rawVisitantes): array
+    {
+        if (! is_array($rawVisitantes)) {
+            return [];
+        }
+
+        $rutValues = [];
+        $nombreValues = [];
+        $apellidoValues = [];
+
+        if (array_key_exists('rut', $rawVisitantes) || array_key_exists('nombre', $rawVisitantes) || array_key_exists('apellido', $rawVisitantes)) {
+            $rutValues = is_array($rawVisitantes['rut'] ?? null) ? array_values($rawVisitantes['rut']) : [($rawVisitantes['rut'] ?? null)];
+            $nombreValues = is_array($rawVisitantes['nombre'] ?? null) ? array_values($rawVisitantes['nombre']) : [($rawVisitantes['nombre'] ?? null)];
+            $apellidoValues = is_array($rawVisitantes['apellido'] ?? null) ? array_values($rawVisitantes['apellido']) : [($rawVisitantes['apellido'] ?? null)];
+        } else {
+            foreach ($rawVisitantes as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $rutValues[] = $item['rut'] ?? null;
+                $nombreValues[] = $item['nombre'] ?? null;
+                $apellidoValues[] = $item['apellido'] ?? null;
+            }
+        }
+
+        $rowCount = max(count($rutValues), count($nombreValues), count($apellidoValues));
+        $normalized = [];
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $rut = preg_replace('/\D+/', '', (string) ($rutValues[$i] ?? ''));
+            $nombre = trim((string) ($nombreValues[$i] ?? ''));
+            $apellido = trim((string) ($apellidoValues[$i] ?? ''));
+
+            if ($rut === '' && $nombre === '' && $apellido === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'rut' => $rut,
+                'nombre' => $nombre,
+                'apellido' => $apellido,
+            ];
+        }
+
+        return array_slice($normalized, 0, 4);
     }
 
     private function clubTimezone(): string
