@@ -96,6 +96,7 @@
                               <span class="font-bebas text-6xl text-white">{{ $initials }}</span>
                             </div>
                           </div>
+                          <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/65 border border-purple-400/40 text-purple-200 text-xs font-semibold">⭐ {{ number_format((float) ($featuredInit->rating ?? 0), 1) }}</div>
                           <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-amber-400 text-[#241337] px-4 py-1 rounded-full font-bebas text-3xl">{{ $featuredInit->numero_camiseta ?? '-' }}</div>
                         </div>
                         <h2 class="font-bebas text-4xl md:text-5xl text-white leading-none">{{ $featuredInit->display_name }}</h2>
@@ -104,8 +105,8 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 max-w-lg w-full">
                           <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">⚽</span><span class="font-bebas text-2xl text-lime-400">{{ (int) ($featuredInit->goles ?? 0) }}</span><span class="text-xs text-gray-300 block">Goles</span></div>
                           <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">🎯</span><span class="font-bebas text-2xl text-amber-300">{{ (int) ($featuredInit->asistencia ?? 0) }}</span><span class="text-xs text-gray-300 block">Asistencias</span></div>
+                          <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">🧤</span><span class="font-bebas text-2xl text-sky-300">{{ (int) ($featuredInit->atajadas ?? 0) }}</span><span class="text-xs text-gray-300 block">Atajadas</span></div>
                           <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">🏟️</span><span class="font-bebas text-2xl text-white">{{ (int) ($featuredInit->partidos ?? 0) }}</span><span class="text-xs text-gray-300 block">Partidos</span></div>
-                          <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">⭐</span><span class="font-bebas text-2xl text-purple-300">{{ number_format((float) ($featuredInit->rating ?? 0), 1) }}</span><span class="text-xs text-gray-300 block">Rating</span></div>
                         </div>
                       </div>
                     </div>
@@ -147,6 +148,7 @@
       posicion: p.posicion_label || 'Sin posición',
       goles: Number(p.goles || 0),
       asistencias: Number(p.asistencia || 0),
+      atajadas: Number(p.atajadas || 0),
       partidos: Number(p.partidos || 0),
       rating: Number(p.rating || 0),
       foto: p.foto_url || null,
@@ -211,7 +213,7 @@
               <h3 class="font-bebas text-2xl leading-none truncate ${index === activePlayerIndex ? 'text-lime-400' : 'text-white'}">${player.nombre}</h3>
               <span class="inline-block px-2 py-0.5 text-xs rounded-full border ${getPositionStyle(player.posicion)} mt-1">${player.posicion}</span>
             </div>
-            <div class="flex flex-col items-end gap-1 text-xs"><span class="text-gray-300">⚽ ${player.goles}</span><span class="text-gray-300">🎯 ${player.asistencias}</span></div>
+            <div class="flex flex-col items-end gap-1 text-xs"><span class="text-gray-300">⚽ ${player.goles}</span><span class="text-gray-300">🎯 ${player.asistencias}</span><span class="text-gray-300">🧤 ${player.atajadas}</span></div>
           </div>
         </button>
       `).join('');
@@ -238,6 +240,7 @@
                   : ''}
                 <div class="w-full h-full items-center justify-center ${player.foto ? 'hidden' : 'flex'}"><span class="font-bebas text-6xl text-white">${initials}</span></div>
               </div>
+              <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/65 border border-purple-400/40 text-purple-200 text-xs font-semibold">⭐ ${Number(player.rating || 0).toFixed(1)}</div>
               <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-amber-400 text-[#241337] px-4 py-1 rounded-full font-bebas text-3xl">${player.numero}</div>
             </div>
 
@@ -247,8 +250,8 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 max-w-lg w-full">
               <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">⚽</span><span class="font-bebas text-2xl text-lime-400">${player.goles}</span><span class="text-xs text-gray-300 block">Goles</span></div>
               <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">🎯</span><span class="font-bebas text-2xl text-amber-300">${player.asistencias}</span><span class="text-xs text-gray-300 block">Asistencias</span></div>
+              <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">🧤</span><span class="font-bebas text-2xl text-sky-300">${player.atajadas}</span><span class="text-xs text-gray-300 block">Atajadas</span></div>
               <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">🏟️</span><span class="font-bebas text-2xl text-white">${player.partidos}</span><span class="text-xs text-gray-300 block">Partidos</span></div>
-              <div class="stat-card bg-black/40 rounded-xl p-4 border border-white/10"><span class="text-2xl mb-1 block">⭐</span><span class="font-bebas text-2xl text-purple-300">${Number(player.rating || 0).toFixed(1)}</span><span class="text-xs text-gray-300 block">Rating</span></div>
             </div>
 
             <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-lime-500/20 rounded-full border border-lime-500/30"><span class="w-2 h-2 rounded-full bg-lime-500 animate-pulse"></span><span class="text-lime-300 text-sm font-medium">En cancha</span></div>
