@@ -243,42 +243,63 @@ class PartidoAsistenciaController extends Controller
             return [];
         }
 
-        $rutValues = [];
-        $nombreValues = [];
-        $apellidoValues = [];
+        $rows = [];
 
+        // Formato por columnas: visitantes[rut][], visitantes[nombre][], visitantes[apellido][]
         if (array_key_exists('rut', $rawVisitantes) || array_key_exists('nombre', $rawVisitantes) || array_key_exists('apellido', $rawVisitantes)) {
             $rutValues = is_array($rawVisitantes['rut'] ?? null) ? array_values($rawVisitantes['rut']) : [($rawVisitantes['rut'] ?? null)];
             $nombreValues = is_array($rawVisitantes['nombre'] ?? null) ? array_values($rawVisitantes['nombre']) : [($rawVisitantes['nombre'] ?? null)];
             $apellidoValues = is_array($rawVisitantes['apellido'] ?? null) ? array_values($rawVisitantes['apellido']) : [($rawVisitantes['apellido'] ?? null)];
+            $rowCount = max(count($rutValues), count($nombreValues), count($apellidoValues));
+
+            for ($i = 0; $i < $rowCount; $i++) {
+                $rows[] = [
+                    'rut' => preg_replace('/\D+/', '', (string) ($rutValues[$i] ?? '')),
+                    'nombre' => trim((string) ($nombreValues[$i] ?? '')),
+                    'apellido' => trim((string) ($apellidoValues[$i] ?? '')),
+                ];
+            }
         } else {
+            // Formato por fila: visitantes[0][rut|nombre|apellido]
             foreach ($rawVisitantes as $item) {
                 if (! is_array($item)) {
                     continue;
                 }
 
-                $rutValues[] = $item['rut'] ?? null;
-                $nombreValues[] = $item['nombre'] ?? null;
-                $apellidoValues[] = $item['apellido'] ?? null;
+                $rows[] = [
+                    'rut' => preg_replace('/\D+/', '', (string) ($item['rut'] ?? '')),
+                    'nombre' => trim((string) ($item['nombre'] ?? '')),
+                    'apellido' => trim((string) ($item['apellido'] ?? '')),
+                ];
             }
         }
 
-        $rowCount = max(count($rutValues), count($nombreValues), count($apellidoValues));
+        // Limpia filas completamente vacías
+        $rows = array_values(array_filter($rows, fn (array $row) => ! ($row['rut'] === '' && $row['nombre'] === '' && $row['apellido'] === '')));
+
+        if ($rows === []) {
+            return [];
+        }
+
+        // Caso normal: al menos una fila ya viene bien formada con rut+nombre
+        $hasStructuredRows = collect($rows)->contains(fn (array $row) => $row['rut'] !== '' && $row['nombre'] !== '');
+        if ($hasStructuredRows) {
+            return array_slice($rows, 0, 4);
+        }
+
+        // Caso fallback: filas "partidas" (rut en una, nombre en otra, apellido en otra)
+        $ruts = array_values(array_filter(array_map(fn (array $row) => $row['rut'], $rows), fn (string $v) => $v !== ''));
+        $nombres = array_values(array_filter(array_map(fn (array $row) => $row['nombre'], $rows), fn (string $v) => $v !== ''));
+        $apellidos = array_values(array_filter(array_map(fn (array $row) => $row['apellido'], $rows), fn (string $v) => $v !== ''));
+
+        $rowCount = max(count($ruts), count($nombres), count($apellidos));
         $normalized = [];
 
         for ($i = 0; $i < $rowCount; $i++) {
-            $rut = preg_replace('/\D+/', '', (string) ($rutValues[$i] ?? ''));
-            $nombre = trim((string) ($nombreValues[$i] ?? ''));
-            $apellido = trim((string) ($apellidoValues[$i] ?? ''));
-
-            if ($rut === '' && $nombre === '' && $apellido === '') {
-                continue;
-            }
-
             $normalized[] = [
-                'rut' => $rut,
-                'nombre' => $nombre,
-                'apellido' => $apellido,
+                'rut' => $ruts[$i] ?? '',
+                'nombre' => $nombres[$i] ?? '',
+                'apellido' => $apellidos[$i] ?? '',
             ];
         }
 
