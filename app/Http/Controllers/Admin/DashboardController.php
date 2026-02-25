@@ -112,7 +112,7 @@ class DashboardController extends Controller
         }
 
         $attendanceMatches = $this->attendanceMatches(6);
-        $attendanceLogs = $this->attendanceLogs(20);
+        $attendanceLogs = $this->attendanceLogs(10, '', 'recent');
 
         return view('admin.dashboard', [
             'stats' => $stats,
@@ -125,11 +125,22 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function activeMatches(): View
+    public function activeMatches(Request $request): View
     {
+        $perPage = (int) $request->query('checks_per_page', 10);
+        if (! in_array($perPage, [10, 25, 50], true)) {
+            $perPage = 10;
+        }
+
+        $search = trim((string) $request->query('checks_q', ''));
+        $order = $request->query('checks_order', 'recent') === 'oldest' ? 'oldest' : 'recent';
+
         return view('admin.partidos-activos', [
             'attendanceMatches' => $this->attendanceMatches(50),
-            'attendanceLogs' => $this->attendanceLogs(100),
+            'attendanceLogs' => $this->attendanceLogs($perPage, $search, $order),
+            'checksPerPage' => $perPage,
+            'checksSearch' => $search,
+            'checksOrder' => $order,
         ]);
     }
 
@@ -229,92 +240,56 @@ class DashboardController extends Controller
         });
     }
 
-    private function attendanceLogs(int $limit)
+    private function attendanceLogs(int $perPage, string $search, string $order)
     {
         if (! Schema::hasTable('partido_asistencia_logs')) {
             return collect();
         }
 
-        return DB::table('partido_asistencia_logs as l')
+        $latestIds = DB::table('partido_asistencia_logs')
+            ->orderByDesc('checked_at')
+            ->limit(500)
+            ->pluck('id');
+
+        if ($latestIds->isEmpty()) {
+            return collect();
+        }
+
+        $query = DB::table('partido_asistencia_logs as l')
             ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
             ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
             ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
             ->select(
                 'l.id',
                 'l.checked_at',
-                'l.partido_id',
-                'p.rival',
+                'l.actor_rut',
+                'l.target_rut',
                 'p.fecha',
+                'p.rival',
                 'actor.nombre as actor_nombre',
                 'actor.sobrenombre as actor_sobrenombre',
                 'target.nombre as target_nombre',
                 'target.sobrenombre as target_sobrenombre'
             )
-            ->orderByDesc('l.checked_at')
-            ->limit($limit)
-            ->get();
+            ->whereIn('l.id', $latestIds->all())
+            ->when($search !== '', function ($q) use ($search): void {
+                $q->where(function ($nested) use ($search): void {
+                    $nested->where('actor.nombre', 'like', "%{$search}%")
+                        ->orWhere('actor.sobrenombre', 'like', "%{$search}%")
+                        ->orWhere('target.nombre', 'like', "%{$search}%")
+                        ->orWhere('target.sobrenombre', 'like', "%{$search}%")
+                        ->orWhere('p.rival', 'like', "%{$search}%");
+                });
+            });
+
+        $query->orderBy('l.checked_at', $order === 'oldest' ? 'asc' : 'desc');
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
-    public function convertImagesToWebp(Request $request): RedirectResponse
+    private function clubTimezone(): string
     {
-        $user = $request->user();
-        abort_if(! $user || ! $user->isAdmin(), 403);
-
-        if (! function_exists('imagewebp')) {
-            return redirect()->route('admin.dashboard')->with('error', 'El servidor no tiene soporte GD/WebP (imagewebp).');
-        }
-
-        $converted = 0;
-        $skipped = 0;
-        $errors = 0;
-
-        $mappings = [
-            ['table' => 'jugadores', 'key' => 'rut', 'fields' => ['foto']],
-            ['table' => 'noticias', 'key' => 'id', 'fields' => ['foto', 'foto2']],
-            ['table' => 'avisos', 'key' => 'id', 'fields' => ['foto']],
-            ['table' => 'ayudantes', 'key' => 'id', 'fields' => ['foto']],
-        ];
-
-        foreach ($mappings as $mapping) {
-            if (! Schema::hasTable($mapping['table'])) {
-                continue;
-            }
-
-            $rows = DB::table($mapping['table'])->select(array_merge([$mapping['key']], $mapping['fields']))->get();
-            foreach ($rows as $row) {
-                foreach ($mapping['fields'] as $field) {
-                    $current = (string) ($row->{$field} ?? '');
-                    if ($current === '') {
-                        continue;
-                    }
-
-                    $result = $this->convertStoragePathToWebp($current);
-                    if ($result['status'] === 'converted') {
-                        DB::table($mapping['table'])->where($mapping['key'], $row->{$mapping['key']})->update([$field => $result['path'], 'updated_at' => now()]);
-                        $converted++;
-                    } elseif ($result['status'] === 'skipped') {
-                        $skipped++;
-                    } else {
-                        $errors++;
-                    }
-                }
-            }
-        }
-
-        // Fotos del álbum (sin BD, se listan por carpeta)
-        $albumFiles = collect(Storage::disk('public')->files('fotos'));
-        foreach ($albumFiles as $filePath) {
-            $result = $this->convertStoragePathToWebp($filePath);
-            if ($result['status'] === 'converted') {
-                $converted++;
-            } elseif ($result['status'] === 'skipped') {
-                $skipped++;
-            } else {
-                $errors++;
-            }
-        }
-
-        return redirect()->route('admin.dashboard')->with('status', "Conversión WebP lista. Convertidas: {$converted}, omitidas: {$skipped}, errores: {$errors}.");
+        return 'America/Santiago';
     }
 
     private function clubTimezone(): string

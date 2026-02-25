@@ -44,30 +44,65 @@ class ModuleController extends Controller
 
         if ($module === 'modificaciones') {
             $search = trim((string) $request->query('q', ''));
-            $order = $request->query('order', 'recent') === 'oldest' ? 'asc' : 'desc';
             $action = trim((string) $request->query('action', ''));
+            $moduleFilter = trim((string) $request->query('module_filter', ''));
+            $actorFilter = trim((string) $request->query('actor_filter', ''));
+            $sortBy = trim((string) $request->query('sort_by', 'created_at'));
+            $sortDir = $request->query('sort_dir', 'desc') === 'asc' ? 'asc' : 'desc';
+            $perPage = (int) $request->query('per_page', 10);
+            if (! in_array($perPage, [10, 25, 50], true)) {
+                $perPage = 10;
+            }
 
-            $logs = DB::table('modificaciones')
-                ->when($search !== '', function ($query) use ($search): void {
-                    $query->where(function ($nested) use ($search): void {
-                        $nested->where('actor_name', 'like', "%{$search}%")
-                            ->orWhere('summary', 'like', "%{$search}%")
-                            ->orWhere('module', 'like', "%{$search}%")
-                            ->orWhere('item_key', 'like', "%{$search}%");
-                    });
-                })
-                ->when($action !== '', fn ($query) => $query->where('action', $action))
-                ->orderBy('created_at', $order)
-                ->limit(200)
-                ->get();
+            $allowedSorts = ['created_at', 'action', 'module', 'actor_name'];
+            if (! in_array($sortBy, $allowedSorts, true)) {
+                $sortBy = 'created_at';
+            }
+
+            $latestIds = DB::table('modificaciones')
+                ->orderByDesc('created_at')
+                ->limit(500)
+                ->pluck('id');
+
+            $logs = collect();
+            if ($latestIds->isNotEmpty()) {
+                $logs = DB::table('modificaciones')
+                    ->whereIn('id', $latestIds->all())
+                    ->when($search !== '', function ($query) use ($search): void {
+                        $query->where(function ($nested) use ($search): void {
+                            $nested->where('actor_name', 'like', "%{$search}%")
+                                ->orWhere('summary', 'like', "%{$search}%")
+                                ->orWhere('module', 'like', "%{$search}%")
+                                ->orWhere('item_key', 'like', "%{$search}%");
+                        });
+                    })
+                    ->when($action !== '', fn ($query) => $query->where('action', $action))
+                    ->when($moduleFilter !== '', fn ($query) => $query->where('module', $moduleFilter))
+                    ->when($actorFilter !== '', fn ($query) => $query->where('actor_name', 'like', "%{$actorFilter}%"))
+                    ->orderBy($sortBy, $sortDir)
+                    ->paginate($perPage)
+                    ->withQueryString();
+            }
+
+            $modulesFilterOptions = DB::table('modificaciones')
+                ->whereIn('id', $latestIds->all())
+                ->select('module')
+                ->distinct()
+                ->orderBy('module')
+                ->pluck('module');
 
             return view('admin.modificaciones-index', [
                 'module' => $module,
                 'config' => $config,
                 'logs' => $logs,
                 'search' => $search,
-                'order' => $order,
                 'action' => $action,
+                'moduleFilter' => $moduleFilter,
+                'actorFilter' => $actorFilter,
+                'sortBy' => $sortBy,
+                'sortDir' => $sortDir,
+                'perPage' => $perPage,
+                'modulesFilterOptions' => $modulesFilterOptions,
             ]);
         }
 
