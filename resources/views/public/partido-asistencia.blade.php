@@ -68,6 +68,24 @@
           <button type="button" id="addGuest" class="px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm">+ Agregar persona</button>
         </div>
 
+
+        <div class="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h3 class="font-semibold text-white">🧳 Invitar visita</h3>
+              <p class="text-sm text-slate-300">Opcional. Puedes ingresar hasta 4 visitas (RUT, Nombre, Apellidos opcional).</p>
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-200">
+              <input type="checkbox" id="enableVisitors"> Activar
+            </label>
+          </div>
+
+          <div id="visitorsWrap" class="hidden space-y-3">
+            <div id="visitorsList" class="space-y-3"></div>
+            <button type="button" id="addVisitor" class="px-3 py-2 rounded-lg border border-lime-400/40 bg-lime-500/10 text-lime-200 text-sm">+ Agregar visita</button>
+          </div>
+        </div>
+
         <button type="submit" class="px-4 py-3 rounded-xl bg-lime-500 text-slate-900 font-semibold">Confirmar check</button>
       </div>
     </form>
@@ -83,6 +101,10 @@
       const selectedPlayer = document.getElementById('selectedPlayer');
       const guestsList = document.getElementById('guestsList');
       const addGuestBtn = document.getElementById('addGuest');
+      const enableVisitors = document.getElementById('enableVisitors');
+      const visitorsWrap = document.getElementById('visitorsWrap');
+      const visitorsList = document.getElementById('visitorsList');
+      const addVisitorBtn = document.getElementById('addVisitor');
 
       let guestCount = 0;
       const token = @json($partido->attendance_token);
@@ -124,14 +146,90 @@
         }
 
         container.innerHTML = players.map((p) => `
-          <button type="button" class="w-full text-left px-3 py-2 rounded-lg border border-white/15 bg-black/20 hover:bg-white/10" data-rut="${p.rut}" data-name="${p.name}">
+          <button type="button" class="w-full text-left px-3 py-2 rounded-lg border border-white/15 bg-black/20 hover:bg-white/10"
+            data-rut="${p.rut}"
+            data-name="${p.name}"
+            data-nombre="${p.nombre || ''}"
+            data-apellido="${p.apellido || ''}">
             ${p.rut} | ${p.name}
           </button>
         `).join('');
 
         container.querySelectorAll('button[data-rut]').forEach((btn) => {
-          btn.addEventListener('click', () => onSelect(btn.dataset.rut, btn.dataset.name));
+          btn.addEventListener('click', () => onSelect(btn.dataset.rut, btn.dataset.name, {
+            nombre: btn.dataset.nombre || '',
+            apellido: btn.dataset.apellido || '',
+          }));
         });
+      }
+
+
+
+      function addVisitorInput(seed = {}) {
+        if (!visitorsList) return;
+        if (visitorsList.children.length >= 4) return;
+
+        const row = document.createElement('div');
+        row.className = 'rounded-xl border border-white/10 bg-black/25 p-3';
+        row.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-2 items-start">
+            <input type="text" class="visitor-rut rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-1 xl:col-span-3" placeholder="RUT" value="${sanitizeRut(seed.rut || '')}">
+            <input type="text" class="visitor-nombre rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-1 xl:col-span-3" placeholder="Nombre" value="${seed.nombre || ''}">
+            <input type="text" class="visitor-apellido rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-2 xl:col-span-4" placeholder="Apellidos (opcional)" value="${seed.apellido || ''}">
+            <div class="sm:col-span-2 xl:col-span-2 flex flex-wrap xl:justify-end gap-2">
+              <button type="button" class="visitor-autofill px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm whitespace-nowrap">Autocompletar</button>
+              <button type="button" class="visitor-remove px-3 py-2 rounded-lg border border-red-400/40 bg-red-500/10 text-red-200 text-sm whitespace-nowrap">Quitar</button>
+            </div>
+          </div>
+        `;
+
+        const rutInput = row.querySelector('.visitor-rut');
+        const nombreInput = row.querySelector('.visitor-nombre');
+        const apellidoInput = row.querySelector('.visitor-apellido');
+        const autofillBtn = row.querySelector('.visitor-autofill');
+        const removeBtn = row.querySelector('.visitor-remove');
+
+        const syncNames = () => {
+          row.querySelectorAll('input[data-hidden]').forEach((el) => el.remove());
+
+          const rut = sanitizeRut(rutInput.value);
+          if (!rut) return;
+
+          const fields = [
+            ['visitantes[][rut]', rut],
+            ['visitantes[][nombre]', nombreInput.value.trim()],
+            ['visitantes[][apellido]', apellidoInput.value.trim()],
+          ];
+
+          for (const [name, value] of fields) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = name;
+            hidden.value = value;
+            hidden.setAttribute('data-hidden', '1');
+            row.appendChild(hidden);
+          }
+        };
+
+        const autofill = async () => {
+          const rut = sanitizeRut(rutInput.value);
+          if (rut.length < 5) return;
+          const result = await fetchPlayersByRut(rut);
+          const first = (result.players || [])[0];
+          if (!first) return;
+          nombreInput.value = first.nombre || first.name || '';
+          apellidoInput.value = first.apellido || '';
+          syncNames();
+        };
+
+        rutInput.addEventListener('input', syncNames);
+        nombreInput.addEventListener('input', syncNames);
+        apellidoInput.addEventListener('input', syncNames);
+        autofillBtn.addEventListener('click', autofill);
+        removeBtn.addEventListener('click', () => row.remove());
+
+        visitorsList.appendChild(row);
+        syncNames();
       }
 
       async function searchMainPlayer() {
@@ -231,6 +329,16 @@
 
       addGuestBtn?.addEventListener('click', () => addGuestInput());
 
+      enableVisitors?.addEventListener('change', () => {
+        const active = enableVisitors.checked;
+        visitorsWrap?.classList.toggle('hidden', !active);
+        if (active && visitorsList && visitorsList.children.length === 0) {
+          addVisitorInput();
+        }
+      });
+
+      addVisitorBtn?.addEventListener('click', () => addVisitorInput());
+
       @if(old('actor_rut'))
         fields.classList.remove('hidden');
         selectedPlayer.textContent = 'Rut | Nombre: {{ old('actor_rut') }} | (seleccionado anteriormente)';
@@ -239,6 +347,14 @@
       @foreach(old('guests', []) as $guest)
         addGuestInput(@json($guest));
       @endforeach
+
+      @if(is_array(old('visitantes')) && count(old('visitantes')) > 0)
+        enableVisitors.checked = true;
+        visitorsWrap.classList.remove('hidden');
+      @foreach(old('visitantes', []) as $visitante)
+        addVisitorInput(@json($visitante));
+      @endforeach
+      @endif
     })();
   </script>
 </body>
