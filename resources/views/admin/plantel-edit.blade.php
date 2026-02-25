@@ -32,23 +32,46 @@
                 <input class="player-input w-full rounded-xl px-4 py-3 mt-1 opacity-60" type="text" value="{{ $item->rut }}" disabled>
             </div>
 
-            <input class="player-input w-full rounded-xl px-4 py-3" type="text" name="nombre" maxlength="25" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre completo">
-            <input class="player-input w-full rounded-xl px-4 py-3" type="text" name="sobrenombre" maxlength="25" value="{{ old('sobrenombre', $item->sobrenombre ?? '') }}" placeholder="✨ Sobrenombre (opcional)">
-            <p class="col-span-full text-xs text-slate-400">Se mostrará este sobrenombre en plantel y plantilla si está cargado.</p>
-            <input class="player-input w-full rounded-xl px-4 py-3" type="number" name="numero_camiseta" min="1" max="65535" required value="{{ old('numero_camiseta', $item->numero_camiseta) }}" placeholder="# Número camiseta">
-
-            <select name="posicion" required class="player-input player-select w-full rounded-xl px-4 py-3">
-                @foreach(['ARQUERO' => '🧤 Arquero','DEFENSA' => '🛡️ Defensa','MEDIOCAMPISTA' => '🎯 Mediocampista','DELANTERO' => '⚽ Delantero'] as $value => $label)
-                    <option value="{{ $value }}" @selected(($value === 'MEDIOCAMPISTA' && in_array(old('posicion', $item->posicion), ['MEDIOCAMPISTA','CENTRAL'], true)) || old('posicion', $item->posicion) === $value)>{{ $label }}</option>
-                @endforeach
-            </select>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input class="player-input w-full rounded-xl px-4 py-3" type="number" name="goles" min="0" value="{{ old('goles', $item->goles) }}" placeholder="⚽ Goles">
-                <input class="player-input w-full rounded-xl px-4 py-3" type="number" name="asistencia" min="0" value="{{ old('asistencia', $item->asistencia) }}" placeholder="🎯 Asistencias">
+            <div>
+                <label class="text-sm text-slate-300">Nombre *</label>
+                <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre" maxlength="25" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre completo">
             </div>
 
-            <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+            <div>
+                <label class="text-sm text-slate-300">Sobrenombre (opcional)</label>
+                <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="sobrenombre" maxlength="25" value="{{ old('sobrenombre', $item->sobrenombre ?? '') }}" placeholder="✨ Sobrenombre">
+                <p class="text-xs text-slate-400 mt-1">Se mostrará este sobrenombre en plantel y plantilla si está cargado.</p>
+            </div>
+
+            <div>
+                <label class="text-sm text-slate-300">Número de camiseta *</label>
+                <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="numero_camiseta" min="1" max="65535" required value="{{ old('numero_camiseta', $item->numero_camiseta) }}" placeholder="# Número camiseta">
+            </div>
+
+            <div>
+                <label class="text-sm text-slate-300">Posición *</label>
+                <select name="posicion" required class="player-input player-select w-full rounded-xl px-4 py-3 mt-1">
+                    @foreach(['ARQUERO' => '🧤 Arquero','DEFENSA' => '🛡️ Defensa','MEDIOCAMPISTA' => '🎯 Mediocampista','DELANTERO' => '⚽ Delantero'] as $value => $label)
+                        <option value="{{ $value }}" @selected(($value === 'MEDIOCAMPISTA' && in_array(old('posicion', $item->posicion), ['MEDIOCAMPISTA','CENTRAL'], true)) || old('posicion', $item->posicion) === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-slate-300">Goles</label>
+                    <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="goles" min="0" value="{{ old('goles', $item->goles) }}" placeholder="⚽ Goles">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Asistencias</label>
+                    <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="asistencia" min="0" value="{{ old('asistencia', $item->asistencia) }}" placeholder="🎯 Asistencias">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-sm text-slate-300">Foto (opcional)</label>
+                <input class="block w-full text-sm text-slate-300 mt-1 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+            </div>
 
             <div class="pt-4 flex flex-col sm:flex-row gap-3">
                 <a href="{{ route('admin.plantel.index') }}" class="text-center px-6 py-3 rounded-xl border border-white/20 text-slate-200">← Volver al buscador</a>

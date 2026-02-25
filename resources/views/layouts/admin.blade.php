@@ -32,6 +32,7 @@
                 $isAdmin = Auth::user()?->isAdmin() ?? false;
                 $menu = [
                     'plantel' => ['title' => '👥 Plantel', 'routes' => ['create' => '➕ Añadir Jugador', 'index' => '✏️ Editar / Eliminar Jugadores'], 'admin_only' => false],
+                    'visitantes' => ['title' => '🧳 Jugadores Visitantes', 'routes' => ['create' => '➕ Añadir Visitante', 'index' => '✏️ Editar / Traspasar Visitantes'], 'admin_only' => false],
                     'noticias' => ['title' => '📰 Noticias', 'routes' => ['create' => '➕ Crear Noticia', 'index' => '✏️ Editar / Eliminar Noticias'], 'admin_only' => false],
                     'avisos' => ['title' => '📢 Avisos', 'routes' => ['create' => '➕ Crear Aviso', 'index' => '✏️ Editar / Eliminar Avisos'], 'admin_only' => false],
                     'album' => ['title' => '📸 Álbum / Fotos', 'routes' => ['create' => '⬆️ Subir Fotos', 'index' => '🗑️ Eliminar Fotos'], 'admin_only' => false],

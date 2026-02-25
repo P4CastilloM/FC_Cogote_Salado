@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -132,6 +133,29 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function removeConfirmedPlayer(int $partidoId, int $jugadorRut): RedirectResponse
+    {
+        if (! Schema::hasTable('partido_asistencias')) {
+            return back()->with('error', 'La tabla de asistencias no está disponible.');
+        }
+
+        DB::transaction(function () use ($partidoId, $jugadorRut): void {
+            DB::table('partido_asistencias')
+                ->where('partido_id', $partidoId)
+                ->where('jugador_rut', $jugadorRut)
+                ->delete();
+
+            if (Schema::hasTable('jugador_partido')) {
+                DB::table('jugador_partido')
+                    ->where('partido_id', $partidoId)
+                    ->where('jugador_rut', $jugadorRut)
+                    ->update(['participo' => false]);
+            }
+        });
+
+        return back()->with('status', 'Jugador retirado del partido correctamente.');
+    }
+
     private function attendanceMatches(int $limit)
     {
         if (! Schema::hasTable('partidos') || ! Schema::hasColumn('partidos', 'attendance_token')) {
@@ -165,20 +189,44 @@ class DashboardController extends Controller
             $matchesQuery->addSelect(DB::raw('0 as confirmed_count'));
         }
 
-        return $matchesQuery
+        $matches = $matchesQuery
             ->orderBy('partidos.fecha')
             ->limit($limit)
-            ->get()
-            ->map(function ($row) {
-                $row->attendance_url = $row->attendance_token
-                    ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
-                    : null;
-                $row->is_active = $row->attendance_starts_at && $row->attendance_ends_at
-                    ? now()->between($row->attendance_starts_at, $row->attendance_ends_at)
-                    : false;
+            ->get();
 
-                return $row;
-            });
+        $confirmedByMatch = collect();
+        if (Schema::hasTable('partido_asistencias') && $matches->isNotEmpty()) {
+            $confirmedByMatch = DB::table('partido_asistencias as pa')
+                ->leftJoin('jugadores as j', 'j.rut', '=', 'pa.jugador_rut')
+                ->whereIn('pa.partido_id', $matches->pluck('id')->all())
+                ->select('pa.partido_id', 'pa.jugador_rut', 'j.nombre', 'j.sobrenombre', 'j.es_visitante')
+                ->orderBy('pa.confirmed_at')
+                ->get()
+                ->groupBy('partido_id')
+                ->map(fn ($group) => $group->map(fn ($player) => [
+                    'rut' => (int) $player->jugador_rut,
+                    'name' => trim((string) ($player->sobrenombre ?: $player->nombre ?: 'Jugador')),
+                    'is_visitante' => (bool) ($player->es_visitante ?? false),
+                ])->values());
+        }
+
+        return $matches->map(function ($row) use ($confirmedByMatch) {
+            $row->attendance_url = $row->attendance_token
+                ? route('fccs.partidos.asistencia.show', ['token' => $row->attendance_token])
+                : null;
+            if ($row->attendance_starts_at && $row->attendance_ends_at) {
+                $now = now($this->clubTimezone());
+                $start = Carbon::parse((string) $row->attendance_starts_at, $this->clubTimezone());
+                $end = Carbon::parse((string) $row->attendance_ends_at, $this->clubTimezone());
+                $row->is_active = $now->betweenIncluded($start, $end);
+            } else {
+                $row->is_active = false;
+            }
+
+            $row->confirmed_players = $confirmedByMatch->get($row->id, collect());
+
+            return $row;
+        });
     }
 
     private function attendanceLogs(int $limit)
@@ -267,6 +315,11 @@ class DashboardController extends Controller
         }
 
         return redirect()->route('admin.dashboard')->with('status', "Conversión WebP lista. Convertidas: {$converted}, omitidas: {$skipped}, errores: {$errors}.");
+    }
+
+    private function clubTimezone(): string
+    {
+        return 'America/Santiago';
     }
 
     private function convertStoragePathToWebp(string $relativePath): array

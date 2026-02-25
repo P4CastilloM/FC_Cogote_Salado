@@ -39,51 +39,126 @@
             @endif
 
             @if($module === 'noticias')
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="titulo" maxlength="60" required value="{{ old('titulo', $item->titulo) }}" placeholder="📝 Título">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="subtitulo" maxlength="100" value="{{ old('subtitulo', $item->subtitulo) }}" placeholder="✏️ Subtítulo">
-                <textarea class="module-input w-full rounded-xl px-4 py-3" name="cuerpo" rows="6" required placeholder="📚 Cuerpo">{{ old('cuerpo', $item->cuerpo) }}</textarea>
-                <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
-                <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
-                <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto2" accept="image/jpeg,image/png,image/webp">
+                <div>
+                    <label class="text-sm text-slate-300">Título *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="titulo" maxlength="60" required value="{{ old('titulo', $item->titulo) }}" placeholder="📝 Título">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Subtítulo</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="subtitulo" maxlength="100" value="{{ old('subtitulo', $item->subtitulo) }}" placeholder="✏️ Subtítulo">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Cuerpo *</label>
+                    <textarea class="module-input w-full rounded-xl px-4 py-3 mt-1" name="cuerpo" rows="6" required placeholder="📚 Cuerpo">{{ old('cuerpo', $item->cuerpo) }}</textarea>
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Fecha *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Foto principal</label>
+                    <input class="block w-full text-sm text-slate-300 mt-1 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Foto secundaria</label>
+                    <input class="block w-full text-sm text-slate-300 mt-1 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto2" accept="image/jpeg,image/png,image/webp">
+                </div>
             @endif
 
             @if($module === 'avisos')
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="titulo" maxlength="50" required value="{{ old('titulo', $item->titulo) }}" placeholder="📣 Título">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="descripcion" maxlength="120" required value="{{ old('descripcion', $item->descripcion) }}" placeholder="🗒️ Descripción">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
+                <div>
+                    <label class="text-sm text-slate-300">Título *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="titulo" maxlength="50" required value="{{ old('titulo', $item->titulo) }}" placeholder="📣 Título">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Descripción *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion" maxlength="120" required value="{{ old('descripcion', $item->descripcion) }}" placeholder="🗒️ Descripción">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Fecha *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
+                </div>
                 <label class="inline-flex items-center gap-2 text-slate-200"><input type="checkbox" name="fijado" value="1" @checked(old('fijado', (string) ($item->fijado ?? 0)) == '1')> 📌 Fijar aviso</label>
-                <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+                <div>
+                    <label class="text-sm text-slate-300">Foto</label>
+                    <input class="block w-full text-sm text-slate-300 mt-1 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+                </div>
             @endif
 
             @if($module === 'partidos')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
-                    <input class="module-input w-full rounded-xl px-4 py-3" type="time" name="hora" value="{{ old('hora', $item->hora) }}" placeholder="🕒 Hora">
-                    <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="rival" maxlength="100" required value="{{ old('rival', $item->rival) }}" placeholder="🆚 Rival">
-                    <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre_lugar" maxlength="100" required value="{{ old('nombre_lugar', $item->nombre_lugar) }}" placeholder="📍 Lugar">
+                    <div>
+                        <label class="text-sm text-slate-300">Fecha *</label>
+                        <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha" required value="{{ old('fecha', $item->fecha) }}">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-300">Hora</label>
+                        <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="time" name="hora" value="{{ old('hora', $item->hora) }}" placeholder="🕒 Hora">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-300">Rival *</label>
+                        <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="rival" maxlength="100" required value="{{ old('rival', $item->rival) }}" placeholder="🆚 Rival">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-300">Lugar *</label>
+                        <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre_lugar" maxlength="100" required value="{{ old('nombre_lugar', $item->nombre_lugar) }}" placeholder="📍 Lugar">
+                    </div>
                 </div>
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="direccion" maxlength="180" value="{{ old('direccion', $item->direccion) }}" placeholder="🗺️ Dirección">
+                <div>
+                    <label class="text-sm text-slate-300">Dirección</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="direccion" maxlength="180" value="{{ old('direccion', $item->direccion) }}" placeholder="🗺️ Dirección">
+                </div>
             @endif
 
             @if($module === 'premios')
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre" maxlength="20" required value="{{ old('nombre', $item->nombre) }}" placeholder="🥇 Nombre">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="descripcion" maxlength="50" value="{{ old('descripcion', $item->descripcion) }}" placeholder="🧾 Descripción">
+                <div>
+                    <label class="text-sm text-slate-300">Nombre *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre" maxlength="20" required value="{{ old('nombre', $item->nombre) }}" placeholder="🥇 Nombre">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Descripción</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion" maxlength="50" value="{{ old('descripcion', $item->descripcion) }}" placeholder="🧾 Descripción">
+                </div>
             @endif
 
             @if($module === 'temporadas')
-                <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha_inicio" required value="{{ old('fecha_inicio', $item->fecha_inicio) }}">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="date" name="fecha_termino" value="{{ old('fecha_termino', $item->fecha_termino) }}">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="descripcion" maxlength="150" value="{{ old('descripcion', $item->descripcion) }}" placeholder="🗂️ Descripción">
+                <div>
+                    <label class="text-sm text-slate-300">Fecha de inicio *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha_inicio" required value="{{ old('fecha_inicio', $item->fecha_inicio) }}">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Fecha de término</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="date" name="fecha_termino" value="{{ old('fecha_termino', $item->fecha_termino) }}">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Descripción</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion" maxlength="150" value="{{ old('descripcion', $item->descripcion) }}" placeholder="🗂️ Descripción">
+                </div>
             @endif
 
             @if(in_array($module, ['staff', 'directiva'], true))
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="nombre" maxlength="20" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="apellido" maxlength="20" value="{{ old('apellido', $item->apellido) }}" placeholder="👤 Apellido">
-                <input class="module-input w-full rounded-xl px-4 py-3" type="text" name="descripcion_rol" maxlength="50" value="{{ old('descripcion_rol', $item->descripcion_rol) }}" placeholder="🎖️ Rol">
+                <div>
+                    <label class="text-sm text-slate-300">Nombre *</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre" maxlength="20" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Apellido</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="apellido" maxlength="20" value="{{ old('apellido', $item->apellido) }}" placeholder="👤 Apellido">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Rol</label>
+                    <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="descripcion_rol" maxlength="50" value="{{ old('descripcion_rol', $item->descripcion_rol) }}" placeholder="🎖️ Rol">
+                </div>
                 @if($module === 'directiva')
-                    <input class="module-input w-full rounded-xl px-4 py-3" type="number" name="prioridad" min="1" max="10" required value="{{ old('prioridad', $item->prioridad ?? 10) }}" placeholder="🔢 Prioridad">
+                    <div>
+                        <label class="text-sm text-slate-300">Prioridad (1-10) *</label>
+                        <input class="module-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="prioridad" min="1" max="10" required value="{{ old('prioridad', $item->prioridad ?? 10) }}" placeholder="🔢 Prioridad">
+                    </div>
                 @endif
-                <input class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+                <div>
+                    <label class="text-sm text-slate-300">Foto</label>
+                    <input class="block w-full text-sm text-slate-300 mt-1 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:text-emerald-200 file:px-4 file:py-2" type="file" name="foto" accept="image/jpeg,image/png,image/webp">
+                </div>
                 <label class="inline-flex items-center gap-2 text-slate-300"><input type="checkbox" name="activo" value="1" @checked(old('activo', (string) $item->activo) == '1')> ✅ Activo</label>
                 <div class="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">ℹ️ En ayudantes solo se edita información de base de datos. Login/correo/clave no se muestra aquí.</div>
             @endif
