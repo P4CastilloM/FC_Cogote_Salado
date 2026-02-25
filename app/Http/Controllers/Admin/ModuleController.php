@@ -25,6 +25,7 @@ class ModuleController extends Controller
     /** @var array<string, array{table: string|null, fields: array<int, string>, label: string, icon: string}> */
     private array $modules = [
         'plantel' => ['table' => 'jugadores', 'fields' => ['rut', 'nombre', 'sobrenombre', 'foto', 'goles', 'asistencia', 'numero_camiseta', 'posicion'], 'label' => 'Plantel', 'icon' => '👥'],
+        'visitantes' => ['table' => 'jugadores', 'fields' => ['rut', 'nombre', 'apellido', 'sobrenombre', 'goles', 'asistencia'], 'label' => 'Jugadores Visitantes', 'icon' => '🧳'],
         'noticias' => ['table' => 'noticias', 'fields' => ['temporada_id', 'titulo', 'subtitulo', 'cuerpo', 'fecha', 'foto', 'foto2'], 'label' => 'Noticias', 'icon' => '📰'],
         'avisos' => ['table' => 'avisos', 'fields' => ['temporada_id', 'titulo', 'descripcion', 'fecha', 'foto', 'fijado'], 'label' => 'Avisos', 'icon' => '📢'],
         'album' => ['table' => null, 'fields' => ['foto'], 'label' => 'Álbum / Fotos', 'icon' => '📸'],
@@ -97,6 +98,12 @@ class ModuleController extends Controller
         $pk = $this->primaryKeyFor($module);
 
         $itemsQuery = DB::table($config['table']);
+        if ($module === 'plantel' && Schema::hasColumn('jugadores', 'es_visitante')) {
+            $itemsQuery->where('es_visitante', false);
+        }
+        if ($module === 'visitantes' && Schema::hasColumn('jugadores', 'es_visitante')) {
+            $itemsQuery->where('es_visitante', true);
+        }
         if ($q !== '') {
             $columns = $this->searchableColumnsFor($module);
             $itemsQuery->where(function ($query) use ($columns, $q): void {
@@ -127,6 +134,10 @@ class ModuleController extends Controller
             return view('admin.plantel-create');
         }
 
+        if ($module === 'visitantes') {
+            return view('admin.visitantes-create');
+        }
+
         if (in_array($module, ['noticias', 'avisos', 'partidos', 'premios', 'temporadas', 'staff', 'directiva', 'album'], true)) {
             return view('admin.module-create', [
                 'module' => $module,
@@ -154,6 +165,7 @@ class ModuleController extends Controller
             $data = $request->validate([
                 'rut' => ['required', 'integer', 'min:1', 'max:99999999', 'unique:jugadores,rut'],
                 'nombre' => ['required', 'string', 'max:25'],
+                'apellido' => ['nullable', 'string', 'max:50'],
                 'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
@@ -172,6 +184,7 @@ class ModuleController extends Controller
 
             $data['goles'] = $data['goles'] ?? 0;
             $data['asistencia'] = $data['asistencia'] ?? 0;
+            $data['es_visitante'] = false;
             $data['created_at'] = now();
             $data['updated_at'] = now();
 
@@ -180,6 +193,38 @@ class ModuleController extends Controller
 
             return redirect()->route('admin.plantel.create')->with('status', 'item-created');
         }
+
+
+        if ($module === 'visitantes') {
+            $data = $request->validate([
+                'rut' => ['required', 'integer', 'min:1', 'max:99999999', 'unique:jugadores,rut'],
+                'nombre' => ['required', 'string', 'max:25'],
+                'apellido' => ['nullable', 'string', 'max:50'],
+                'sobrenombre' => ['nullable', 'string', 'max:25'],
+            ]);
+
+            $data['numero_camiseta'] = 999;
+            $data['posicion'] = 'DEFENSA';
+            $data['goles'] = 0;
+            $data['asistencia'] = 0;
+            if (Schema::hasColumn('jugadores', 'atajadas')) {
+                $data['atajadas'] = 0;
+            }
+            if (Schema::hasColumn('jugadores', 'partidos_jugados')) {
+                $data['partidos_jugados'] = 0;
+            }
+            if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                $data['es_visitante'] = true;
+            }
+            $data['created_at'] = now();
+            $data['updated_at'] = now();
+
+            DB::table('jugadores')->insert($data);
+            $this->logModification('visitantes', 'añadir', (string) $data['rut'], $data['nombre'] ?? null);
+
+            return redirect()->route('admin.visitantes.create')->with('status', 'item-created');
+        }
+
 
         if ($module === 'noticias') {
             $data = $request->validate([
@@ -474,6 +519,10 @@ class ModuleController extends Controller
             return view('admin.plantel-edit', ['item' => $item]);
         }
 
+        if ($module === 'visitantes') {
+            return view('admin.visitantes-edit', ['item' => $item]);
+        }
+
         return view('admin.module-edit', [
             'module' => $module,
             'config' => $config,
@@ -489,6 +538,7 @@ class ModuleController extends Controller
         if ($module === 'plantel') {
             $data = $request->validate([
                 'nombre' => ['required', 'string', 'max:25'],
+                'apellido' => ['nullable', 'string', 'max:50'],
                 'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
@@ -509,10 +559,34 @@ class ModuleController extends Controller
             }
             $data['goles'] = $data['goles'] ?? 0;
             $data['asistencia'] = $data['asistencia'] ?? 0;
+            $data['es_visitante'] = false;
             $data['updated_at'] = now();
             DB::table('jugadores')->where('rut', $id)->update($data);
             $this->logModification('plantel', 'actualizar', $id, $data['nombre'] ?? null);
             return redirect()->route('admin.plantel.edit', $id)->with('status', 'item-updated');
+        }
+
+
+        if ($module === 'visitantes') {
+            $data = $request->validate([
+                'nombre' => ['required', 'string', 'max:25'],
+                'apellido' => ['nullable', 'string', 'max:50'],
+                'sobrenombre' => ['nullable', 'string', 'max:25'],
+                'goles' => ['nullable', 'integer', 'min:0'],
+                'asistencia' => ['nullable', 'integer', 'min:0'],
+            ]);
+
+            $data['goles'] = $data['goles'] ?? 0;
+            $data['asistencia'] = $data['asistencia'] ?? 0;
+            if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                $data['es_visitante'] = true;
+            }
+            $data['updated_at'] = now();
+
+            DB::table('jugadores')->where('rut', $id)->update($data);
+            $this->logModification('visitantes', 'actualizar', $id, $data['nombre'] ?? null);
+
+            return redirect()->route('admin.visitantes.edit', $id)->with('status', 'item-updated');
         }
 
         if ($module === 'noticias') {
@@ -658,6 +732,26 @@ class ModuleController extends Controller
         return response()->json(['ok' => false, 'message' => 'Módulo no soportado.'], 422);
     }
 
+
+    public function transferVisitante(string $rut): RedirectResponse
+    {
+        $this->authorizeModuleAccess('visitantes');
+
+        $exists = DB::table('jugadores')->where('rut', $rut)->exists();
+        abort_unless($exists, 404);
+
+        DB::table('jugadores')
+            ->where('rut', $rut)
+            ->update([
+                'es_visitante' => false,
+                'updated_at' => now(),
+            ]);
+
+        $this->logModification('visitantes', 'traspasar', $rut, 'Visitante traspasado a oficial');
+
+        return redirect()->route('admin.plantel.edit', $rut)->with('status', '✅ Jugador traspasado a plantel oficial.');
+    }
+
     public function destroy(string $module, string $id): JsonResponse|RedirectResponse
     {
         $this->authorizeModuleAccess($module);
@@ -728,7 +822,7 @@ class ModuleController extends Controller
 
     private function primaryKeyFor(string $module): string
     {
-        return $module === 'plantel' ? 'rut' : 'id';
+        return in_array($module, ['plantel', 'visitantes'], true) ? 'rut' : 'id';
     }
 
     private function authorizeModuleAccess(string $module): void
@@ -1089,7 +1183,7 @@ class ModuleController extends Controller
         }
 
         return match ($module) {
-            'plantel' => $row->nombre ?? null,
+            'plantel', 'visitantes' => $row->nombre ?? null,
             'noticias' => $row->titulo ?? null,
             'avisos' => $row->titulo ?? null,
             'partidos' => trim((string) (($row->rival ?? 'Partido').' · '.($row->nombre_lugar ?? ''))),
@@ -1104,7 +1198,7 @@ class ModuleController extends Controller
     private function searchableColumnsFor(string $module): array
     {
         return match ($module) {
-            'plantel' => ['rut', 'nombre', 'sobrenombre'],
+            'plantel', 'visitantes' => ['rut', 'nombre', 'apellido', 'sobrenombre'],
             'noticias' => ['titulo', 'subtitulo'],
             'avisos' => ['titulo', 'descripcion'],
             'partidos' => ['rival', 'nombre_lugar', 'direccion', 'fecha'],

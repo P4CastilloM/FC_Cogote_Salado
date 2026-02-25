@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class PartidoAsistenciaController extends Controller
@@ -39,7 +40,7 @@ class PartidoAsistenciaController extends Controller
         }
 
         $players = DB::table('jugadores')
-            ->select('rut', 'nombre', 'sobrenombre')
+            ->select('rut', 'nombre', 'apellido', 'sobrenombre', 'es_visitante')
             ->where('rut', 'like', $rut.'%')
             ->orderBy('nombre')
             ->limit(8)
@@ -47,6 +48,10 @@ class PartidoAsistenciaController extends Controller
             ->map(fn ($p) => [
                 'rut' => (string) $p->rut,
                 'name' => trim((string) ($p->sobrenombre ?: $p->nombre)),
+                'nombre' => (string) ($p->nombre ?? ''),
+                'apellido' => (string) ($p->apellido ?? ''),
+                'sobrenombre' => (string) ($p->sobrenombre ?? ''),
+                'es_visitante' => (bool) ($p->es_visitante ?? false),
             ])
             ->values();
 
@@ -62,6 +67,10 @@ class PartidoAsistenciaController extends Controller
             'actor_rut' => ['required', 'digits_between:5,8'],
             'guests' => ['nullable', 'array', 'max:6'],
             'guests.*' => ['nullable', 'digits_between:5,8'],
+            'visitantes' => ['nullable', 'array', 'max:4'],
+            'visitantes.*.rut' => ['required_with:visitantes', 'digits_between:5,8'],
+            'visitantes.*.nombre' => ['required_with:visitantes', 'string', 'max:25'],
+            'visitantes.*.apellido' => ['nullable', 'string', 'max:50'],
             'will_attend' => ['required', 'accepted'],
         ]);
 
@@ -74,6 +83,72 @@ class PartidoAsistenciaController extends Controller
             ->values();
 
         $allRuts = collect([$actorRut])->merge($guestRuts)->unique()->values();
+
+        $visitantes = collect($data['visitantes'] ?? [])
+            ->map(function ($visitante) {
+                $rut = (int) preg_replace('/\D+/', '', (string) ($visitante['rut'] ?? ''));
+
+                return [
+                    'rut' => $rut,
+                    'nombre' => trim((string) ($visitante['nombre'] ?? '')),
+                    'apellido' => trim((string) ($visitante['apellido'] ?? '')) ?: null,
+                ];
+            })
+            ->filter(fn ($visitante) => $visitante['rut'] > 0 && $visitante['nombre'] !== '')
+            ->unique('rut')
+            ->take(4)
+            ->values();
+
+        if ($visitantes->isNotEmpty()) {
+            foreach ($visitantes as $visitante) {
+                $exists = DB::table('jugadores')->where('rut', $visitante['rut'])->first();
+
+                if (! $exists) {
+                    $insert = [
+                        'rut' => $visitante['rut'],
+                        'nombre' => $visitante['nombre'],
+                        'apellido' => $visitante['apellido'],
+                        'sobrenombre' => null,
+                        'numero_camiseta' => 999,
+                        'posicion' => 'DEFENSA',
+                        'goles' => 0,
+                        'asistencia' => 0,
+                        'created_at' => now($this->clubTimezone()),
+                        'updated_at' => now($this->clubTimezone()),
+                    ];
+
+                    if (Schema::hasColumn('jugadores', 'atajadas')) {
+                        $insert['atajadas'] = 0;
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'partidos_jugados')) {
+                        $insert['partidos_jugados'] = 0;
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                        $insert['es_visitante'] = true;
+                    }
+
+                    DB::table('jugadores')->insert($insert);
+                } else {
+                    $update = [
+                        'updated_at' => now($this->clubTimezone()),
+                    ];
+
+                    if (Schema::hasColumn('jugadores', 'apellido') && empty($exists->apellido) && $visitante['apellido']) {
+                        $update['apellido'] = $visitante['apellido'];
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'es_visitante')) {
+                        $update['es_visitante'] = (bool) ($exists->es_visitante ?? false);
+                    }
+
+                    DB::table('jugadores')->where('rut', $visitante['rut'])->update($update);
+                }
+            }
+
+            $allRuts = $allRuts->merge($visitantes->pluck('rut'))->unique()->values();
+        }
 
         $found = DB::table('jugadores')->whereIn('rut', $allRuts)->pluck('rut')->map(fn ($rut) => (int) $rut);
         $missing = $allRuts->diff($found)->values();
@@ -126,7 +201,7 @@ class PartidoAsistenciaController extends Controller
         $confirmedCount = DB::table('partido_asistencias')->where('partido_id', $partido->id)->count();
 
         return redirect()->route('fccs.partidos.asistencia.show', $token)
-            ->with('status', '✅ Asistencia confirmada para '.count($allRuts).' persona(s).')
+            ->with('status', '✅ Asistencia confirmada para '.count($allRuts).' persona(s).'.($visitantes->isNotEmpty() ? ' Incluye '.count($visitantes).' visita(s).' : ''))
             ->with('attendance_alert', $this->attendanceAlert($confirmedCount));
     }
 

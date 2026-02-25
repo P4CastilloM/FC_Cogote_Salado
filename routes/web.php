@@ -41,8 +41,9 @@ Route::middleware(['auth', 'verified'])
         Route::post('/partidos/{id}/estadisticas/finalizar', [PartidoStatsController::class, 'finish'])->name('partidos.stats.finish');
         Route::post('/dashboard/convert-images-webp', [AdminDashboardController::class, 'convertImagesToWebp'])->name('dashboard.convert-images-webp');
         Route::get('/plantilla', [LineupController::class, 'index'])->name('lineup.index');
+        Route::post('/visitantes/{rut}/traspasar', [AdminModuleController::class, 'transferVisitante'])->name('visitantes.transfer');
 
-        $modules = ['plantel', 'noticias', 'avisos', 'album', 'directiva', 'partidos', 'premios', 'temporadas', 'staff', 'modificaciones'];
+        $modules = ['plantel', 'visitantes', 'noticias', 'avisos', 'album', 'directiva', 'partidos', 'premios', 'temporadas', 'staff', 'modificaciones'];
 
         foreach ($modules as $module) {
             Route::get("/{$module}", fn (\Illuminate\Http\Request $request, AdminModuleController $controller) => $controller->index($request, $module))->name("{$module}.index");
