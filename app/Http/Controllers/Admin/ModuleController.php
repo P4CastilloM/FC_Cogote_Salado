@@ -1251,3 +1251,4 @@ class ModuleController extends Controller
         return 'America/Santiago';
     }
 }
+
