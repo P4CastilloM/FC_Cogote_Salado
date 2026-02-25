@@ -165,6 +165,75 @@
 
 
 
+      function reindexVisitorNames() {
+        if (!visitorsList) return;
+
+        const rows = Array.from(visitorsList.querySelectorAll('[data-visitor-row]'));
+        rows.forEach((row, index) => {
+          const rutInput = row.querySelector('.visitor-rut');
+          const nombreInput = row.querySelector('.visitor-nombre');
+          const apellidoInput = row.querySelector('.visitor-apellido');
+
+          if (rutInput) rutInput.name = `visitantes[${index}][rut]`;
+          if (nombreInput) nombreInput.name = `visitantes[${index}][nombre]`;
+          if (apellidoInput) apellidoInput.name = `visitantes[${index}][apellido]`;
+        });
+      }
+
+      function addVisitorInput(seed = {}) {
+        if (!visitorsList) return;
+        if (visitorsList.children.length >= 4) return;
+
+        const row = document.createElement('div');
+        row.setAttribute('data-visitor-row', '1');
+        row.className = 'rounded-xl border border-white/10 bg-black/25 p-3';
+        row.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-2 items-start">
+            <input type="text" class="visitor-rut rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-1 xl:col-span-3" placeholder="RUT" value="${sanitizeRut(seed.rut || '')}">
+            <input type="text" class="visitor-nombre rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-1 xl:col-span-3" placeholder="Nombre" value="${seed.nombre || ''}">
+            <input type="text" class="visitor-apellido rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-2 xl:col-span-4" placeholder="Apellidos (opcional)" value="${seed.apellido || ''}">
+            <div class="sm:col-span-2 xl:col-span-2 flex flex-col gap-2 xl:items-stretch">
+              <button type="button" class="visitor-autofill w-full px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm whitespace-nowrap">Autocompletar</button>
+              <button type="button" class="visitor-remove w-full px-3 py-2 rounded-lg border border-red-400/40 bg-red-500/10 text-red-200 text-sm whitespace-nowrap">Quitar</button>
+            </div>
+          </div>
+        `;
+
+        const rutInput = row.querySelector('.visitor-rut');
+        const nombreInput = row.querySelector('.visitor-nombre');
+        const apellidoInput = row.querySelector('.visitor-apellido');
+        const autofillBtn = row.querySelector('.visitor-autofill');
+        const removeBtn = row.querySelector('.visitor-remove');
+
+        const normalizeRut = () => {
+          rutInput.value = sanitizeRut(rutInput.value);
+        };
+
+        const autofill = async () => {
+          const rut = sanitizeRut(rutInput.value);
+          if (rut.length < 5) return;
+
+          const result = await fetchPlayersByRut(rut);
+          const first = (result.players || [])[0];
+          if (!first) return;
+
+          nombreInput.value = first.nombre || first.name || '';
+          apellidoInput.value = first.apellido || '';
+        };
+
+        rutInput.addEventListener('input', normalizeRut);
+        autofillBtn.addEventListener('click', autofill);
+        removeBtn.addEventListener('click', () => {
+          row.remove();
+          reindexVisitorNames();
+        });
+
+        visitorsList.appendChild(row);
+        reindexVisitorNames();
+      }
+
+
+
       function addVisitorInput(seed = {}) {
         if (!visitorsList) return;
         if (visitorsList.children.length >= 4) return;
@@ -332,6 +401,12 @@
       enableVisitors?.addEventListener('change', () => {
         const active = enableVisitors.checked;
         visitorsWrap?.classList.toggle('hidden', !active);
+
+        if (!active && visitorsList) {
+          visitorsList.innerHTML = '';
+          return;
+        }
+
         if (active && visitorsList && visitorsList.children.length === 0) {
           addVisitorInput();
         }
