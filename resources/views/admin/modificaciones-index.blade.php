@@ -12,30 +12,73 @@
 
     <div class="max-w-6xl mx-auto space-y-6">
         <div class="mod-wrap rounded-2xl p-5 sm:p-6 space-y-4">
-            <form method="GET" action="{{ route('admin.modificaciones.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <input id="log-search" type="text" name="q" value="{{ $search }}" placeholder="Buscar por usuario, módulo o detalle..." class="mod-input rounded-xl px-4 py-3 md:col-span-2">
+            <form method="GET" action="{{ route('admin.modificaciones.index') }}" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="text-xs text-slate-300">Buscar</label>
+                    <input type="text" name="q" value="{{ $search }}" placeholder="Usuario, módulo, detalle..." class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                </div>
 
-                <select name="action" class="mod-input rounded-xl px-4 py-3">
-                    <option value="">Todas las acciones</option>
-                    @foreach(['añadir' => 'Añadir', 'actualizar' => 'Actualizar', 'eliminar' => 'Eliminar'] as $k => $label)
-                        <option value="{{ $k }}" @selected($action === $k)>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <div>
+                    <label class="text-xs text-slate-300">Acción (filtro)</label>
+                    <select name="action" class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                        <option value="">Todas</option>
+                        @foreach(['añadir' => 'Añadir', 'actualizar' => 'Actualizar', 'eliminar' => 'Eliminar', 'traspasar' => 'Traspasar'] as $k => $label)
+                            <option value="{{ $k }}" @selected($action === $k)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                <select name="order" class="mod-input rounded-xl px-4 py-3">
-                    <option value="recent" @selected($order === 'desc')>Más recientes</option>
-                    <option value="oldest" @selected($order === 'asc')>Más antiguas</option>
-                </select>
+                <div>
+                    <label class="text-xs text-slate-300">Módulo (filtro)</label>
+                    <select name="module_filter" class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                        <option value="">Todos</option>
+                        @foreach(($modulesFilterOptions ?? collect()) as $moduleOption)
+                            <option value="{{ $moduleOption }}" @selected($moduleFilter === $moduleOption)>{{ ucfirst($moduleOption) }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                <div class="md:col-span-4 flex gap-3">
+                <div>
+                    <label class="text-xs text-slate-300">Quién lo hizo (filtro)</label>
+                    <input type="text" name="actor_filter" value="{{ $actorFilter }}" placeholder="Nombre de usuario" class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-300">Ordenar por</label>
+                    <select name="sort_by" class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                        <option value="created_at" @selected($sortBy === 'created_at')>Fecha</option>
+                        <option value="action" @selected($sortBy === 'action')>Acción</option>
+                        <option value="module" @selected($sortBy === 'module')>Módulo</option>
+                        <option value="actor_name" @selected($sortBy === 'actor_name')>Quién lo hizo</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-300">Dirección</label>
+                    <select name="sort_dir" class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                        <option value="desc" @selected($sortDir === 'desc')>Descendente</option>
+                        <option value="asc" @selected($sortDir === 'asc')>Ascendente</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-300">Ver</label>
+                    <select name="per_page" class="mod-input rounded-xl px-4 py-3 mt-1 w-full">
+                        @foreach([10,25,50] as $size)
+                            <option value="{{ $size }}" @selected((int) $perPage === $size)>Ver {{ $size }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="md:col-span-2 flex gap-3 items-end">
                     <button class="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold">Aplicar filtros</button>
                     <a href="{{ route('admin.modificaciones.index') }}" class="px-5 py-3 rounded-xl border border-white/20 text-slate-200">Limpiar</a>
                 </div>
             </form>
         </div>
 
-        <div class="mod-wrap rounded-2xl overflow-hidden">
-            <div class="overflow-x-auto">
+        <div class="mod-wrap rounded-2xl p-4 sm:p-5 space-y-4">
+            <div class="overflow-x-auto rounded-xl border border-white/10">
                 <table class="w-full text-sm">
                     <thead class="bg-white/5 text-slate-300">
                         <tr>
@@ -46,9 +89,9 @@
                             <th class="text-left px-4 py-3">Detalle</th>
                         </tr>
                     </thead>
-                    <tbody id="logs-table">
+                    <tbody>
                         @forelse($logs as $log)
-                            <tr class="border-t border-white/10 log-row" data-search="{{ strtolower(($log->actor_name ?? '').' '.($log->module ?? '').' '.($log->summary ?? '').' '.($log->item_key ?? '')) }}">
+                            <tr class="border-t border-white/10">
                                 <td class="px-4 py-3 whitespace-nowrap text-slate-200">{{ \Carbon\Carbon::parse($log->created_at)->format('d-m-Y H:i') }}</td>
                                 <td class="px-4 py-3">
                                     @php
@@ -56,6 +99,7 @@
                                             'añadir' => 'bg-emerald-500/20 text-emerald-300',
                                             'actualizar' => 'bg-amber-500/20 text-amber-300',
                                             'eliminar' => 'bg-red-500/20 text-red-300',
+                                            'traspasar' => 'bg-sky-500/20 text-sky-300',
                                             default => 'bg-slate-500/20 text-slate-300',
                                         };
                                     @endphp
@@ -71,19 +115,14 @@
                     </tbody>
                 </table>
             </div>
+
+            @if(method_exists($logs, 'links'))
+                <div>
+                    {{ $logs->onEachSide(1)->links() }}
+                </div>
+            @endif
+
+            <p class="text-xs text-slate-400">Se muestran y filtran solo los 500 cambios más recientes.</p>
         </div>
     </div>
-
-    <script>
-        const input = document.getElementById('log-search');
-        const rows = Array.from(document.querySelectorAll('.log-row'));
-
-        input?.addEventListener('input', (e) => {
-            const q = (e.target.value || '').toLowerCase().trim();
-            rows.forEach((row) => {
-                const hay = row.dataset.search || '';
-                row.style.display = hay.includes(q) ? '' : 'none';
-            });
-        });
-    </script>
 @endsection
