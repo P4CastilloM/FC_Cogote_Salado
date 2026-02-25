@@ -35,6 +35,7 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/partidos-activos', [AdminDashboardController::class, 'activeMatches'])->name('partidos.activos');
+        Route::delete('/partidos/{partidoId}/confirmados/{jugadorRut}', [AdminDashboardController::class, 'removeConfirmedPlayer'])->name('partidos.confirmados.destroy');
         Route::get('/partidos/{id}/estadisticas', [PartidoStatsController::class, 'index'])->name('partidos.stats');
         Route::post('/partidos/{id}/estadisticas', [PartidoStatsController::class, 'update'])->name('partidos.stats.update');
         Route::get('/partidos/{id}/estadisticas/data', [PartidoStatsController::class, 'data'])->name('partidos.stats.data');

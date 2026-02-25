@@ -170,15 +170,15 @@
         if (visitorsList.children.length >= 4) return;
 
         const row = document.createElement('div');
-        row.className = 'rounded-lg border border-white/10 bg-black/20 p-3 space-y-2';
+        row.className = 'rounded-xl border border-white/10 bg-black/25 p-3';
         row.innerHTML = `
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <input type="text" class="visitor-rut rounded-lg bg-black/20 border border-white/15 px-3 py-2" placeholder="RUT" value="${sanitizeRut(seed.rut || '')}">
-            <input type="text" class="visitor-nombre rounded-lg bg-black/20 border border-white/15 px-3 py-2" placeholder="Nombre" value="${seed.nombre || ''}">
-            <input type="text" class="visitor-apellido rounded-lg bg-black/20 border border-white/15 px-3 py-2" placeholder="Apellidos (opcional)" value="${seed.apellido || ''}">
-            <div class="flex gap-2">
-              <button type="button" class="visitor-autofill px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm">Autocompletar</button>
-              <button type="button" class="visitor-remove px-3 py-2 rounded-lg bg-red-500/20 text-red-200 text-sm">Quitar</button>
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-2 items-start">
+            <input type="text" class="visitor-rut rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-1 xl:col-span-3" placeholder="RUT" value="${sanitizeRut(seed.rut || '')}">
+            <input type="text" class="visitor-nombre rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-1 xl:col-span-3" placeholder="Nombre" value="${seed.nombre || ''}">
+            <input type="text" class="visitor-apellido rounded-lg bg-black/20 border border-white/15 px-3 py-2 sm:col-span-2 xl:col-span-4" placeholder="Apellidos (opcional)" value="${seed.apellido || ''}">
+            <div class="sm:col-span-2 xl:col-span-2 flex flex-wrap xl:justify-end gap-2">
+              <button type="button" class="visitor-autofill px-3 py-2 rounded-lg border border-sky-400/40 bg-sky-500/10 text-sky-200 text-sm whitespace-nowrap">Autocompletar</button>
+              <button type="button" class="visitor-remove px-3 py-2 rounded-lg border border-red-400/40 bg-red-500/10 text-red-200 text-sm whitespace-nowrap">Quitar</button>
             </div>
           </div>
         `;
