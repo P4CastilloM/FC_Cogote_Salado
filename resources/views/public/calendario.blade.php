@@ -31,6 +31,7 @@
         <h1 id="page-title" class="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 bg-gradient-to-r from-white via-amber-300 to-lime-400 bg-clip-text text-transparent">Calendario</h1>
         <p id="page-subtitle" class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">Próximas fechas y encuentros del club</p>
       </div>
+
     </section>
 
     <section class="px-4 pb-16 max-w-6xl mx-auto">
@@ -61,6 +62,12 @@
           </div>
         </div>
       </div>
+
+      <div class="mt-6 glass-card rounded-2xl p-4 md:p-6">
+        <h3 class="text-2xl font-bebas tracking-wide text-white mb-3 flex items-center gap-2">👥 <span>Jugadores confirmados</span></h3>
+        <p id="confirmed-help" class="text-sm text-gray-400 mb-3">Selecciona un día con partido para ver los sobrenombres confirmados.</p>
+        <div id="confirmed-list" class="flex flex-wrap gap-2"></div>
+      </div>
     </section>
   </main>
 
@@ -74,6 +81,7 @@
     const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
     const getMatchForDate = (dateStr) => partidos.find((p) => p.fecha === dateStr);
+    const getMatchesForDate = (dateStr) => partidos.filter((p) => p.fecha === dateStr);
     const getDaysInMonth = (y,m) => new Date(y, m + 1, 0).getDate();
     const getFirstDayOfMonth = (y,m) => { const d = new Date(y,m,1).getDay(); return d === 0 ? 6 : d - 1; };
     const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -81,6 +89,12 @@
       const d = new Date(dateStr + 'T12:00:00');
       return `${diasSemana[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]} ${d.getFullYear()}`;
     };
+    const escapeHtml = (value) => String(value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
 
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
@@ -112,7 +126,7 @@
       grid.innerHTML = html;
     }
 
-    function selectDate(dateStr) { selectedDate = dateStr; renderCalendar(); showEventPanel(dateStr); }
+    function selectDate(dateStr) { selectedDate = dateStr; renderCalendar(); showEventPanel(dateStr); renderConfirmedPanel(dateStr); }
     window.selectDate = selectDate;
 
     function showEventPanel(dateStr) {
@@ -172,6 +186,34 @@
       }
     }
 
+
+
+    function renderConfirmedPanel(dateStr) {
+      const list = document.getElementById('confirmed-list');
+      const help = document.getElementById('confirmed-help');
+      if (!list || !help) return;
+
+      const matches = getMatchesForDate(dateStr);
+      const confirmedNames = [...new Set(matches.flatMap((m) => Array.isArray(m.confirmados) ? m.confirmados : []))];
+
+      if (matches.length === 0) {
+        help.textContent = 'No hay partido programado para este día.';
+        list.innerHTML = '<span class="inline-flex items-center px-3 py-1.5 rounded-full border border-white/15 bg-white/5 text-sm text-gray-400">Sin partido</span>';
+        return;
+      }
+
+      if (confirmedNames.length === 0) {
+        help.textContent = 'Partido programado, pero aún no hay jugadores confirmados.';
+        list.innerHTML = '<span class="inline-flex items-center px-3 py-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 text-sm text-amber-200">Aún sin confirmados</span>';
+        return;
+      }
+
+      help.textContent = `Confirmados para ${formatDisplayDate(dateStr)} (${confirmedNames.length})`;
+      list.innerHTML = confirmedNames
+        .map((name) => `<span class="inline-flex items-center px-3 py-1.5 rounded-full border border-lime-400/30 bg-lime-500/10 text-sm text-lime-200 font-semibold">${escapeHtml(name)}</span>`)
+        .join('');
+    }
+
     async function copyAddress(address) {
       if (!address) return;
       try {
@@ -186,7 +228,15 @@
 
     if (partidos.length > 0) {
       currentDate = new Date(partidos[0].fecha + 'T12:00:00');
+      selectedDate = partidos[0].fecha;
+      showEventPanel(selectedDate);
+      renderConfirmedPanel(selectedDate);
     }
+
+    if (!selectedDate) {
+      renderConfirmedPanel(formatDate(new Date()));
+    }
+
     renderCalendar();
   </script>
 </body>
