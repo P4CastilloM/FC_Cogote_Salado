@@ -47,6 +47,7 @@ class AvisoController extends Controller
             ->get();
 
         $jugadores = DB::table('jugadores')
+            ->when(Schema::hasColumn('jugadores', 'es_visitante'), fn ($q) => $q->where('es_visitante', false))
             ->select('rut', 'nombre', 'sobrenombre', 'foto', 'numero_camiseta', 'posicion')
             ->orderBy('numero_camiseta')
             ->limit(8)

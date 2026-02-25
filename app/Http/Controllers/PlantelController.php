@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PlantelController extends Controller
 {
     public function index()
     {
         $jugadores = DB::table('jugadores')
+            ->when(Schema::hasColumn('jugadores', 'es_visitante'), fn ($q) => $q->where('es_visitante', false))
             ->select('rut', 'nombre', 'sobrenombre', 'foto', 'goles', 'asistencia', 'atajadas', 'partidos_jugados', 'numero_camiseta', 'posicion')
             ->orderBy('numero_camiseta')
             ->get()

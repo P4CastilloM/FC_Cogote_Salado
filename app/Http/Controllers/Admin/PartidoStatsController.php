@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class PartidoStatsController extends Controller
@@ -24,22 +26,20 @@ class PartidoStatsController extends Controller
         if (! $isActiveWindow) {
             return redirect()
                 ->route('admin.partidos.index')
-                ->with('error', 'La carga de estadísticas está disponible desde 1 hora antes hasta 2 horas después del inicio del partido.');
+                ->with('error', 'La carga de estadísticas está disponible desde 1 hora antes hasta 4 horas después del inicio del partido.');
         }
 
         $this->syncConfirmedPlayers($id);
 
-        $players = $this->playersForMatch($id);
-
         return view('admin.partido-estadisticas', [
             'partido' => $partido,
-            'players' => $players,
+            'players' => $this->playersForMatch($id),
             'windowStart' => $window['starts_at'],
             'windowEnd' => $window['ends_at'],
             'statsClosedAt' => $partido->stats_closed_at ?? null,
+            'supportsOperationId' => $this->supportsOperationTable(),
         ]);
     }
-
 
     public function data(int $id): JsonResponse
     {
@@ -80,6 +80,7 @@ class PartidoStatsController extends Controller
             'jugador_rut' => ['required', 'integer', 'exists:jugadores,rut'],
             'field' => ['required', 'string', 'in:goles,asistencias,atajadas'],
             'delta' => ['required', 'integer', 'min:-20', 'max:20'],
+            'operation_id' => ['nullable', 'string', 'max:80'],
         ]);
 
         $confirmed = DB::table('partido_asistencias')
@@ -94,8 +95,28 @@ class PartidoStatsController extends Controller
         $field = $data['field'];
         $jugadorRut = (int) $data['jugador_rut'];
         $delta = (int) $data['delta'];
+        $operationId = trim((string) ($data['operation_id'] ?? ''));
 
-        $result = DB::transaction(function () use ($id, $jugadorRut, $field, $delta): array {
+        $this->syncConfirmedPlayers($id);
+
+        $result = DB::transaction(function () use ($id, $jugadorRut, $field, $delta, $operationId): array {
+            if ($operationId !== '' && $this->supportsOperationTable()) {
+                $alreadyApplied = DB::table('partido_stat_operaciones')
+                    ->where('partido_id', $id)
+                    ->where('operation_id', $operationId)
+                    ->exists();
+
+                if ($alreadyApplied) {
+                    return [
+                        'value' => (int) DB::table('jugador_partido')
+                            ->where('partido_id', $id)
+                            ->where('jugador_rut', $jugadorRut)
+                            ->value($field),
+                        'effective_delta' => 0,
+                    ];
+                }
+            }
+
             DB::table('jugador_partido')->insertOrIgnore([
                 'partido_id' => $id,
                 'jugador_rut' => $jugadorRut,
@@ -122,6 +143,21 @@ class PartidoStatsController extends Controller
                     'participo' => true,
                 ]);
 
+            if ($operationId !== '' && $this->supportsOperationTable()) {
+                try {
+                    DB::table('partido_stat_operaciones')->insert([
+                        'partido_id' => $id,
+                        'operation_id' => $operationId,
+                        'jugador_rut' => $jugadorRut,
+                        'field' => $field,
+                        'delta' => $effectiveDelta,
+                        'created_at' => now($this->clubTimezone()),
+                    ]);
+                } catch (QueryException) {
+                    // Compatibilidad si la migración no está aplicada aún.
+                }
+            }
+
             return [
                 'value' => $next,
                 'effective_delta' => $effectiveDelta,
@@ -145,24 +181,29 @@ class PartidoStatsController extends Controller
         }
 
         DB::transaction(function () use ($id): void {
-            $rows = DB::table('jugador_partido')
-                ->where('partido_id', $id)
-                ->where('participo', true)
-                ->select('jugador_rut', 'goles', 'asistencias', 'atajadas')
+            $confirmedRows = DB::table('partido_asistencias as pa')
+                ->leftJoin('jugador_partido as jp', function ($join): void {
+                    $join->on('jp.jugador_rut', '=', 'pa.jugador_rut')
+                        ->on('jp.partido_id', '=', 'pa.partido_id');
+                })
+                ->where('pa.partido_id', $id)
+                ->select(
+                    'pa.jugador_rut',
+                    DB::raw('COALESCE(jp.goles, 0) as goles'),
+                    DB::raw('COALESCE(jp.asistencias, 0) as asistencias'),
+                    DB::raw('COALESCE(jp.atajadas, 0) as atajadas')
+                )
                 ->get();
 
-            foreach ($rows as $row) {
+            foreach ($confirmedRows as $row) {
                 DB::table('jugadores')
                     ->where('rut', $row->jugador_rut)
-                    ->increment('goles', (int) $row->goles);
-
-                DB::table('jugadores')
-                    ->where('rut', $row->jugador_rut)
-                    ->increment('asistencia', (int) $row->asistencias);
-
-                DB::table('jugadores')
-                    ->where('rut', $row->jugador_rut)
-                    ->increment('atajadas', (int) $row->atajadas);
+                    ->incrementEach([
+                        'goles' => (int) $row->goles,
+                        'asistencia' => (int) $row->asistencias,
+                        'atajadas' => (int) $row->atajadas,
+                        'partidos_jugados' => 1,
+                    ]);
             }
 
             DB::table('partidos')
@@ -172,7 +213,6 @@ class PartidoStatsController extends Controller
 
         return redirect()->route('admin.partidos.stats', $id)->with('status', '✅ Partido cerrado y estadísticas acumuladas al plantel.');
     }
-
 
     private function playersForMatch(int $matchId)
     {
@@ -215,7 +255,7 @@ class PartidoStatsController extends Controller
             ]);
 
             if ($inserted > 0) {
-                DB::table('jugadores')->where('rut', (int) $rut)->increment('partidos_jugados', 1);
+                continue;
             }
 
             DB::table('jugador_partido')
@@ -223,6 +263,19 @@ class PartidoStatsController extends Controller
                 ->where('jugador_rut', (int) $rut)
                 ->update(['participo' => true]);
         }
+    }
+
+    private function supportsOperationTable(): bool
+    {
+        static $supports = null;
+
+        if ($supports !== null) {
+            return $supports;
+        }
+
+        $supports = Schema::hasTable('partido_stat_operaciones');
+
+        return $supports;
     }
 
     private function clubTimezone(): string
@@ -241,7 +294,7 @@ class PartidoStatsController extends Controller
 
         return [
             'starts_at' => $kickoff->copy()->subHour(),
-            'ends_at' => $kickoff->copy()->addHours(2),
+            'ends_at' => $kickoff->copy()->addHours(4),
         ];
     }
 }
