@@ -194,6 +194,7 @@ class PartidoStatsControllerTest extends TestCase
                 'asistencias' => 1,
                 'atajadas' => 0,
                 'participo' => true,
+                'equipo_ab' => 'A',
             ],
             [
                 'partido_id' => 1,
@@ -202,6 +203,7 @@ class PartidoStatsControllerTest extends TestCase
                 'asistencias' => 9,
                 'atajadas' => 9,
                 'participo' => true,
+                'equipo_ab' => 'B',
             ],
         ]);
 
@@ -221,6 +223,15 @@ class PartidoStatsControllerTest extends TestCase
             'goles' => 0,
             'asistencia' => 0,
             'partidos_jugados' => 0,
+        ]);
+
+
+        $this->assertDatabaseHas('partidos', [
+            'id' => 1,
+            'resultado_equipo_a' => 2,
+            'resultado_equipo_b' => 0,
+            'resultado_ganador' => 'A',
+            'resultado_texto' => '2 - 0 · Ganó Equipo A',
         ]);
     }
 }

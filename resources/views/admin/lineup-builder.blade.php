@@ -114,13 +114,24 @@
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script>
     const players = @json($players);
-    const state = { onField: [], search: '', draggedId: null, draggedFromField: false };
+    const activeMatchId = @json($activeMatch->id ?? null);
+    const saveTeamEndpointTemplate = @json(route('admin.lineup.save-team', ['id' => '__MATCH_ID__'], false));
+    const initialTeamAssignments = @json($teamAssignments ?? []);
+    const state = {
+      onField: [],
+      search: '',
+      draggedId: null,
+      draggedFromField: false,
+      teamByPlayer: Object.fromEntries(Object.entries(initialTeamAssignments).map(([key, value]) => [String(key), String(value).toUpperCase()])),
+    };
 
     const getInitials = (name) => String(name || 'J').slice(0, 2).toUpperCase();
     const findPlayer = (id) => players.find(p => String(p.id) === String(id));
     const isOnField = (id) => state.onField.some(p => String(p.playerId) === String(id));
 
     function benchCard(player) {
+      const team = state.teamByPlayer[String(player.id)] || null;
+      const teamClass = team === 'A' ? 'text-sky-300 border-sky-400/40 bg-sky-500/15' : 'text-amber-300 border-amber-400/40 bg-amber-500/15';
       return `
         <div class="bench-player lineup-glass rounded-lg p-2 flex flex-col items-center gap-1" draggable="true" data-player-id="${player.id}">
           <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center">
@@ -129,6 +140,7 @@
               : `<span class="text-white text-xs font-bold">${getInitials(player.name)}</span>`}
           </div>
           <span class="text-[11px] text-center text-white truncate w-full">${player.name}</span>
+          ${team ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full border ${teamClass}">Equipo ${team}</span>` : ''}
         </div>`;
     }
 
@@ -199,6 +211,48 @@
       else state.onField.push(next);
     }
 
+
+    function resolveTeamByX(x) {
+      return x < 50 ? 'A' : 'B';
+    }
+
+    function setTeamForPlayer(playerId, team) {
+      state.teamByPlayer[String(playerId)] = team;
+    }
+
+    async function persistTeam(playerId, team) {
+      if (!activeMatchId) return;
+
+      const endpoint = saveTeamEndpointTemplate.replace('__MATCH_ID__', String(activeMatchId));
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': @json(csrf_token()),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ jugador_rut: Number(playerId), equipo_ab: team }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          alert(data?.message || 'No se pudo guardar el Equipo A/B del jugador.');
+        }
+      } catch (_) {
+        alert('Error de red al guardar Equipo A/B del jugador.');
+      }
+    }
+
+    function assignTeam(playerId, x) {
+      const team = resolveTeamByX(x);
+      setTeamForPlayer(playerId, team);
+      persistTeam(playerId, team);
+      return team;
+    }
+
     function setupDnd() {
       const field = document.getElementById('field');
       field.addEventListener('dragover', (e) => {
@@ -213,7 +267,8 @@
         const r = field.getBoundingClientRect();
         const x = ((e.clientX - r.left) / r.width) * 100;
         const y = ((e.clientY - r.top) / r.height) * 100;
-        upsertOnField(state.draggedId, x, y, x < 50 ? 'A' : 'B');
+        const team = assignTeam(state.draggedId, x);
+        upsertOnField(state.draggedId, x, y, team);
         renderField();
         renderBench();
       });
@@ -227,7 +282,8 @@
         if (t.clientX < r.left || t.clientX > r.right || t.clientY < r.top || t.clientY > r.bottom) return;
         const x = ((t.clientX - r.left) / r.width) * 100;
         const y = ((t.clientY - r.top) / r.height) * 100;
-        upsertOnField(state.draggedId, x, y, x < 50 ? 'A' : 'B');
+        const team = assignTeam(state.draggedId, x);
+        upsertOnField(state.draggedId, x, y, team);
         renderField();
         renderBench();
       });

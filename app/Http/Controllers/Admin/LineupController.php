@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -51,9 +53,78 @@ class LineupController extends Controller
             })
             ->values();
 
+        $teamAssignments = [];
+        if ($activeMatch && Schema::hasTable('jugador_partido') && Schema::hasColumn('jugador_partido', 'equipo_ab')) {
+            $teamAssignments = DB::table('jugador_partido')
+                ->where('partido_id', $activeMatch->id)
+                ->whereIn('jugador_rut', $players->pluck('id')->map(fn ($id) => (int) $id)->all())
+                ->whereIn('equipo_ab', ['A', 'B'])
+                ->pluck('equipo_ab', 'jugador_rut')
+                ->map(fn ($team) => strtoupper((string) $team))
+                ->all();
+        }
+
         return view('admin.lineup-builder', [
             'players' => $players,
             'activeMatch' => $activeMatch,
+            'teamAssignments' => $teamAssignments,
+        ]);
+    }
+
+    public function saveTeam(Request $request, int $partidoId): JsonResponse
+    {
+        $data = $request->validate([
+            'jugador_rut' => ['required', 'integer', 'exists:jugadores,rut'],
+            'equipo_ab' => ['required', 'string', 'in:A,B'],
+        ]);
+
+        if (! Schema::hasTable('jugador_partido') || ! Schema::hasColumn('jugador_partido', 'equipo_ab')) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Falta aplicar migraciones para guardar Equipo A/B.',
+            ], 422);
+        }
+
+        $partido = DB::table('partidos')->where('id', $partidoId)->first();
+        if (! $partido) {
+            return response()->json(['ok' => false, 'message' => 'Partido no encontrado.'], 404);
+        }
+
+        $isConfirmed = Schema::hasTable('partido_asistencias')
+            && DB::table('partido_asistencias')
+                ->where('partido_id', $partidoId)
+                ->where('jugador_rut', (int) $data['jugador_rut'])
+                ->exists();
+
+        if (! $isConfirmed) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Solo jugadores confirmados del partido pueden asignarse a Equipo A/B.',
+            ], 422);
+        }
+
+        DB::table('jugador_partido')->insertOrIgnore([
+            'partido_id' => $partidoId,
+            'jugador_rut' => (int) $data['jugador_rut'],
+            'goles' => 0,
+            'asistencias' => 0,
+            'atajadas' => 0,
+            'participo' => true,
+            'equipo_ab' => strtoupper((string) $data['equipo_ab']),
+        ]);
+
+        DB::table('jugador_partido')
+            ->where('partido_id', $partidoId)
+            ->where('jugador_rut', (int) $data['jugador_rut'])
+            ->update([
+                'equipo_ab' => strtoupper((string) $data['equipo_ab']),
+                'participo' => true,
+            ]);
+
+        return response()->json([
+            'ok' => true,
+            'jugador_rut' => (int) $data['jugador_rut'],
+            'equipo_ab' => strtoupper((string) $data['equipo_ab']),
         ]);
     }
 }

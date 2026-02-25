@@ -206,9 +206,57 @@ class PartidoStatsController extends Controller
                     ]);
             }
 
+            $teamGoals = [
+                'A' => 0,
+                'B' => 0,
+            ];
+
+            if (Schema::hasColumn('jugador_partido', 'equipo_ab')) {
+                $goalRows = DB::table('jugador_partido')
+                    ->where('partido_id', $id)
+                    ->select('equipo_ab', DB::raw('SUM(goles) as total'))
+                    ->whereIn('equipo_ab', ['A', 'B'])
+                    ->groupBy('equipo_ab')
+                    ->get();
+
+                foreach ($goalRows as $goalRow) {
+                    $team = strtoupper((string) ($goalRow->equipo_ab ?? ''));
+                    if (array_key_exists($team, $teamGoals)) {
+                        $teamGoals[$team] = (int) ($goalRow->total ?? 0);
+                    }
+                }
+            }
+
+            $winner = null;
+            $resultText = sprintf('%d - %d · Empate', $teamGoals['A'], $teamGoals['B']);
+            if ($teamGoals['A'] > $teamGoals['B']) {
+                $winner = 'A';
+                $resultText = sprintf('%d - %d · Ganó Equipo A', $teamGoals['A'], $teamGoals['B']);
+            } elseif ($teamGoals['B'] > $teamGoals['A']) {
+                $winner = 'B';
+                $resultText = sprintf('%d - %d · Ganó Equipo B', $teamGoals['A'], $teamGoals['B']);
+            }
+
+            $updates = [
+                'stats_closed_at' => now($this->clubTimezone()),
+            ];
+
+            if (Schema::hasColumn('partidos', 'resultado_equipo_a')) {
+                $updates['resultado_equipo_a'] = $teamGoals['A'];
+            }
+            if (Schema::hasColumn('partidos', 'resultado_equipo_b')) {
+                $updates['resultado_equipo_b'] = $teamGoals['B'];
+            }
+            if (Schema::hasColumn('partidos', 'resultado_ganador')) {
+                $updates['resultado_ganador'] = $winner;
+            }
+            if (Schema::hasColumn('partidos', 'resultado_texto')) {
+                $updates['resultado_texto'] = $resultText;
+            }
+
             DB::table('partidos')
                 ->where('id', $id)
-                ->update(['stats_closed_at' => now($this->clubTimezone())]);
+                ->update($updates);
         });
 
         return redirect()->route('admin.partidos.stats', $id)->with('status', '✅ Partido cerrado y estadísticas acumuladas al plantel.');
@@ -234,6 +282,7 @@ class PartidoStatsController extends Controller
                 'jp.atajadas',
                 'jp.participo'
             )
+            ->addSelect(DB::raw(Schema::hasColumn('jugador_partido', 'equipo_ab') ? "COALESCE(jp.equipo_ab, '') as equipo_ab" : "'' as equipo_ab"))
             ->orderByRaw("COALESCE(NULLIF(j.sobrenombre, ''), j.nombre) asc")
             ->get();
     }

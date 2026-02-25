@@ -64,8 +64,8 @@
       </div>
 
       <div class="mt-6 glass-card rounded-2xl p-4 md:p-6">
-        <h3 class="text-2xl font-bebas tracking-wide text-white mb-3 flex items-center gap-2">👥 <span>Jugadores confirmados</span></h3>
-        <p id="confirmed-help" class="text-sm text-gray-400 mb-3">Selecciona un día con partido para ver los sobrenombres confirmados.</p>
+        <h3 class="text-2xl font-bebas tracking-wide text-white mb-3 flex items-center gap-2">👥 <span>Confirmados / Resultado</span></h3>
+        <p id="confirmed-help" class="text-sm text-gray-400 mb-3">Selecciona un día con partido para ver confirmados o resultado final.</p>
         <div id="confirmed-list" class="flex flex-wrap gap-2"></div>
       </div>
     </section>
@@ -95,6 +95,18 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+
+
+    const resultLabel = (match) => {
+      if (!match || !match.finalizado) return '';
+
+      const scoreA = Number(match.resultado_equipo_a ?? 0);
+      const scoreB = Number(match.resultado_equipo_b ?? 0);
+
+      if (match.resultado_ganador === 'A') return `${scoreA} - ${scoreB} · Ganó Equipo A`;
+      if (match.resultado_ganador === 'B') return `${scoreA} - ${scoreB} · Ganó Equipo B`;
+      return `${scoreA} - ${scoreB} · Empate`;
+    };
 
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
@@ -149,12 +161,20 @@
             <div class="flex items-center gap-3 pb-4 border-b border-white/10">
               <div class="w-12 h-12 rounded-xl bg-lime-500/20 flex items-center justify-center text-xl">⚽</div>
               <div>
-                <p class="text-xs text-lime-400 font-semibold uppercase tracking-wider">Próximo partido</p>
+                <p class="text-xs ${match.finalizado ? 'text-emerald-300' : 'text-lime-400'} font-semibold uppercase tracking-wider">${match.finalizado ? 'Partido finalizado' : 'Próximo partido'}</p>
                 <p class="text-2xl font-bebas leading-none text-white">vs ${match.rival}</p>
               </div>
             </div>
 
             <div class="space-y-3 text-sm text-gray-200">
+
+            ${match.finalizado ? `
+              <div class="rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-4">
+                <p class="text-xs text-emerald-300 uppercase tracking-wide font-semibold">Resultado final</p>
+                <p class="text-3xl font-bebas text-white leading-none mt-1">${Number(match.resultado_equipo_a ?? 0)} - ${Number(match.resultado_equipo_b ?? 0)}</p>
+                <p class="text-sm text-emerald-100 mt-1">${escapeHtml(resultLabel(match))}</p>
+              </div>
+            ` : ''}
               <div class="flex items-start gap-3">
                 <div class="info-icon-box bg-amber-500/20">📅</div>
                 <div><p class="text-xs text-gray-400">Fecha</p><p class="text-white text-lg font-semibold leading-tight">${formatDisplayDate(match.fecha)}</p></div>
@@ -174,8 +194,10 @@
             </div>
 
             <div class="space-y-2 pt-2">
-              <button onclick="copyAddress('${safeAddress}')" class="w-full py-3 px-4 bg-lime-500 hover:bg-lime-400 text-black font-bold rounded-xl transition">📋 Copiar dirección</button>
-              <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition flex items-center justify-center">🧭 Abrir en Maps</a>
+              ${match.finalizado
+                ? `<span class="w-full inline-flex items-center justify-center py-3 px-4 rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 font-semibold">✅ Fecha finalizada</span>`
+                : `<button onclick="copyAddress('${safeAddress}')" class="w-full py-3 px-4 bg-lime-500 hover:bg-lime-400 text-black font-bold rounded-xl transition">📋 Copiar dirección</button>
+                  <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition flex items-center justify-center">🧭 Abrir en Maps</a>`}
             </div>
           </div>
         `;
@@ -194,11 +216,26 @@
       if (!list || !help) return;
 
       const matches = getMatchesForDate(dateStr);
+      const finalMatch = matches.find((m) => Boolean(m.finalizado));
       const confirmedNames = [...new Set(matches.flatMap((m) => Array.isArray(m.confirmados) ? m.confirmados : []))];
 
       if (matches.length === 0) {
         help.textContent = 'No hay partido programado para este día.';
         list.innerHTML = '<span class="inline-flex items-center px-3 py-1.5 rounded-full border border-white/15 bg-white/5 text-sm text-gray-400">Sin partido</span>';
+        return;
+      }
+
+      if (finalMatch) {
+        const scoreA = Number(finalMatch.resultado_equipo_a ?? 0);
+        const scoreB = Number(finalMatch.resultado_equipo_b ?? 0);
+        help.textContent = `Partido finalizado · ${formatDisplayDate(dateStr)}`;
+        list.innerHTML = `
+          <div class="w-full rounded-2xl border border-emerald-400/35 bg-emerald-500/10 p-4 space-y-2">
+            <p class="text-xs uppercase tracking-wide text-emerald-300 font-semibold">Resultado oficial</p>
+            <p class="text-4xl font-bebas text-white leading-none">${scoreA} - ${scoreB}</p>
+            <p class="text-sm text-emerald-100 font-semibold">${escapeHtml(resultLabel(finalMatch))}</p>
+          </div>
+        `;
         return;
       }
 
