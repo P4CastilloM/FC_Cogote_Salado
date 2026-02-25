@@ -271,25 +271,9 @@ class DashboardController extends Controller
                 'target.nombre as target_nombre',
                 'target.sobrenombre as target_sobrenombre'
             )
-            ->whereIn('l.id', $latestIds->all())
-            ->when($search !== '', function ($q) use ($search): void {
-                $q->where(function ($nested) use ($search): void {
-                    $nested->where('actor.nombre', 'like', "%{$search}%")
-                        ->orWhere('actor.sobrenombre', 'like', "%{$search}%")
-                        ->orWhere('target.nombre', 'like', "%{$search}%")
-                        ->orWhere('target.sobrenombre', 'like', "%{$search}%")
-                        ->orWhere('p.rival', 'like', "%{$search}%");
-                });
-            });
-
-        $query->orderBy('l.checked_at', $order === 'oldest' ? 'asc' : 'desc');
-
-        return $query->paginate($perPage)->withQueryString();
-    }
-
-    private function clubTimezone(): string
-    {
-        return 'America/Santiago';
+            ->orderByDesc('l.checked_at')
+            ->limit($limit)
+            ->get();
     }
 
     private function clubTimezone(): string
