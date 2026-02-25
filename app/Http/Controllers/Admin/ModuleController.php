@@ -171,6 +171,7 @@ class ModuleController extends Controller
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
+                'atajadas' => ['nullable', 'integer', 'min:0'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
@@ -184,6 +185,11 @@ class ModuleController extends Controller
 
             $data['goles'] = $data['goles'] ?? 0;
             $data['asistencia'] = $data['asistencia'] ?? 0;
+            if (Schema::hasColumn('jugadores', 'atajadas')) {
+                $data['atajadas'] = $data['atajadas'] ?? 0;
+            } else {
+                unset($data['atajadas']);
+            }
             $data['es_visitante'] = false;
             $data['created_at'] = now();
             $data['updated_at'] = now();
@@ -544,6 +550,7 @@ class ModuleController extends Controller
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
+                'atajadas' => ['nullable', 'integer', 'min:0'],
                 'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
             if (($data['posicion'] ?? null) === 'MEDIOCAMPISTA') {
@@ -559,6 +566,11 @@ class ModuleController extends Controller
             }
             $data['goles'] = $data['goles'] ?? 0;
             $data['asistencia'] = $data['asistencia'] ?? 0;
+            if (Schema::hasColumn('jugadores', 'atajadas')) {
+                $data['atajadas'] = $data['atajadas'] ?? 0;
+            } else {
+                unset($data['atajadas']);
+            }
             $data['es_visitante'] = false;
             $data['updated_at'] = now();
             DB::table('jugadores')->where('rut', $id)->update($data);
@@ -574,10 +586,16 @@ class ModuleController extends Controller
                 'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'goles' => ['nullable', 'integer', 'min:0'],
                 'asistencia' => ['nullable', 'integer', 'min:0'],
+                'atajadas' => ['nullable', 'integer', 'min:0'],
             ]);
 
             $data['goles'] = $data['goles'] ?? 0;
             $data['asistencia'] = $data['asistencia'] ?? 0;
+            if (Schema::hasColumn('jugadores', 'atajadas')) {
+                $data['atajadas'] = $data['atajadas'] ?? 0;
+            } else {
+                unset($data['atajadas']);
+            }
             if (Schema::hasColumn('jugadores', 'es_visitante')) {
                 $data['es_visitante'] = true;
             }

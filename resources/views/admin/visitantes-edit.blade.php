@@ -29,7 +29,7 @@
 
             <h2 class="text-xl font-semibold text-white">🧳 Visitante RUT {{ $item->rut }}</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="text-sm text-slate-300">Nombre *</label>
                     <input class="w-full rounded-xl bg-slate-900/70 border border-white/15 text-white px-4 py-3 mt-1" type="text" name="nombre" maxlength="25" required value="{{ old('nombre', $item->nombre) }}">
@@ -53,6 +53,11 @@
                 <div>
                     <label class="text-sm text-slate-300">Asistencias</label>
                     <input class="w-full rounded-xl bg-slate-900/70 border border-white/15 text-white px-4 py-3 mt-1" type="number" name="asistencia" min="0" value="{{ old('asistencia', $item->asistencia ?? 0) }}">
+                </div>
+
+                <div>
+                    <label class="text-sm text-slate-300">Atajadas</label>
+                    <input class="w-full rounded-xl bg-slate-900/70 border border-white/15 text-white px-4 py-3 mt-1" type="number" name="atajadas" min="0" value="{{ old('atajadas', $item->atajadas ?? 0) }}">
                 </div>
             </div>
 

@@ -57,7 +57,7 @@
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="text-sm text-slate-300">Goles</label>
                     <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="goles" min="0" value="{{ old('goles', $item->goles) }}" placeholder="⚽ Goles">
@@ -65,6 +65,10 @@
                 <div>
                     <label class="text-sm text-slate-300">Asistencias</label>
                     <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="asistencia" min="0" value="{{ old('asistencia', $item->asistencia) }}" placeholder="🎯 Asistencias">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Atajadas</label>
+                    <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="number" name="atajadas" min="0" value="{{ old('atajadas', $item->atajadas ?? 0) }}" placeholder="🧤 Atajadas">
                 </div>
             </div>
 
