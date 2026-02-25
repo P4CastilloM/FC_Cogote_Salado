@@ -234,6 +234,7 @@ class PartidoStatsController extends Controller
                 'jp.atajadas',
                 'jp.participo'
             )
+            ->addSelect(DB::raw(Schema::hasColumn('jugador_partido', 'equipo_ab') ? "COALESCE(jp.equipo_ab, '') as equipo_ab" : "'' as equipo_ab"))
             ->orderByRaw("COALESCE(NULLIF(j.sobrenombre, ''), j.nombre) asc")
             ->get();
     }

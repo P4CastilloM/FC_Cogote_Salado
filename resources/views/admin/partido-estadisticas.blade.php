@@ -45,6 +45,21 @@
                 <span class="inline-flex items-center rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 px-2 py-1" x-text="`Pendientes: ${queue.length}`"></span>
                 <span class="inline-flex items-center rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-300 px-2 py-1" x-show="errorMessage" x-text="errorMessage"></span>
             </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-3">
+                    <p class="text-xs text-sky-200 uppercase tracking-wide">Equipo A</p>
+                    <p class="text-3xl font-bold text-white" x-text="teamGoals('A')"></p>
+                </div>
+                <div class="rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3">
+                    <p class="text-xs text-amber-200 uppercase tracking-wide">Equipo B</p>
+                    <p class="text-3xl font-bold text-white" x-text="teamGoals('B')"></p>
+                </div>
+                <div class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3">
+                    <p class="text-xs text-emerald-200 uppercase tracking-wide">Resultado</p>
+                    <p class="text-sm sm:text-base font-semibold text-white mt-1" x-text="winnerLabel()"></p>
+                </div>
+            </div>
         </div>
 
         <template x-if="filteredPlayers().length === 0">
@@ -152,7 +167,39 @@ function statsApp() {
         meta(player) {
             const pos = player.posicion || 'Sin posición';
             const num = player.numero_camiseta ? `#${player.numero_camiseta}` : '#--';
-            return `${num} · ${pos}`;
+            const team = (player.equipo_ab || '').toUpperCase();
+            const teamLabel = team === 'A' || team === 'B' ? ` · Equipo ${team}` : ' · Sin equipo';
+            return `${num} · ${pos}${teamLabel}`;
+        },
+
+
+        teamGoals(team) {
+            const side = String(team || '').toUpperCase();
+
+            return this.players.reduce((total, player) => {
+                if (String(player.equipo_ab || '').toUpperCase() !== side) {
+                    return total;
+                }
+
+                return total + Number(player.goles || 0);
+            }, 0);
+        },
+
+        winnerLabel() {
+            const goalsA = this.teamGoals('A');
+            const goalsB = this.teamGoals('B');
+
+            if (goalsA === 0 && goalsB === 0) {
+                return 'Sin goles registrados aún';
+            }
+
+            if (goalsA === goalsB) {
+                return `Empate ${goalsA} - ${goalsB}`;
+            }
+
+            return goalsA > goalsB
+                ? `Gana Equipo A (${goalsA} - ${goalsB})`
+                : `Gana Equipo B (${goalsA} - ${goalsB})`;
         },
 
         apply(rut, field, delta) {
