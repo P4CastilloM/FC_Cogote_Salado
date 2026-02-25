@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])
         Route::post('/partidos/{id}/estadisticas/finalizar', [PartidoStatsController::class, 'finish'])->name('partidos.stats.finish');
         Route::post('/dashboard/convert-images-webp', [AdminDashboardController::class, 'convertImagesToWebp'])->name('dashboard.convert-images-webp');
         Route::get('/plantilla', [LineupController::class, 'index'])->name('lineup.index');
+        Route::post('/partidos/{id}/plantilla/equipo', [LineupController::class, 'saveTeam'])->name('lineup.save-team');
         Route::post('/visitantes/{rut}/traspasar', [AdminModuleController::class, 'transferVisitante'])->name('visitantes.transfer');
 
         $modules = ['plantel', 'visitantes', 'noticias', 'avisos', 'album', 'directiva', 'partidos', 'premios', 'temporadas', 'staff', 'modificaciones'];
