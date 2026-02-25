@@ -271,10 +271,13 @@ class DashboardController extends Controller
             return collect();
         }
 
+        $perPage = in_array($perPage, [10, 25, 50], true) ? $perPage : 10;
+        $order = $order === 'oldest' ? 'oldest' : 'recent';
+
+        $hasJugadoresTable = Schema::hasTable('jugadores');
+        $hasPartidosTable = Schema::hasTable('partidos');
+
         $query = DB::table('partido_asistencia_logs as l')
-            ->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
-            ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut')
-            ->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id')
             ->select('l.id')
             ->addSelect(
                 Schema::hasColumn('partido_asistencia_logs', 'checked_at')
@@ -282,22 +285,55 @@ class DashboardController extends Controller
                     : DB::raw('l.created_at as checked_at')
             )
             ->addSelect('l.actor_rut', 'l.target_rut')
-            ->addSelect(DB::raw(Schema::hasColumn('partidos', 'fecha') ? 'p.fecha as fecha' : 'NULL as fecha'))
-            ->addSelect(DB::raw(Schema::hasColumn('partidos', 'rival') ? 'p.rival as rival' : "'' as rival"))
-            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'nombre') ? 'actor.nombre as actor_nombre' : "'' as actor_nombre"))
-            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'sobrenombre') ? 'actor.sobrenombre as actor_sobrenombre' : "'' as actor_sobrenombre"))
-            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'nombre') ? 'target.nombre as target_nombre' : "'' as target_nombre"))
-            ->addSelect(DB::raw(Schema::hasColumn('jugadores', 'sobrenombre') ? 'target.sobrenombre as target_sobrenombre' : "'' as target_sobrenombre"));
+            ->addSelect(DB::raw($hasPartidosTable && Schema::hasColumn('partidos', 'fecha') ? 'p.fecha as fecha' : 'NULL as fecha'))
+            ->addSelect(DB::raw($hasPartidosTable && Schema::hasColumn('partidos', 'rival') ? 'p.rival as rival' : "'' as rival"))
+            ->addSelect(DB::raw($hasJugadoresTable && Schema::hasColumn('jugadores', 'nombre') ? 'actor.nombre as actor_nombre' : "'' as actor_nombre"))
+            ->addSelect(DB::raw($hasJugadoresTable && Schema::hasColumn('jugadores', 'sobrenombre') ? 'actor.sobrenombre as actor_sobrenombre' : "'' as actor_sobrenombre"))
+            ->addSelect(DB::raw($hasJugadoresTable && Schema::hasColumn('jugadores', 'nombre') ? 'target.nombre as target_nombre' : "'' as target_nombre"))
+            ->addSelect(DB::raw($hasJugadoresTable && Schema::hasColumn('jugadores', 'sobrenombre') ? 'target.sobrenombre as target_sobrenombre' : "'' as target_sobrenombre"));
 
-        if (Schema::hasColumn('partido_asistencia_logs', 'checked_at')) {
-            $query->orderByDesc('l.checked_at');
-        } elseif (Schema::hasColumn('partido_asistencia_logs', 'created_at')) {
-            $query->orderByDesc('l.created_at');
-        } else {
-            $query->orderByDesc('l.id');
+        if ($hasJugadoresTable) {
+            $query->leftJoin('jugadores as actor', 'actor.rut', '=', 'l.actor_rut')
+                ->leftJoin('jugadores as target', 'target.rut', '=', 'l.target_rut');
         }
 
-        return $query->limit($limit)->get();
+        if ($hasPartidosTable) {
+            $query->leftJoin('partidos as p', 'p.id', '=', 'l.partido_id');
+        }
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search, $hasPartidosTable, $hasJugadoresTable): void {
+                if ($hasPartidosTable && Schema::hasColumn('partidos', 'rival')) {
+                    $builder->orWhere('p.rival', 'like', "%{$search}%");
+                }
+
+                if ($hasJugadoresTable) {
+                    if (Schema::hasColumn('jugadores', 'nombre')) {
+                        $builder->orWhere('actor.nombre', 'like', "%{$search}%")
+                            ->orWhere('target.nombre', 'like', "%{$search}%");
+                    }
+
+                    if (Schema::hasColumn('jugadores', 'sobrenombre')) {
+                        $builder->orWhere('actor.sobrenombre', 'like', "%{$search}%")
+                            ->orWhere('target.sobrenombre', 'like', "%{$search}%");
+                    }
+                }
+            });
+        }
+
+        if (Schema::hasColumn('partido_asistencia_logs', 'checked_at')) {
+            $query->{$order === 'oldest' ? 'orderBy' : 'orderByDesc'}('l.checked_at');
+        } elseif (Schema::hasColumn('partido_asistencia_logs', 'created_at')) {
+            $query->{$order === 'oldest' ? 'orderBy' : 'orderByDesc'}('l.created_at');
+        } else {
+            $query->{$order === 'oldest' ? 'orderBy' : 'orderByDesc'}('l.id');
+        }
+
+        return $query
+            ->limit(500)
+            ->get()
+            ->take($perPage)
+            ->values();
     }
 
     private function clubTimezone(): string
