@@ -274,6 +274,7 @@ class PartidoStatsController extends Controller
             ->select(
                 'j.rut',
                 'j.nombre',
+                'j.apellido',
                 'j.sobrenombre',
                 'j.numero_camiseta',
                 'j.posicion',

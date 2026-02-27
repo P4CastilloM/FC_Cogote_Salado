@@ -30,6 +30,21 @@
                 </form>
             </div>
 
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-3">
+                    <p class="text-xs text-sky-200 uppercase tracking-wide">Equipo A</p>
+                    <p class="text-3xl font-bold text-white" x-text="teamGoals('A')"></p>
+                </div>
+                <div class="rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3">
+                    <p class="text-xs text-amber-200 uppercase tracking-wide">Equipo B</p>
+                    <p class="text-3xl font-bold text-white" x-text="teamGoals('B')"></p>
+                </div>
+                <div class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3">
+                    <p class="text-xs text-emerald-200 uppercase tracking-wide">Resultado</p>
+                    <p class="text-sm sm:text-base font-semibold text-white mt-1" x-text="winnerLabel()"></p>
+                </div>
+            </div>
+
             <div class="mt-4">
                 <input
                     type="text"
@@ -44,21 +59,6 @@
                 <span x-show="online" class="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 px-2 py-1">En línea</span>
                 <span class="inline-flex items-center rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-300 px-2 py-1" x-text="`Pendientes: ${queue.length}`"></span>
                 <span class="inline-flex items-center rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-300 px-2 py-1" x-show="errorMessage" x-text="errorMessage"></span>
-            </div>
-
-            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-3">
-                    <p class="text-xs text-sky-200 uppercase tracking-wide">Equipo A</p>
-                    <p class="text-3xl font-bold text-white" x-text="teamGoals('A')"></p>
-                </div>
-                <div class="rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3">
-                    <p class="text-xs text-amber-200 uppercase tracking-wide">Equipo B</p>
-                    <p class="text-3xl font-bold text-white" x-text="teamGoals('B')"></p>
-                </div>
-                <div class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3">
-                    <p class="text-xs text-emerald-200 uppercase tracking-wide">Resultado</p>
-                    <p class="text-sm sm:text-base font-semibold text-white mt-1" x-text="winnerLabel()"></p>
-                </div>
             </div>
         </div>
 
@@ -159,9 +159,20 @@ function statsApp() {
         },
 
         displayName(player) {
-            return player.sobrenombre && player.sobrenombre.trim() !== ''
-                ? `${player.sobrenombre} (${player.nombre})`
-                : player.nombre;
+            const nombre = (player.nombre || '').trim();
+            const apellido = (player.apellido || '').trim();
+            const nombreCorto = [nombre, apellido.split(/\s+/).filter(Boolean)[0] || '']
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+
+            if (player.sobrenombre && player.sobrenombre.trim() !== '') {
+                return nombreCorto !== ''
+                    ? `${player.sobrenombre} (${nombreCorto})`
+                    : player.sobrenombre;
+            }
+
+            return nombreCorto !== '' ? nombreCorto : nombre;
         },
 
         meta(player) {
