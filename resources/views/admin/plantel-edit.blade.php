@@ -32,9 +32,15 @@
                 <input class="player-input w-full rounded-xl px-4 py-3 mt-1 opacity-60" type="text" value="{{ $item->rut }}" disabled>
             </div>
 
-            <div>
-                <label class="text-sm text-slate-300">Nombre *</label>
-                <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre" maxlength="25" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre completo">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-slate-300">Nombre *</label>
+                    <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="nombre" maxlength="25" required value="{{ old('nombre', $item->nombre) }}" placeholder="👤 Nombre">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300">Apellidos *</label>
+                    <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" name="apellido" maxlength="50" required value="{{ old('apellido', $item->apellido) }}" placeholder="👤 Apellidos">
+                </div>
             </div>
 
             <div>

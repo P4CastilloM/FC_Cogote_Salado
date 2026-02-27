@@ -67,11 +67,20 @@
                         <p class="text-xs text-slate-500 mt-1">Solo números, máximo 8 dígitos.</p>
                     </div>
 
-                    <div>
-                        <label class="text-sm text-slate-300">Nombre completo *</label>
-                        <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" id="nombre" name="nombre" maxlength="25" required value="{{ old('nombre') }}" placeholder="Ej: Juan Pérez González">
-                    <input class="player-input w-full rounded-xl px-4 py-3 mt-3" type="text" id="sobrenombre" name="sobrenombre" maxlength="25" value="{{ old('sobrenombre') }}" placeholder="Sobrenombre (opcional)">
-                    <p class="text-xs text-slate-500 mt-2">Si tiene sobrenombre, se mostrará en plantel/plantilla en lugar del nombre.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-slate-300">Nombre *</label>
+                            <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" id="nombre" name="nombre" maxlength="25" required value="{{ old('nombre') }}" placeholder="Ej: Juan">
+                        </div>
+                        <div>
+                            <label class="text-sm text-slate-300">Apellidos *</label>
+                            <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" id="apellido" name="apellido" maxlength="50" required value="{{ old('apellido') }}" placeholder="Ej: Pérez González">
+                        </div>
+                        <div>
+                            <label class="text-sm text-slate-300">Sobrenombre (opcional)</label>
+                            <input class="player-input w-full rounded-xl px-4 py-3 mt-1" type="text" id="sobrenombre" name="sobrenombre" maxlength="25" value="{{ old('sobrenombre') }}" placeholder="Sobrenombre (opcional)">
+                            <p class="text-xs text-slate-500 mt-2">Si tiene sobrenombre, se mostrará en plantel/plantilla en lugar del nombre.</p>
+                        </div>
                     </div>
 
                     <div>

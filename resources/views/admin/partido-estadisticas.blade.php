@@ -159,9 +159,20 @@ function statsApp() {
         },
 
         displayName(player) {
-            return player.sobrenombre && player.sobrenombre.trim() !== ''
-                ? `${player.sobrenombre} (${player.nombre})`
-                : player.nombre;
+            const nombre = (player.nombre || '').trim();
+            const apellido = (player.apellido || '').trim();
+            const nombreCorto = [nombre, apellido.split(/\s+/).filter(Boolean)[0] || '']
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+
+            if (player.sobrenombre && player.sobrenombre.trim() !== '') {
+                return nombreCorto !== ''
+                    ? `${player.sobrenombre} (${nombreCorto})`
+                    : player.sobrenombre;
+            }
+
+            return nombreCorto !== '' ? nombreCorto : nombre;
         },
 
         meta(player) {

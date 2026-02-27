@@ -200,7 +200,7 @@ class ModuleController extends Controller
             $data = $request->validate([
                 'rut' => ['required', 'integer', 'min:1', 'max:99999999', 'unique:jugadores,rut'],
                 'nombre' => ['required', 'string', 'max:25'],
-                'apellido' => ['nullable', 'string', 'max:50'],
+                'apellido' => ['required', 'string', 'max:50'],
                 'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
@@ -579,7 +579,7 @@ class ModuleController extends Controller
         if ($module === 'plantel') {
             $data = $request->validate([
                 'nombre' => ['required', 'string', 'max:25'],
-                'apellido' => ['nullable', 'string', 'max:50'],
+                'apellido' => ['required', 'string', 'max:50'],
                 'sobrenombre' => ['nullable', 'string', 'max:25'],
                 'numero_camiseta' => ['required', 'integer', 'min:1', 'max:65535'],
                 'posicion' => ['required', 'in:ARQUERO,DELANTERO,MEDIOCAMPISTA,CENTRAL,DEFENSA'],
